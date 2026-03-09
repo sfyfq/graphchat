@@ -17,7 +17,7 @@ export interface SquashGroup {
  *
  * Adjacent collapsible commits are merged into a single SquashGroup.
  */
-const MIN_SIZE = 2
+const MIN_SIZE = 1
 
 export function computeSquashGroups(
   commits:    Record<string, Commit>,

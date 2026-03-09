@@ -8,17 +8,60 @@ import { SearchPanel } from './components/Search/SearchPanel'
 import { Toolbar }     from './components/Toolbar/Toolbar'
 import { useConversationStore } from './store/conversationStore'
 import { computeLayout }        from './lib/layout'
-import { clamp }                from './lib/utils'
+import { computeSquashGroups, hiddenIds } from './lib/squash'
+import { branchColor, clamp }   from './lib/utils'
 import type { Commit, DialogState } from './types'
 
 export default function App() {
-  const { commits, edges, setHEAD } = useConversationStore()
+  const { commits, edges, HEAD, setHEAD } = useConversationStore()
 
   // Dialogs: map from commitId → position
   const [dialogs,     setDialogs]     = useState<Record<string, { x: number; y: number }>>({})
   const [hoveredId,   setHoveredId]   = useState<string | null>(null)
   const [hoverPos,    setHoverPos]    = useState({ x: 0, y: 0 })
   const [showSearch,  setShowSearch]  = useState(false)
+
+  // Which squash groups the user has manually expanded
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
+
+  // Pinned ids: HEAD + any open dialogs — these are never collapsed
+  const openDialogIds = useMemo(() => new Set(Object.keys(dialogs)), [dialogs])
+  const pinned = useMemo<Set<string>>(() => {
+    const s = new Set(openDialogIds)
+    s.add(HEAD)
+    return s
+  }, [HEAD, openDialogIds])
+
+  // Compute squash groups
+  const allGroups = useMemo(
+    () => computeSquashGroups(commits, edges, pinned),
+    [commits, edges, pinned],
+  )
+
+  // Sync expandedGroups: if a group ID is no longer in allGroups, remove it
+  useEffect(() => {
+    setExpandedGroups(prev => {
+      let changed = false
+      const next = new Set(prev)
+      prev.forEach(id => {
+        if (!allGroups.has(id)) {
+          next.delete(id)
+          changed = true
+        }
+      })
+      return changed ? next : prev
+    })
+  }, [allGroups])
+
+  // Toggle expand/collapse a group
+  const toggleGroup = useCallback((groupId: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev)
+      if (next.has(groupId)) next.delete(groupId)
+      else next.add(groupId)
+      return next
+    })
+  }, [])
 
   // Adjacency for finding children
   const childrenMap = useMemo(() => {
@@ -97,8 +140,6 @@ export default function App() {
   }, [])
 
   // ── Search → open dialog + pan ────────────────────────────────────────────
-  const layout = useMemo(() => computeLayout(commits, edges), [commits, edges])
-
   const handleSearchSelect = useCallback((commit: Commit) => {
     setHEAD(commit.id)
     const x = clamp(window.innerWidth  / 2 + 40, 10, window.innerWidth  - 450)
@@ -110,8 +151,6 @@ export default function App() {
   const hoveredCommit = hoveredId ? commits[hoveredId] : null
   const showTooltip   = hoveredCommit && !dialogs[hoveredId!]
 
-  const openDialogIds = useMemo(() => new Set(Object.keys(dialogs)), [dialogs])
-
   return (
     <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', background: '#080810' }}>
 
@@ -120,6 +159,8 @@ export default function App() {
         onNodeClick={handleNodeClick}
         onNodeHover={handleNodeHover}
         openDialogIds={openDialogIds}
+        expandedGroups={expandedGroups}
+        toggleGroup={toggleGroup}
       />
 
       {/* Toolbar (logo, search btn, zoom controls, legend) */}

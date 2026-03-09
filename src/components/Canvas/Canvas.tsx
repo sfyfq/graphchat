@@ -15,21 +15,20 @@ const ZOOM_MIN = 0.12
 const ZOOM_MAX = 3.0
 
 interface Props {
-  onNodeClick:   (commit: Commit, screenX: number, screenY: number) => void
-  onNodeHover:   (commitId: string | null, screenX: number, screenY: number) => void
-  openDialogIds: Set<string>
+  onNodeClick:    (commit: Commit, screenX: number, screenY: number) => void
+  onNodeHover:    (commitId: string | null, screenX: number, screenY: number) => void
+  openDialogIds:  Set<string>
+  expandedGroups: Set<string>
+  toggleGroup:    (groupId: string) => void
 }
 
 export const Canvas: React.FC<Props> = ({
-  onNodeClick, onNodeHover, openDialogIds,
+  onNodeClick, onNodeHover, openDialogIds, expandedGroups, toggleGroup
 }) => {
   const { commits, edges, HEAD } = useConversationStore()
 
   const [pan,  setPan]  = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
-
-  // Which squash groups the user has manually expanded
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
 
   // Squash hover state (separate from regular node hover)
   const [squashHover, setSquashHover] = useState<{
@@ -67,7 +66,8 @@ export const Canvas: React.FC<Props> = ({
   }, [allGroups, expandedGroups])
 
   // Deduplicated set of group representatives (first commit of each group)
-  const groupReps = useMemo<Map<string, SquashGroup>>(() => {
+  // ONLY for those that are currently collapsed.
+  const collapsedGroupReps = useMemo<Map<string, SquashGroup>>(() => {
     const reps = new Map<string, SquashGroup>()
     allGroups.forEach((group) => {
       if (!expandedGroups.has(group.id)) {
@@ -77,8 +77,7 @@ export const Canvas: React.FC<Props> = ({
     return reps
   }, [allGroups, expandedGroups])
 
-  // Layout on the collapsed graph — hidden nodes excluded so depths
-  // reflect the visible tree only, eliminating phantom spacing.
+  // Layout on the collapsed graph — hidden nodes excluded
   const layout: Layout = useMemo(
     () => computeLayout(commits, edges, hidden),
     [commits, edges, hidden],
@@ -175,17 +174,6 @@ export const Canvas: React.FC<Props> = ({
     window.dispatchEvent(new CustomEvent('gitchat:zoom-value', { detail: zoom }))
   }, [zoom])
 
-  // Toggle expand/collapse a group
-  const toggleGroup = useCallback((groupId: string) => {
-    setExpandedGroups(prev => {
-      const next = new Set(prev)
-      if (next.has(groupId)) next.delete(groupId)
-      else next.add(groupId)
-      return next
-    })
-    setSquashHover(null)
-  }, [])
-
   // Squash pill hover
   const handleSquashHover = useCallback((
     groupId: string | null,
@@ -193,9 +181,9 @@ export const Canvas: React.FC<Props> = ({
     screenY: number,
   ) => {
     if (!groupId) { setSquashHover(null); return }
-    const group = groupReps.get(groupId)
+    const group = collapsedGroupReps.get(groupId)
     if (group) setSquashHover({ group, screenX, screenY })
-  }, [groupReps])
+  }, [collapsedGroupReps])
 
   const handleNodeClick = useCallback(
     (commit: Commit, screenX: number, screenY: number) => {
@@ -207,9 +195,7 @@ export const Canvas: React.FC<Props> = ({
   // Visible edges: skip edges where both endpoints are hidden
   const visibleEdges = useMemo(() => {
     return edges.filter(({ source, target }) => {
-      // If target is hidden, skip — the group rep's edge covers it
       if (hidden.has(target)) return false
-      // If source is hidden, remap: draw from the group rep instead
       return true
     }).map(({ source, target }) => ({
       // If source is hidden, draw from its group rep
@@ -261,7 +247,7 @@ export const Canvas: React.FC<Props> = ({
             if (commit.id === 'root') return null
             if (hidden.has(commit.id)) return null
             // Also skip if this id is a group rep rendered as a pill
-            if (groupReps.has(commit.id)) return null
+            if (collapsedGroupReps.has(commit.id)) return null
 
             const pos = layout[commit.id]
             if (!pos) return null
@@ -273,6 +259,8 @@ export const Canvas: React.FC<Props> = ({
                 y={pos.y}
                 isHEAD={commit.id === HEAD}
                 isOpen={openDialogIds.has(commit.id)}
+                isExpandedRep={expandedGroups.has(commit.id)}
+                onCollapse={toggleGroup}
                 zoom={zoom}
                 onHover={(id) => onNodeHover(id, 0, 0)}
                 onClick={handleNodeClick}
@@ -281,7 +269,7 @@ export const Canvas: React.FC<Props> = ({
           })}
 
           {/* Squash pill nodes */}
-          {Array.from(groupReps.entries()).map(([repId, group]) => {
+          {Array.from(collapsedGroupReps.entries()).map(([repId, group]) => {
             const pos = layout[repId]
             if (!pos) return null
             const isActive = group.commits.some(c => activePath.has(c.id))

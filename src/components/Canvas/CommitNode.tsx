@@ -10,13 +10,15 @@ interface Props {
   y:        number
   isHEAD:   boolean
   isOpen:   boolean
+  isExpandedRep?: boolean
   onHover:  (id: string | null) => void
   onClick:  (commit: Commit, screenX: number, screenY: number) => void
+  onCollapse?: (id: string) => void
   zoom:     number
 }
 
 export const CommitNode: React.FC<Props> = ({
-  commit, x, y, isHEAD, isOpen, onHover, onClick, zoom,
+  commit, x, y, isHEAD, isOpen, isExpandedRep, onHover, onClick, onCollapse, zoom,
 }) => {
   const isUser      = commit.role === 'user'
   const strokeColor = isUser ? '#3b82f6' : '#10b981'
@@ -34,6 +36,11 @@ export const CommitNode: React.FC<Props> = ({
     const sx = x * zoom + rect.left
     const sy = y * zoom + rect.top
     onClick(commit, sx, sy)
+  }
+
+  const handleCollapse = (e: React.MouseEvent<SVGGElement>) => {
+    e.stopPropagation()
+    onCollapse?.(commit.id)
   }
 
   return (
@@ -110,6 +117,23 @@ export const CommitNode: React.FC<Props> = ({
       >
         {isUser ? 'U' : '✦'}
       </text>
+
+      {/* Collapse button (for expanded groups) */}
+      {isExpandedRep && (
+        <g
+          transform={`translate(${NODE_R - 6}, -${NODE_R - 6})`}
+          onClick={handleCollapse}
+        >
+          <circle r={8} fill="rgba(8,8,16,0.95)" stroke="rgba(255,255,255,0.25)" strokeWidth={1} />
+          <text
+            textAnchor="middle" dominantBaseline="central"
+            fontSize={12} fill="rgba(255,255,255,0.7)"
+            style={{ pointerEvents: 'none', userSelect: 'none' }}
+          >
+            ×
+          </text>
+        </g>
+      )}
 
       {/* Branch label pill */}
       {commit.branchLabel && (
