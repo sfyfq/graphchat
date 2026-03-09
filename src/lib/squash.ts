@@ -14,11 +14,10 @@ export interface SquashGroup {
  *  - it has exactly one parent
  *  - it has exactly one child
  *  - it is not pinned (branch label, HEAD, or open dialog)
- *  - it is not an 'assistant' role node (landmarks)
  *
  * Adjacent collapsible commits are merged into a single SquashGroup.
  */
-const MIN_SIZE = 1
+const MIN_SIZE = 2
 
 export function computeSquashGroups(
   commits:    Record<string, Commit>,
@@ -40,7 +39,6 @@ export function computeSquashGroups(
     if (id === 'root') return
     if (pinned.has(id)) return
     if (commits[id].branchLabel) return      // branch roots stay visible
-    if (commits[id].role === 'assistant') return // assistants are landmarks
     if (children[id].length !== 1) return    // branch points / tips stay visible
     if (!parents[id] || parents[id] === 'root') return
     collapsible.add(id)
