@@ -1,4 +1,0 @@
-bug: when a squashGroup is active, hovering on another one would close the active one, leaving the expanded group in an expanded group without a means to close it. so hovering on a squashgroup should create a toplevel overlay that is automatically dismissed without affecting the active one.
---- Tue Mar 10 10:45:00 PDT 2026 ---
-Analysis: The `activeSquashGroup` state in `App.tsx` is being overloaded for both "hover" and "expansion". When a user hovers over a different group, `activeSquashGroup` is updated, and when they leave, it's cleared if the new group isn't expanded. This effectively "evicts" the previously expanded group from the sidebar.
-Plan: Decouple these states. Maintain a persistent `expandedSquashGroup` and a transient `hoveredSquashGroup`. Render both as separate instances of `SquashTooltip` if they differ.
