@@ -105,3 +105,8 @@ adjustment: ensure initial dialog position and automatic growth respect the tool
 - Manual dragging should still allow the dialog to be moved anywhere within the viewport.
 --- Tue Mar 10 14:15:00 PDT 2026 ---
 Analysis: Currently, all clamping (initial, auto-growth, and dragging) uses a 10px top margin. We need to bifurcate this logic: use a larger margin (e.g., 80px) for computer-controlled positioning and keep the tighter margin (10px) for user-controlled dragging.
+improvement: remove auto-centering/zoom-in for squash groups.
+- Clicking a squash pill should open the sidebar but not trigger an auto-fit/zoom.
+- Clicking a turn in the sidebar should open the dialog but not trigger an auto-fit/zoom.
+- This prevents disorienting layout shifts as the graph re-squashes during interaction.
+--- Tue Mar 10 14:30:00 PDT 2026 ---

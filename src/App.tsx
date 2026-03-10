@@ -92,13 +92,7 @@ export default function App() {
       const group = allGroups.get(groupId)
       if (group) {
         setExpandedSquashGroup(group)
-        // Auto-center on the pill and its boundaries
-        const ids = [groupId, group.parentId, group.childId].filter(Boolean) as string[]
-        
-        // Wait for layout to update before fitting
-        setTimeout(() => {
-          window.dispatchEvent(new CustomEvent('graphchat:fit-nodes', { detail: ids }))
-        }, 50)
+        // Auto-centering removed per user request to stabilize navigation
       }
     } else {
       setExpandedSquashGroup(null)
@@ -198,10 +192,7 @@ export default function App() {
   const handleSidebarTurnClick = useCallback((commit: Commit) => {
     handleNodeClick(commit)
     setExpandedSquashGroup(null) // Close sidebar once a specific node is picked
-    // Auto-center on the newly expanded node
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('graphchat:fit-nodes', { detail: [commit.id] }))
-    }, 50)
+    // Auto-centering removed per user request to stabilize navigation
   }, [handleNodeClick])
 
   // ── Close dialog ──────────────────────────────────────────────────────────
