@@ -1,21 +1,15 @@
 **Your Optimized Prompt:**
-Enhance the visibility of the `HEAD` commit in `src/components/Canvas/CommitNode.tsx` to make it the most prominent element in the graph.
+Adjust the graph layout constants in `src/lib/layout.ts` to prevent overlapping between adjacent `SquashNode` pills and other components.
 
-1.  **Labeling**:
-    - Add a small "HEAD" pill/label above the node (similar to the branch label but positioned at the top).
-    - Use a high-contrast color (e.g., Indigo/Indigo-400) for the HEAD label.
+1.  **Constants Adjustment**:
+    - Increase `H_GAP` to at least `160` (currently `96`) to ensure that `SquashNode` pills (width `144px`) have sufficient clearance between branches.
+    - Review `V_GAP` (currently `128`) to ensure it remains proportionate and provides enough vertical space for branch labels and the new "HEAD" label.
 
-2.  **Visual Styling**:
-    - Increase the `strokeWidth` of the node when `isHEAD` is true.
-    - Intensify the pulse rings: make them larger or more opaque.
-    - Add a CSS filter or SVG drop-shadow to create a "glow" effect around the HEAD node.
-
-3.  **Integration**:
-    - Ensure the label doesn't overlap with the "collapse" button or other UI elements.
-    - Maintain the smooth animation of the pulse rings.
+2.  **Verification**:
+    - Ensure that the layout computation remains correct and that nodes are spaced far enough apart that even the widest components (squash pills with labels) do not collide.
 
 **Key Improvements:**
-• Removes ambiguity about which node is the current focus of the conversation.
-• Provides a clear "You are here" marker in complex conversation trees.
+• Eliminates visual clutter and overlapping elements.
+• Ensures a clean, readable graph regardless of branch density or squashing.
 
-**Techniques Applied:** Visual hierarchy enhancement, SVG styling.
+**Techniques Applied:** Constant-based layout refinement.

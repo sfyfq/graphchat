@@ -1,7 +1,7 @@
 import type { Commit, Edge, Layout } from '../types'
 
-const H_GAP = 96
-const V_GAP = 128
+const H_GAP = 160
+const V_GAP = 144
 const ROOT_ID = 'root'
 
 /**
