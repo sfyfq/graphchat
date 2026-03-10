@@ -34,8 +34,14 @@ export default function App() {
   const pinned = useMemo<Set<string>>(() => {
     const s = new Set(openDialogIds)
     s.add(HEAD)
+    // If we have an active squash group (expanded or being hovered),
+    // and we're interacting with it via a dialog, pin all its members
+    // to prevent the generic squash logic from carving it up.
+    if (activeSquashGroup && openDialogIds.size > 0) {
+      activeSquashGroup.commits.forEach(c => s.add(c.id))
+    }
     return s
-  }, [HEAD, openDialogIds])
+  }, [HEAD, openDialogIds, activeSquashGroup?.id]) // depend on id to avoid excessive re-runs
 
   // Compute squash groups
   const allGroups = useMemo(
@@ -45,6 +51,9 @@ export default function App() {
 
   // Sync expandedGroups: if a group ID is no longer in allGroups, remove it
   useEffect(() => {
+    // Only sync if no dialogs are open, to keep the UI state stable during interaction
+    if (openDialogIds.size > 0) return
+
     setExpandedGroups(prev => {
       let changed = false
       const next = new Set(prev)
@@ -56,7 +65,7 @@ export default function App() {
       })
       return changed ? next : prev
     })
-  }, [allGroups])
+  }, [allGroups, openDialogIds.size])
 
   // Toggle expand/collapse a group
   const toggleGroup = useCallback((groupId: string) => {
