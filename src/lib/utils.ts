@@ -17,6 +17,36 @@ export function truncate(str: string, n: number): string {
 }
 
 /**
+ * Detect if the cursor is within $...$ or $$...$$ delimiters and return the math string.
+ */
+export function getMathAtCursor(text: string, pos: number): string | null {
+  if (!text) return null;
+
+  // Check for $$...$$ block math first
+  const blockRegex = /\$\$(.*?)\$\$/gs;
+  let match;
+  while ((match = blockRegex.exec(text)) !== null) {
+    const start = match.index;
+    const end = blockRegex.lastIndex;
+    if (pos >= start && pos <= end) {
+      return match[0];
+    }
+  }
+
+  // Check for $...$ inline math
+  const inlineRegex = /\$((?!\$)[^\$]+?)\$/g;
+  while ((match = inlineRegex.exec(text)) !== null) {
+    const start = match.index;
+    const end = inlineRegex.lastIndex;
+    if (pos >= start && pos <= end) {
+      return match[0];
+    }
+  }
+
+  return null;
+}
+
+/**
  * Generate a short summary from message content.
  */
 export function makeSummary(content: string): string {

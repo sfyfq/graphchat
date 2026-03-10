@@ -12,7 +12,7 @@ import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import { useConversationStore } from "../../store/conversationStore";
 import { llm, reconstructMessages, estimateTokens } from "../../lib/llm";
-import { makeSummary, branchColor } from "../../lib/utils";
+import { makeSummary, branchColor, getMathAtCursor } from "../../lib/utils";
 import { MessageList, MarkdownComponents } from "./MessageList";
 import type { Commit } from "../../types";
 
@@ -40,6 +40,7 @@ export const ChatDialog: React.FC<Props> = ({
 
   const [pos, setPos] = useState(initialPosition);
   const [input, setInput] = useState(initialInput);
+  const [activeMath, setActiveMath] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -182,6 +183,7 @@ export const ChatDialog: React.FC<Props> = ({
     if (!text || loading) return;
 
     setInput("");
+    setActiveMath(null);
     setError(null);
     setLoading(true);
     setStreamingContent("");
@@ -240,11 +242,25 @@ export const ChatDialog: React.FC<Props> = ({
     }
   };
 
+  const checkMath = useCallback((text: string, pos: number) => {
+    setActiveMath(getMathAtCursor(text, pos));
+  }, []);
+
   // Auto-resize textarea
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(e.target.value);
+    const val = e.target.value;
+    setInput(val);
+    checkMath(val, e.target.selectionStart);
     e.target.style.height = "auto";
     e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+  };
+
+  const handleKeyUp = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    checkMath(input, e.currentTarget.selectionStart);
+  };
+
+  const handleClick = (e: React.MouseEvent<HTMLTextAreaElement>) => {
+    checkMath(input, e.currentTarget.selectionStart);
   };
 
   const canSend = (input.trim().length > 0 || streamingContent) && !loading;
@@ -418,42 +434,66 @@ export const ChatDialog: React.FC<Props> = ({
           padding: "10px 14px 14px",
           borderTop: "1px solid rgba(255,255,255,0.07)",
           flexShrink: 0,
+          position: 'relative'
         }}
       >
-        {/* Live Preview */}
-        {input.trim() && (
+        {/* Math Overlay Preview */}
+        {activeMath && (
           <div style={{
-            marginBottom: 12,
-            padding: '10px 12px',
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.05)',
-            borderRadius: 10,
-            maxHeight: 120,
-            overflowY: 'auto'
+            position: 'absolute',
+            bottom: 'calc(100% + 12px)',
+            left: 14,
+            right: 14,
+            padding: '12px 16px',
+            background: 'rgba(15,15,25,0.95)',
+            border: '1px solid rgba(99,102,241,0.3)',
+            borderRadius: 12,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+            zIndex: 1100,
+            backdropFilter: 'blur(12px)',
+            animation: 'dialog-in 0.15s ease-out'
           }}>
             <div style={{
               fontFamily: "'Syne', sans-serif",
               fontSize: 9,
-              color: 'rgba(255,255,255,0.25)',
+              color: 'rgba(99,102,241,0.8)',
               textTransform: 'uppercase',
               letterSpacing: '0.08em',
-              marginBottom: 6
+              marginBottom: 8,
+              display: 'flex',
+              justifyContent: 'space-between'
             }}>
-              Live Preview
+              <span>LaTeX Preview</span>
+              <span style={{ opacity: 0.5 }}>Rendering...</span>
             </div>
             <div style={{
-              color: '#bbb',
-              fontSize: 13,
-              lineHeight: 1.5
+              color: '#fff',
+              fontSize: 15,
+              lineHeight: 1.5,
+              display: 'flex',
+              justifyContent: 'center',
+              minHeight: 24
             }}>
               <ReactMarkdown 
                 remarkPlugins={[remarkGfm, remarkMath]} 
                 rehypePlugins={[rehypeKatex]}
                 components={MarkdownComponents}
               >
-                {input}
+                {activeMath}
               </ReactMarkdown>
             </div>
+            {/* Arrow */}
+            <div style={{
+              position: 'absolute',
+              bottom: -6,
+              left: 30,
+              width: 12,
+              height: 12,
+              background: 'rgba(15,15,25,0.95)',
+              borderRight: '1px solid rgba(99,102,241,0.3)',
+              borderBottom: '1px solid rgba(99,102,241,0.3)',
+              transform: 'rotate(45deg)'
+            }} />
           </div>
         )}
 
@@ -462,7 +502,8 @@ export const ChatDialog: React.FC<Props> = ({
             ref={textareaRef}
             value={input}
             onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
+            onKeyUp={handleKeyUp}
+            onClick={handleClick}
             placeholder="Continue this thread…"
             rows={1}
             style={{
@@ -485,6 +526,8 @@ export const ChatDialog: React.FC<Props> = ({
             }}
             onBlur={(e) => {
               e.target.style.borderColor = "rgba(255,255,255,0.1)";
+              // Small delay to allow clicking preview if needed, or just close
+              setTimeout(() => setActiveMath(null), 150);
             }}
           />
 

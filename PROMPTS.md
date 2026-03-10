@@ -1,25 +1,22 @@
 **Your Optimized Prompt:**
-Implement LaTeX support using KaTeX for both message history and live input.
+Refactor the LaTeX live preview into a floating overlay in `src/components/ChatDialog/ChatDialog.tsx`.
 
-1.  **Dependencies**:
-    - `remark-math`: Markdown plugin for math delimiters.
-    - `rehype-katex`: Rehype plugin to render math using KaTeX.
-    - `katex`: The core rendering library and CSS.
+1.  **Selection Detection**:
+    - Add state to track the active LaTeX segment at the cursor: `activeMath: string | null`.
+    - In `handleInputChange` and a new `handleKeyUp` (for arrow keys), check if `selectionStart` is within a `$ $` or `$$ $$` block.
+    - If it is, extract that specific math string and set `activeMath`.
 
-2.  **Rendering History (`src/components/ChatDialog/MessageList.tsx`)**:
-    - Import `remarkMath`, `rehypeKatex`, and `katex/dist/katex.min.css`.
-    - Configure `ReactMarkdown` to use these plugins.
-    - Ensure both completed messages and the `streamingContent` are processed.
+2.  **Positioning**:
+    - Implement a way to find the cursor's pixel position within the textarea. *Hint: Using a hidden mirror div or a lightweight utility is standard for this.*
+    - Alternatively, position the overlay at a fixed offset above the textarea if precise cursor tracking is too complex for this turn, but ensure it's an `absolute` overlay that doesn't push layout.
 
-3.  **Live Preview (`src/components/ChatDialog/ChatDialog.tsx`)**:
-    - Introduce a `Live Preview` section just above the input textarea.
-    - This section should render the current `input` state using the same `ReactMarkdown` + KaTeX configuration used in `MessageList`.
-    - Only display the preview when `input` is not empty.
-    - Apply styling to differentiate the preview area (e.g., subtle background, italic hint).
+3.  **UI/UX**:
+    - The `Live Preview` should be an absolutely positioned div.
+    - Give it a higher `zIndex`, a subtle shadow, and a dark, blurred background (`backdropFilter`).
+    - Use an "arrow" or "speech bubble" style to point down towards the input.
 
 **Key Improvements:**
-• Enables complex mathematical notation in conversations.
-• Provides immediate visual feedback for LaTeX as the user types, reducing errors.
-• Maintains visual consistency across user drafts and assistant replies.
+• Non-disruptive UI: The dialog size doesn't jump as the user types math.
+• Focused feedback: Shows exactly what the user is currently editing.
 
-**Techniques Applied:** Plugin-based Markdown expansion, real-time preview patterns.
+**Techniques Applied:** Floating UI patterns, context-aware selection extraction.

@@ -1,20 +1,17 @@
-# TODO: Implement LaTeX Support
+# TODO: LaTeX Overlay Preview
 
-## Phase 1: Implementation - Message History
-- [ ] Update `src/components/ChatDialog/MessageList.tsx`:
-    - [ ] Import `remarkMath` and `rehypeKatex`.
-    - [ ] Import `katex/dist/katex.min.css`.
-    - [ ] Update `ReactMarkdown` props to include `remarkMath` and `rehypeKatex`.
+## Phase 1: Math Detection Logic
+- [ ] Implement `getMathAtCursor(text, position)` helper function.
+- [ ] Add `activeMath` state to `ChatDialog`.
+- [ ] Update `handleInputChange` and `onKeyUp` to set `activeMath`.
 
-## Phase 2: Implementation - Live Preview
-- [ ] Update `src/components/ChatDialog/ChatDialog.tsx`:
-    - [ ] Import `ReactMarkdown`, `remarkMath`, `rehypeKatex`.
-    - [ ] Add a `Preview` area inside the dialog, just above the input zone.
-    - [ ] Render `input` in this area using the Markdown/KaTeX setup.
-    - [ ] Style the preview area for clarity.
+## Phase 2: Overlay UI
+- [ ] Create an absolutely positioned `MathPreviewOverlay` component (or inline div).
+- [ ] Style it as a floating bubble above the textarea.
+- [ ] Remove the old static `Live Preview` block.
 
 ## Phase 3: Validation
-- [ ] Type `$x^2$` in the input. Verify it renders as a mathematical formula in the preview.
-- [ ] Send a message with LaTeX. Verify the assistant response (if it contains LaTeX) renders correctly.
-- [ ] Verify both inline `$math$` and block `$$math$$` notation work.
+- [ ] Verify the overlay appears only when the cursor is inside `$ $`.
+- [ ] Verify the overlay content updates as you type.
+- [ ] Verify the dialog layout remains stable.
 - [ ] Run `npx tsc`.
