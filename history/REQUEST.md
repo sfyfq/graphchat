@@ -132,3 +132,9 @@ feature: Implement Markdown support for assistant replies.
 - Apply custom styling to ensure Markdown elements fit well within chat bubbles.
 - Update `MessageList.tsx` to handle both finished messages and streaming content.
 --- Tue Mar 10 16:00:00 PDT 2026 ---
+feature: add Latex support to both user message (auto render as typing) and assistant message.
+- Use KaTeX for high-performance LaTeX rendering.
+- Integrate `remark-math` and `rehype-katex` with `react-markdown`.
+- Implement a "Live Preview" in the ChatDialog that renders the user's input as they type.
+- Ensure assistant replies (including streaming) render LaTeX correctly.
+--- Wed Mar 11 10:00:00 PDT 2026 ---
