@@ -88,7 +88,9 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
       currId = currentSession.commits[currId].parentId
     }
 
-    const branches = commits.filter(c => c.branchLabel).length
+    // A branch is defined as a leaf node (a node with no children)
+    const sourceIds = new Set(currentSession.edges.map(e => e.source))
+    const branches = commits.filter(c => !sourceIds.has(c.id)).length
 
     return [
       { label: 'Turns',    value: turns },
