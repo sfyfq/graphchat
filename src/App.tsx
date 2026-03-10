@@ -24,70 +24,44 @@ export default function App() {
   const [isHoveringCanvas, setIsHoveringCanvas] = useState(false)
   const [showSearch,  setShowSearch]  = useState(false)
 
-  // Which squash groups the user has manually expanded
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
-
   // Separate states for hover and persistent expansion
   const [hoveredSquashGroup,  setHoveredSquashGroup]  = useState<SquashGroup | null>(null)
   const [expandedSquashGroup, setExpandedSquashGroup] = useState<SquashGroup | null>(null)
 
-  // Pinned ids: HEAD + any open dialogs — these are never collapsed
+  // Pinned ids: HEAD + any open dialogs — these nodes are never part of a squash pill
   const openDialogIds = useMemo(() => new Set(Object.keys(dialogs)), [dialogs])
   const pinned = useMemo<Set<string>>(() => {
     const s = new Set(openDialogIds)
     s.add(HEAD)
-    // If we have an active squash group (expanded or being hovered),
-    // and we're interacting with it via a dialog, pin all its members
-    // to prevent the generic squash logic from carving it up.
-    if (expandedSquashGroup && openDialogIds.size > 0) {
-      expandedSquashGroup.commits.forEach(c => s.add(c.id))
-    }
     return s
-  }, [HEAD, openDialogIds, expandedSquashGroup?.id])
+  }, [HEAD, openDialogIds])
 
-  // Compute squash groups
+  // Compute squash groups based on current pins
   const allGroups = useMemo(
     () => computeSquashGroups(commits, edges, pinned),
     [commits, edges, pinned],
   )
 
-  // Sync expandedGroups: if a group ID is no longer in allGroups, remove it
-  useEffect(() => {
-    // Only sync if no dialogs are open, to keep the UI state stable during interaction
-    if (openDialogIds.size > 0) return
+  // Anchor set: the specific commit IDs currently being explored in the sidebar
+  const expandedNodeIds = useMemo(() => {
+    if (!expandedSquashGroup) return new Set<string>()
+    return new Set(expandedSquashGroup.commits.map(c => c.id))
+  }, [expandedSquashGroup])
 
-    setExpandedGroups(prev => {
-      let changed = false
-      const next = new Set(prev)
-      prev.forEach(id => {
-        if (!allGroups.has(id)) {
-          next.delete(id)
-          changed = true
-        }
-      })
-      if (changed) {
-        // Also clear persistent object if its ID was evicted
-        if (expandedSquashGroup && !allGroups.has(expandedSquashGroup.id)) {
-          setExpandedSquashGroup(null)
-        }
-      }
-      return changed ? next : prev
-    })
-  }, [allGroups, openDialogIds.size, expandedSquashGroup])
+  // Cleanup: if the expanded group's origin node is gone, close the sidebar
+  useEffect(() => {
+    if (expandedSquashGroup && !commits[expandedSquashGroup.id]) {
+      setExpandedSquashGroup(null)
+    }
+  }, [commits, expandedSquashGroup])
 
   // Toggle expand/collapse a group
   const toggleGroup = useCallback((groupId: string) => {
-    const isExpanding = !expandedGroups.has(groupId)
+    const currentExpandedId = expandedSquashGroup?.id
+    const isExpanding = groupId !== currentExpandedId
     
     // Clear ephemeral hover state immediately on click
     setHoveredSquashGroup(null)
-
-    setExpandedGroups(prev => {
-      // If expanding a new one, replace the current one.
-      // If collapsing the current one, empty the set.
-      if (isExpanding) return new Set([groupId])
-      return new Set()
-    })
 
     if (isExpanding) {
       const group = allGroups.get(groupId)
@@ -108,7 +82,7 @@ export default function App() {
     } else {
       setExpandedSquashGroup(null)
     }
-  }, [allGroups, expandedGroups])
+  }, [allGroups, expandedSquashGroup])
 
   // Adjacency for finding children
   const childrenMap = useMemo(() => {
@@ -188,9 +162,9 @@ export default function App() {
     setHoveredSquashGroup(group)
   }, [])
 
-  const handleCollapseGroup = useCallback((groupId: string) => {
-    toggleGroup(groupId)
-  }, [toggleGroup])
+  const handleCollapseGroup = useCallback(() => {
+    setExpandedSquashGroup(null)
+  }, [])
 
   const handleSidebarTurnHover = useCallback((id: string | null) => {
     setHoveredId(id)
@@ -222,6 +196,17 @@ export default function App() {
   const hoveredCommit = hoveredId ? commits[hoveredId] : null
   const showTooltip   = hoveredCommit && !dialogs[hoveredId!] && isHoveringCanvas
 
+  // Expand Groups: A group is forced open if any of its members are anchored by the sidebar
+  const expandedGroupIds = useMemo(() => {
+    const s = new Set<string>()
+    allGroups.forEach(g => {
+      if (g.commits.some(c => expandedNodeIds.has(c.id))) {
+        s.add(g.id)
+      }
+    })
+    return s
+  }, [allGroups, expandedNodeIds])
+
   return (
     <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', background: '#080810' }}>
 
@@ -231,7 +216,7 @@ export default function App() {
         onNodeHover={handleNodeHover}
         onSquashHover={handleSquashHover}
         openDialogIds={openDialogIds}
-        expandedGroups={expandedGroups}
+        expandedGroups={expandedGroupIds}
         toggleGroup={toggleGroup}
         hoveredId={hoveredId}
       />
