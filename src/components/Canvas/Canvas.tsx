@@ -261,7 +261,7 @@ export const Canvas: React.FC<Props> = ({
                 isExpandedRep={expandedGroups.has(commit.id)}
                 onCollapse={toggleGroup}
                 zoom={zoom}
-                onHover={(id) => onNodeHover(id, 0, 0)}
+                onHover={onNodeHover}
                 onClick={handleNodeClick}
               />
             )

@@ -11,7 +11,7 @@ interface Props {
   isHEAD:   boolean
   isOpen:   boolean
   isExpandedRep?: boolean
-  onHover:  (id: string | null) => void
+  onHover:  (id: string | null, screenX: number, screenY: number) => void
   onClick:  (commit: Commit, screenX: number, screenY: number) => void
   onCollapse?: (id: string) => void
   zoom:     number
@@ -36,6 +36,14 @@ export const CommitNode: React.FC<Props> = ({
     onClick(commit, sx, sy)
   }
 
+  const handleMouseEnter = (e: React.MouseEvent<SVGGElement>) => {
+    const rect = (e.currentTarget.ownerSVGElement as SVGSVGElement)
+      .getBoundingClientRect()
+    const sx = x * zoom + rect.left
+    const sy = y * zoom + rect.top
+    onHover(commit.id, sx, sy)
+  }
+
   const handleCollapse = (e: React.MouseEvent<SVGGElement>) => {
     e.stopPropagation()
     onCollapse?.(commit.id)
@@ -46,8 +54,8 @@ export const CommitNode: React.FC<Props> = ({
       transform={`translate(${x},${y})`}
       style={{ cursor: 'pointer' }}
       onClick={handleClick}
-      onMouseEnter={() => onHover(commit.id)}
-      onMouseLeave={() => onHover(null)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={() => onHover(null, 0, 0)}
     >
       {/* HEAD pulse ring */}
       {isHEAD && (
