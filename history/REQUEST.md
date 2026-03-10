@@ -27,3 +27,6 @@ feature: refine the squash logic.
 bug: when the canvas consists of root-user-assistant-user-assistant-user-assistant, i expect the layout to become root-squashed-assistant, but I get root-user-assistant-squashed-assistant.
 --- Tue Mar 10 09:25:00 PDT 2026 ---
 Analysis: The `computeSquashGroups` function in `src/lib/squash.ts` explicitly excludes nodes whose parent is 'root' from being candidates for squashing. This prevents the first user-assistant pair from being included in a squash group even if they meet all other criteria.
+bugfix: when using the sidebar to explore the nodes, a floating overlay next to the node shall not be shown. The floating overlay shall only be when the user is actually hovering on the node.
+--- Tue Mar 10 10:15:00 PDT 2026 ---
+Analysis: `App.tsx` uses a shared `hoveredId` state for both canvas node hovers and sidebar turn hovers. The `showTooltip` logic relies only on `hoveredId`, causing the floating `Tooltip` to appear even when the hover originates from the sidebar. We need to distinguish the source of the hover.
