@@ -175,7 +175,10 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen }) => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      if (window.confirm('Delete this chat?')) deleteSession(s.id)
+                      if (window.confirm('Delete this chat?')) {
+                        deleteSession(s.id)
+                        setShowSessions(false)
+                      }
                     }}
                     style={{
                       background: 'none', border: 'none', color: 'rgba(255,255,255,0.2)',
