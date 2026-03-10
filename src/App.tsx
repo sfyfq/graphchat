@@ -60,13 +60,32 @@ export default function App() {
 
   // Toggle expand/collapse a group
   const toggleGroup = useCallback((groupId: string) => {
+    const isExpanding = !expandedGroups.has(groupId)
+    
     setExpandedGroups(prev => {
       const next = new Set(prev)
       if (next.has(groupId)) next.delete(groupId)
       else next.add(groupId)
       return next
     })
-  }, [])
+
+    if (isExpanding) {
+      const group = allGroups.get(groupId)
+      if (group) {
+        // Auto-center on group + parent + child
+        const ids = [
+          ...group.commits.map(c => c.id),
+          group.parentId,
+          group.childId
+        ].filter(Boolean) as string[]
+        
+        // Wait for layout to update before fitting
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('gitchat:fit-nodes', { detail: ids }))
+        }, 50)
+      }
+    }
+  }, [allGroups, expandedGroups])
 
   // Adjacency for finding children
   const childrenMap = useMemo(() => {
@@ -92,7 +111,7 @@ export default function App() {
   }, [])
 
   // ── Node click → spawn / focus dialog ────────────────────────────────────
-  const handleNodeClick = useCallback((commit: Commit, screenX: number, screenY: number) => {
+  const handleNodeClick = useCallback((commit: Commit, screenX?: number, screenY?: number) => {
     // If clicking a user node, try to set HEAD to its assistant child instead
     let targetHEAD = commit.id
     if (commit.role === 'user') {
@@ -110,8 +129,10 @@ export default function App() {
       }
 
       // Spawn: 40px right, 200px above click point, clamped to viewport
-      const x = clamp(screenX + 40,  10, window.innerWidth  - 450)
-      const y = clamp(screenY - 200, 10, window.innerHeight - 580)
+      const baseSX = screenX ?? window.innerWidth / 2
+      const baseSY = screenY ?? window.innerHeight / 2
+      const x = clamp(baseSX + 40,  10, window.innerWidth  - 450)
+      const y = clamp(baseSY - 200, 10, window.innerHeight - 580)
       return { ...prev, [commit.id]: { x, y } }
     })
   }, [setHEAD, childrenMap, commits])
@@ -157,6 +178,10 @@ export default function App() {
     setActiveSquashGroup(null)
   }, [toggleGroup])
 
+  const handleSidebarTurnClick = useCallback((commit: Commit) => {
+    handleNodeClick(commit)
+  }, [handleNodeClick])
+
   // ── Close dialog ──────────────────────────────────────────────────────────
   const closeDialog = useCallback((commitId: string) => {
     setDialogs(prev => {
@@ -189,6 +214,7 @@ export default function App() {
         openDialogIds={openDialogIds}
         expandedGroups={expandedGroups}
         toggleGroup={toggleGroup}
+        hoveredId={hoveredId}
       />
 
       {/* Toolbar (logo, search btn, zoom controls, legend) */}
@@ -211,6 +237,8 @@ export default function App() {
           screenY={0}
           isExpanded={expandedGroups.has(activeSquashGroup.id)}
           onCollapse={handleCollapseGroup}
+          onTurnHover={setHoveredId}
+          onTurnClick={handleSidebarTurnClick}
         />
       )}
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import type { SquashGroup } from '../../lib/squash'
 import { branchColor, timeAgo, truncate } from '../../lib/utils'
+import type { Commit } from '../../types'
 
 const NODE_R  = 22
 const PILL_W  = 72   // half-width of the pill capsule
@@ -107,10 +108,13 @@ interface TooltipProps {
   screenY:    number
   isExpanded: boolean
   onCollapse: (groupId: string) => void
+  onTurnHover: (id: string | null) => void
+  onTurnClick: (commit: Commit) => void
+  hoveredId?:  string | null
 }
 
 export const SquashTooltip: React.FC<TooltipProps> = ({
-  group, isExpanded, onCollapse,
+  group, isExpanded, onCollapse, onTurnHover, onTurnClick, hoveredId
 }) => {
   return (
     <div style={{
@@ -122,7 +126,7 @@ export const SquashTooltip: React.FC<TooltipProps> = ({
       borderRadius:   12,
       padding:        '12px 14px',
       width:          280,
-      pointerEvents:  isExpanded ? 'auto' : 'none',
+      pointerEvents:  'auto',
       zIndex:         900,
       backdropFilter: 'blur(16px)',
       boxShadow:      '0 8px 32px rgba(0,0,0,0.7)',
@@ -180,41 +184,55 @@ export const SquashTooltip: React.FC<TooltipProps> = ({
 
       {/* Mini timeline */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-        {group.commits.map((c, i) => (
-          <div key={c.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 7 }}>
-            {/* Dot + line */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, paddingTop: 3 }}>
-              <div style={{
-                width:        6,
-                height:       6,
-                borderRadius: '50%',
-                background:   c.role === 'user' ? '#60a5fa' : '#4ade80',
-                flexShrink:   0,
-              }} />
-              {i < group.commits.length - 1 && (
-                <div style={{ width: 1, height: 10, background: 'rgba(255,255,255,0.1)', marginTop: 2 }} />
-              )}
-            </div>
-            <div>
-              <div style={{
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize:   11,
-                color:      '#ccc',
-                lineHeight: 1.4,
-              }}>
-                {truncate(c.summary || c.content, 55)}
+        {group.commits.map((c, i) => {
+          const isTurnHovered = hoveredId === c.id
+          return (
+            <div
+              key={c.id}
+              style={{
+                display: 'flex', alignItems: 'flex-start', gap: 7,
+                cursor: 'pointer', padding: '4px', borderRadius: 6,
+                background: isTurnHovered ? 'rgba(255,255,255,0.05)' : 'transparent',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={() => onTurnHover(c.id)}
+              onMouseLeave={() => onTurnHover(null)}
+              onClick={() => onTurnClick(c)}
+            >
+              {/* Dot + line */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, paddingTop: 3 }}>
+                <div style={{
+                  width:        6,
+                  height:       6,
+                  borderRadius: '50%',
+                  background:   c.role === 'user' ? '#60a5fa' : '#4ade80',
+                  flexShrink:   0,
+                }} />
+                {i < group.commits.length - 1 && (
+                  <div style={{ width: 1, height: 10, background: 'rgba(255,255,255,0.1)', marginTop: 2 }} />
+                )}
               </div>
-              <div style={{
-                fontFamily: "'DM Mono', monospace",
-                fontSize:   9,
-                color:      'rgba(255,255,255,0.25)',
-                marginTop:  1,
-              }}>
-                {timeAgo(c.timestamp)}
+              <div>
+                <div style={{
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontSize:   11,
+                  color:      isTurnHovered ? '#fff' : '#ccc',
+                  lineHeight: 1.4,
+                }}>
+                  {truncate(c.summary || c.content, 55)}
+                </div>
+                <div style={{
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize:   9,
+                  color:      isTurnHovered ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.25)',
+                  marginTop:  1,
+                }}>
+                  {timeAgo(c.timestamp)}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

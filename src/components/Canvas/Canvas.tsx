@@ -21,10 +21,11 @@ interface Props {
   openDialogIds:  Set<string>
   expandedGroups: Set<string>
   toggleGroup:    (groupId: string) => void
+  hoveredId:      string | null
 }
 
 export const Canvas: React.FC<Props> = ({
-  onNodeClick, onNodeHover, onSquashHover, openDialogIds, expandedGroups, toggleGroup
+  onNodeClick, onNodeHover, onSquashHover, openDialogIds, expandedGroups, toggleGroup, hoveredId
 }) => {
   const { commits, edges, HEAD } = useConversationStore()
 
@@ -164,6 +165,39 @@ export const Canvas: React.FC<Props> = ({
     }
     window.addEventListener('gitchat:zoom', handler as EventListener)
     return () => window.removeEventListener('gitchat:zoom', handler as EventListener)
+  }, [layout])
+
+  // Centering event listener
+  useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      const ids = e.detail as string[]
+      const positions = ids.map(id => layout[id]).filter(Boolean)
+      if (positions.length === 0) return
+
+      const xs = positions.map(p => p.x)
+      const ys = positions.map(p => p.y)
+      const minX = Math.min(...xs), maxX = Math.max(...xs)
+      const minY = Math.min(...ys), maxY = Math.max(...ys)
+      
+      const width = maxX - minX + 160 // add padding
+      const height = maxY - minY + 160
+      
+      const newZoom = clamp(
+        Math.min(window.innerWidth / width, window.innerHeight / height) * 0.85,
+        ZOOM_MIN, ZOOM_MAX
+      )
+      
+      const cx = (minX + maxX) / 2
+      const cy = (minY + maxY) / 2
+      
+      setPan({
+        x: window.innerWidth / 2 - cx * newZoom,
+        y: window.innerHeight / 2 - cy * newZoom
+      })
+      setZoom(newZoom)
+    }
+    window.addEventListener('gitchat:fit-nodes', handler as EventListener)
+    return () => window.removeEventListener('gitchat:fit-nodes', handler as EventListener)
   }, [layout])
 
   useEffect(() => {

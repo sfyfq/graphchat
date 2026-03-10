@@ -10,6 +10,7 @@ interface Props {
   y:        number
   isHEAD:   boolean
   isOpen:   boolean
+  isHovered?: boolean
   isExpandedRep?: boolean
   onHover:  (id: string | null, screenX: number, screenY: number) => void
   onClick:  (commit: Commit, screenX: number, screenY: number) => void
@@ -18,7 +19,7 @@ interface Props {
 }
 
 export const CommitNode: React.FC<Props> = ({
-  commit, x, y, isHEAD, isOpen, isExpandedRep, onHover, onClick, onCollapse, zoom,
+  commit, x, y, isHEAD, isOpen, isHovered, isExpandedRep, onHover, onClick, onCollapse, zoom,
 }) => {
   const isRoot      = commit.id === 'root'
   const isUser      = commit.role === 'user'
@@ -88,14 +89,14 @@ export const CommitNode: React.FC<Props> = ({
         </>
       )}
 
-      {/* Open-dialog ring */}
-      {isOpen && !isHEAD && (
+      {/* Open-dialog or Hover highlight ring */}
+      {(isOpen || isHovered) && !isHEAD && (
         <circle
           r={NODE_R + 5}
           fill="none"
-          stroke="rgba(99,102,241,0.3)"
-          strokeWidth={1}
-          strokeDasharray="3 3"
+          stroke={isHovered ? "rgba(255,255,255,0.5)" : "rgba(99,102,241,0.3)"}
+          strokeWidth={isHovered ? 2 : 1}
+          strokeDasharray={isHovered ? "none" : "3 3"}
         />
       )}
 
