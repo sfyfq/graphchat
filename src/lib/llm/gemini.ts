@@ -1,15 +1,22 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { useConfigStore } from '../../store/configStore';
 import type { LLMProvider } from './types';
 import type { ReconstructedConversation } from './utils';
-
-const API_KEY = import.meta.env.VITE_LLM_API_KEY || "";
-const genAI = new GoogleGenerativeAI(API_KEY);
 
 // For testing, we use gemini-3.1-flash-lite-preview
 const MODEL_NAME = "gemini-3.1-flash-lite-preview";
 
+function getGenAI() {
+    const key = useConfigStore.getState().apiKey;
+    if (!key) {
+        throw new Error("MISSING_API_KEY");
+    }
+    return new GoogleGenerativeAI(key);
+}
+
 export class GeminiProvider implements LLMProvider {
     async sendMessage(conv: ReconstructedConversation, newText: string): Promise<string> {
+        const genAI = getGenAI();
         const model = genAI.getGenerativeModel({
             model: MODEL_NAME,
             systemInstruction: conv.systemInstruction
@@ -22,6 +29,7 @@ export class GeminiProvider implements LLMProvider {
     }
 
     async* streamMessage(conv: ReconstructedConversation, newText: string): AsyncGenerator<string, void, unknown> {
+        const genAI = getGenAI();
         const model = genAI.getGenerativeModel({
             model: MODEL_NAME,
             systemInstruction: conv.systemInstruction

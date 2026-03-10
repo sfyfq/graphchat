@@ -11,6 +11,7 @@ import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import { useConversationStore } from "../../store/conversationStore";
+import { useConfigStore } from "../../store/configStore";
 import { llm, reconstructMessages, estimateTokens } from "../../lib/llm";
 import { makeSummary, branchColor, getMathAtCursor } from "../../lib/utils";
 import { MessageList, MarkdownComponents } from "./MessageList";
@@ -35,7 +36,8 @@ export const ChatDialog: React.FC<Props> = ({
   onClose,
   onFocus,
 }) => {
-  const { sessions, currentSessionId, addTurn, setHEAD } = useConversationStore();
+  const { sessions, currentSessionId, addTurn } = useConversationStore();
+  const { apiKey, setApiKey, setShowKeyModal } = useConfigStore();
   const commits = sessions[currentSessionId]?.commits || {};
 
   const [pos, setPos] = useState(initialPosition);
@@ -182,6 +184,11 @@ export const ChatDialog: React.FC<Props> = ({
     const text = input.trim();
     if (!text || loading) return;
 
+    if (!apiKey) {
+      setShowKeyModal(true);
+      return;
+    }
+
     setInput("");
     setActiveMath(null);
     setError(null);
@@ -227,13 +234,27 @@ export const ChatDialog: React.FC<Props> = ({
       setStreamingContent("");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "API error";
-      setError(msg);
+      
+      // Detect API Key issues
+      const isKeyError = msg.includes("MISSING_API_KEY") || 
+                         msg.includes("API_KEY_INVALID") || 
+                         msg.includes("403") || 
+                         msg.includes("401");
+
+      if (isKeyError) {
+        setApiKey(null); // Clear the invalid key
+        setShowKeyModal(true);
+        setError("Invalid or missing API key. Please provide a new one.");
+      } else {
+        setError(msg);
+      }
+      
       // Restore input on failure
       setInput(text);
     } finally {
       setLoading(false);
     }
-  }, [input, loading, commits, addTurn, tipId]);
+  }, [input, loading, commits, addTurn, tipId, apiKey, setShowKeyModal, setApiKey]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {

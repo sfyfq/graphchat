@@ -8,6 +8,7 @@ import { Tooltip }     from './components/Tooltip'
 import { SearchPanel } from './components/Search/SearchPanel'
 import { Toolbar }     from './components/Toolbar/Toolbar'
 import { LibrarySidebar } from './components/Library/LibrarySidebar'
+import { ApiKeyModal } from './components/Modals/ApiKeyModal'
 import { SquashTooltip } from './components/Canvas/SquashNode'
 import { useConversationStore } from './store/conversationStore'
 import { computeLayout }        from './lib/layout'
@@ -244,6 +245,8 @@ export default function App() {
         isOpen={showLibrary} 
         onClose={() => setShowLibrary(false)} 
       />
+
+      <ApiKeyModal />
 
       {/* Hover tooltip */}
       {showTooltip && (
