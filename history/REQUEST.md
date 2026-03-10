@@ -93,3 +93,57 @@ improvement: auto-open root dialog and position root node in bottom 1/3.
 - Adjust the initial canvas layout so that the root node is centered horizontally but positioned in the bottom 1/3 of the screen.
 - This ensures both the centered dialog and the root node are visible and clear.
 --- Tue Mar 10 13:45:00 PDT 2026 ---
+feature: multi-session support and IndexedDB persistence.
+- Refactor store to manage multiple sessions (id -> SessionObject).
+- Use IndexedDB (via idb-keyval) for persistent storage to support future attachments.
+- Add UI for session listing, switching, creating, and deleting in the Toolbar.
+- Replace commit count with Session Manager.
+- Ensure "Draft" logic and local UI state are cleared upon session switch.
+--- Tue Mar 10 14:00:00 PDT 2026 ---
+adjustment: ensure initial dialog position and automatic growth respect the toolbar area.
+- The top edge of the dialog should not go above the bottom of the session dropdown menu (approx 80px) during initial spawn or automatic vertical growth.
+- Manual dragging should still allow the dialog to be moved anywhere within the viewport.
+--- Tue Mar 10 14:15:00 PDT 2026 ---
+Analysis: Currently, all clamping (initial, auto-growth, and dragging) uses a 10px top margin. We need to bifurcate this logic: use a larger margin (e.g., 80px) for computer-controlled positioning and keep the tighter margin (10px) for user-controlled dragging.
+improvement: remove auto-centering/zoom-in for squash groups.
+- Clicking a squash pill should open the sidebar but not trigger an auto-fit/zoom.
+- Clicking a turn in the sidebar should open the dialog but not trigger an auto-fit/zoom.
+- This prevents disorienting layout shifts as the graph re-squashes during interaction.
+--- Tue Mar 10 14:30:00 PDT 2026 ---
+bugfix: when a session is deleted or switched, the new session's root node positioning is incorrect.
+--- Tue Mar 10 15:00:00 PDT 2026 ---
+Analysis: `Canvas.tsx` uses an `initialised` ref to run the "Auto-fit on first render" logic exactly once. However, this ref persists even when the underlying session changes (e.g., via deletion or switching). Consequently, the auto-centering logic for the new session's `root` node never runs.
+Plan: Reset the `initialised` ref whenever the current session ID changes. This ensures that every time a new graph is loaded, the `root` node is correctly framed in the lower third of the viewport.
+bugfix: deleting a session should close the session dropdown menu.
+--- Tue Mar 10 15:15:00 PDT 2026 ---
+Analysis: The delete button in the session list doesn't trigger a state update to close the dropdown. When the active session is deleted, the store automatically switches to another session (or creates a new one), but the UI stays in its "menu open" state.
+Plan: Add `setShowSessions(false)` to the delete button's click handler in `Toolbar.tsx`.
+feature: Structured LLM API support with multi-vendor capability.
+- Create a dedicated `src/lib/llm/` folder.
+- Implement Gemini API support as the first provider.
+- Use `gemini-3.1-flash-lite-preview` model for testing.
+- Define a generic `LLMProvider` interface to ensure future-proof enhancements.
+- Support both standard and streaming messages.
+--- Tue Mar 10 15:30:00 PDT 2026 ---
+Analysis: The current single-file integration in `src/lib/llm.ts` is insufficient for a multi-vendor future. We need a provider-based architecture where each vendor (Gemini, Anthropic, OpenAI) implements a common interface. This allows the application to remain agnostic of the specific LLM being used.
+feature: Implement Markdown support for assistant replies.
+- Support line breaks, bold, italic, and other Markdown features.
+- Use `react-markdown` for rendering.
+- Apply custom styling to ensure Markdown elements fit well within chat bubbles.
+- Update `MessageList.tsx` to handle both finished messages and streaming content.
+--- Tue Mar 10 16:00:00 PDT 2026 ---
+feature: add Latex support to both user message (auto render as typing) and assistant message.
+- Use KaTeX for high-performance LaTeX rendering.
+- Integrate `remark-math` and `rehype-katex` with `react-markdown`.
+- Implement a "Live Preview" in the ChatDialog that renders the user's input as they type.
+- Ensure assistant replies (including streaming) render LaTeX correctly.
+--- Wed Mar 11 10:00:00 PDT 2026 ---
+improvement: Make LaTeX live preview a floating overlay instead of a layout-changing box.
+- The preview should only appear when the cursor is inside a LaTeX delimiter pair ($...$ or $$...$$).
+- It should be positioned as a floating tooltip above the cursor/active input area.
+- It should not change the overall dialog layout.
+--- Wed Mar 11 10:15:00 PDT 2026 ---
+Analysis: Currently, the preview is a static block above the textarea. To make it a floating overlay, we need:
+1. Logic to detect if the cursor is within math delimiters.
+2. A way to calculate the (x, y) coordinates of the cursor relative to the textarea or container.
+3. A floating div that uses these coordinates for absolute positioning.

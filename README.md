@@ -22,7 +22,7 @@ GraphChat is a git-architected LLM chatbot featuring an infinite canvas UI. By t
 ### Prerequisites
 
 - Node.js (v18+)
-- An Anthropic API Key
+- An LLM API Key (e.g., Gemini, Anthropic, OpenAI)
 
 ### Setup
 
@@ -34,7 +34,7 @@ GraphChat is a git-architected LLM chatbot featuring an infinite canvas UI. By t
 2. **Configure Environment**
    Create a `.env.local` file in the root directory:
    ```bash
-   VITE_ANTHROPIC_API_KEY=your_sk_ant_key_here
+   VITE_LLM_API_KEY=your_api_key_here
    ```
 
 3. **Start Development Server**
@@ -61,7 +61,7 @@ The output will be located in the `dist/` directory, which can be hosted on any 
 
 | Variable | Description |
 |----------|-------------|
-| `VITE_ANTHROPIC_API_KEY` | Your Anthropic API key |
+| `VITE_LLM_API_KEY` | Your LLM API key |
 
 > [!WARNING]
 > **Security Note**: This prototype executes API calls directly from the browser. In a production environment, you should proxy these requests through a backend to keep your API keys secure.

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useConversationStore } from '../../store/conversationStore'
 
 interface Props {
@@ -22,14 +22,15 @@ const BTN: React.CSSProperties = {
 
 const IconBtn: React.FC<{
   label: string
-  onClick: () => void
+  onClick: (e: React.MouseEvent) => void
   title?: string
-}> = ({ label, onClick, title }) => (
+  style?: React.CSSProperties
+}> = ({ label, onClick, title, style }) => (
   <button
     title={title}
     onClick={onClick}
     className="no-pan"
-    style={{ ...BTN, width: 36, height: 36, fontSize: 16 }}
+    style={{ ...BTN, width: 36, height: 36, fontSize: 16, ...style }}
     onMouseEnter={e => {
       const el = e.currentTarget
       el.style.borderColor = 'rgba(99,102,241,0.5)'
@@ -46,8 +47,26 @@ const IconBtn: React.FC<{
 )
 
 export const Toolbar: React.FC<Props> = ({ onSearchOpen }) => {
-  const { commits } = useConversationStore()
-  const commitCount = Object.keys(commits).length
+  const { 
+    sessions, currentSessionId, 
+    createSession, switchSession, deleteSession 
+  } = useConversationStore()
+  
+  const [showSessions, setShowSessions] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  const currentSession = sessions[currentSessionId]
+  const sessionList = Object.values(sessions).sort((a, b) => b.lastModified - a.lastModified)
+
+  useEffect(() => {
+    const clickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowSessions(false)
+      }
+    }
+    document.addEventListener('mousedown', clickOutside)
+    return () => document.removeEventListener('mousedown', clickOutside)
+  }, [])
 
   const zoom = (action: string) => {
     window.dispatchEvent(new CustomEvent('graphchat:zoom', { detail: action }))
@@ -55,7 +74,7 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen }) => {
 
   return (
     <>
-      {/* ── Top-left: logo ── */}
+      {/* ── Top-left: logo & session manager ── */}
       <div
         className="no-pan"
         style={{
@@ -64,14 +83,14 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen }) => {
           left:           20,
           display:        'flex',
           alignItems:     'center',
-          gap:            12,
+          gap:            8,
           zIndex:         500,
         }}
       >
+        {/* Logo */}
         <div style={{
           ...BTN,
           padding:    '9px 16px',
-          gap:        10,
           cursor:     'default',
           height:     38,
         }}>
@@ -84,17 +103,105 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen }) => {
           }}>
             graph<span style={{ color: '#6366f1' }}>chat</span>
           </span>
-
-          <div style={{ width: 1, height: 14, background: 'rgba(255,255,255,0.1)' }} />
-
-          <span style={{
-            fontFamily: "'DM Mono', monospace",
-            fontSize:   10,
-            color:      'rgba(255,255,255,0.3)',
-          }}>
-            {commitCount} {commitCount === 1 ? 'commit' : 'commits'}
-          </span>
         </div>
+
+        {/* Session Switcher */}
+        <div style={{ position: 'relative' }} ref={menuRef}>
+          <button
+            onClick={() => setShowSessions(!showSessions)}
+            style={{
+              ...BTN,
+              padding: '0 12px',
+              height: 38,
+              minWidth: 140,
+              justifyContent: 'space-between',
+              gap: 10,
+              borderColor: showSessions ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.1)',
+              color: showSessions ? '#fff' : 'rgba(255,255,255,0.55)',
+            }}
+          >
+            <span style={{ 
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 180 
+            }}>
+              {currentSession?.name || 'Loading...'}
+            </span>
+            <span style={{ fontSize: 10, opacity: 0.5 }}>{showSessions ? '▲' : '▼'}</span>
+          </button>
+
+          {showSessions && (
+            <div style={{
+              position: 'absolute',
+              top: 'calc(100% + 8px)',
+              left: 0,
+              width: 260,
+              background: 'rgba(11,11,17,0.98)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 12,
+              boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
+              padding: '6px',
+              backdropFilter: 'blur(20px)',
+              maxHeight: 400,
+              overflowY: 'auto',
+            }}>
+              {sessionList.map(s => (
+                <div 
+                  key={s.id}
+                  onClick={() => { switchSession(s.id); setShowSessions(false) }}
+                  style={{
+                    padding: '10px 12px',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    background: s.id === currentSessionId ? 'rgba(99,102,241,0.15)' : 'transparent',
+                    color: s.id === currentSessionId ? '#fff' : 'rgba(255,255,255,0.6)',
+                    transition: 'all 0.1s',
+                    marginBottom: 2,
+                  }}
+                  onMouseEnter={e => {
+                    if (s.id !== currentSessionId) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
+                  }}
+                  onMouseLeave={e => {
+                    if (s.id !== currentSessionId) e.currentTarget.style.background = 'transparent'
+                  }}
+                >
+                  <span style={{ 
+                    fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginRight: 10 
+                  }}>
+                    {s.name}
+                  </span>
+                  
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (window.confirm('Delete this chat?')) {
+                        deleteSession(s.id)
+                        setShowSessions(false)
+                      }
+                    }}
+                    style={{
+                      background: 'none', border: 'none', color: 'rgba(255,255,255,0.2)',
+                      cursor: 'pointer', fontSize: 16, padding: '0 4px'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.2)'}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* New Chat */}
+        <IconBtn 
+          label="+" 
+          title="New Chat" 
+          onClick={() => { createSession(); setShowSessions(false) }} 
+          style={{ height: 38, width: 38 }}
+        />
       </div>
 
       {/* ── Top-right: controls ── */}

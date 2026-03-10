@@ -1,11 +1,37 @@
 import React, { useEffect, useRef } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import remarkMath from 'remark-math'
+import rehypeKatex from 'rehype-katex'
 import type { Commit } from '../../types'
 import { timeAgo } from '../../lib/utils'
+
+import 'katex/dist/katex.min.css'
 
 interface Props {
   messages:         Commit[]
   loading:          boolean
   streamingContent?: string
+}
+
+export const MarkdownComponents: any = {
+  p: ({ children }: any) => <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{children}</p>,
+  ul: ({ children }: any) => <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>{children}</ul>,
+  ol: ({ children }: any) => <ol style={{ margin: '8px 0', paddingLeft: '20px' }}>{children}</ol>,
+  li: ({ children }: any) => <li style={{ marginBottom: '4px' }}>{children}</li>,
+  code: ({ children, inline }: any) => (
+    <code style={{
+      background: 'rgba(255,255,255,0.1)',
+      padding: inline ? '2px 4px' : '8px',
+      borderRadius: 4,
+      fontSize: '0.9em',
+      fontFamily: "'DM Mono', monospace",
+      display: inline ? 'inline' : 'block',
+      overflowX: 'auto',
+    }}>
+      {children}
+    </code>
+  ),
 }
 
 export const MessageList: React.FC<Props> = ({ messages, loading, streamingContent }) => {
@@ -59,7 +85,13 @@ export const MessageList: React.FC<Props> = ({ messages, loading, streamingConte
             fontSize:   13.5,
             lineHeight: 1.65,
           }}>
-            {m.content}
+            <ReactMarkdown 
+              remarkPlugins={[remarkGfm, remarkMath]} 
+              rehypePlugins={[rehypeKatex]}
+              components={MarkdownComponents}
+            >
+              {m.content}
+            </ReactMarkdown>
             <div style={{
               fontSize:   10,
               color:      'rgba(255,255,255,0.3)',
@@ -87,7 +119,13 @@ export const MessageList: React.FC<Props> = ({ messages, loading, streamingConte
             fontSize:     13.5,
             lineHeight:   1.65,
           }}>
-            {streamingContent}
+            <ReactMarkdown 
+              remarkPlugins={[remarkGfm, remarkMath]} 
+              rehypePlugins={[rehypeKatex]}
+              components={MarkdownComponents}
+            >
+              {streamingContent}
+            </ReactMarkdown>
             <span style={{
               display:    'inline-block',
               width:      8,

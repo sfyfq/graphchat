@@ -1,7 +1,7 @@
 import React, {
   useRef, useState, useCallback, useEffect, useMemo,
 } from 'react'
-import { useConversationStore } from '../../store/conversationStore'
+import { useConversationStore, useCurrentSession } from '../../store/conversationStore'
 import { computeLayout }        from '../../lib/layout'
 import { computeSquashGroups, hiddenIds } from '../../lib/squash'
 import type { SquashGroup }     from '../../lib/squash'
@@ -27,7 +27,8 @@ interface Props {
 export const Canvas: React.FC<Props> = ({
   onNodeClick, onNodeHover, onSquashHover, openDialogIds, expandedGroups, toggleGroup, hoveredId
 }) => {
-  const { commits, edges, HEAD } = useConversationStore()
+  const currentSession = useCurrentSession()
+  const { commits, edges, HEAD } = currentSession || { commits: {}, edges: [], HEAD: 'root' }
 
   const [pan,  setPan]  = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
@@ -36,6 +37,11 @@ export const Canvas: React.FC<Props> = ({
   const lastMouse   = useRef({ x: 0, y: 0 })
   const canvasRef   = useRef<HTMLDivElement>(null)
   const initialised = useRef(false)
+
+  // Reset initialised flag when session changes to trigger auto-fit for the new graph
+  useEffect(() => {
+    initialised.current = false
+  }, [currentSession?.id])
 
   // Pinned ids: HEAD + any open dialogs — these are never collapsed
   const pinned = useMemo<Set<string>>(() => {
@@ -293,16 +299,15 @@ export const Canvas: React.FC<Props> = ({
             return (
               <CommitNode
                 key={commit.id}
-                commit={commit}
+                commit={commit as Commit}
                 x={pos.x}
                 y={pos.y}
                 isHEAD={commit.id === HEAD}
                 isOpen={openDialogIds.has(commit.id)}
-                isExpandedRep={expandedGroups.has(commit.id)}
-                onCollapse={toggleGroup}
-                zoom={zoom}
+                isExpandedRep={false}
                 onHover={onNodeHover}
                 onClick={handleNodeClick}
+                zoom={zoom}
               />
             )
           })}

@@ -15,20 +15,16 @@ import { branchColor, clamp }   from './lib/utils'
 import type { Commit, DialogState } from './types'
 
 export default function App() {
-  const { commits, edges, HEAD, setHEAD } = useConversationStore()
+  const { sessions, currentSessionId, setHEAD } = useConversationStore()
+  const currentSession = sessions[currentSessionId]
+  
+  // Fallback to empty defaults to prevent "undefined" errors during initial load/persist sync
+  const commits = currentSession?.commits || {}
+  const edges   = currentSession?.edges || []
+  const HEAD    = currentSession?.HEAD || 'root'
 
   // Dialogs: map from commitId → { position, initialInput }
-  const [dialogs,     setDialogs]     = useState<Record<string, { x: number; y: number; initialInput?: string }>>(() => {
-    const width = 860
-    const height = 400
-    return {
-      root: {
-        x: (window.innerWidth - width) / 2,
-        y: (window.innerHeight - height) / 2,
-        initialInput: ""
-      }
-    }
-  })
+  const [dialogs,     setDialogs]     = useState<Record<string, { x: number; y: number; initialInput?: string }>>({})
   const [hoveredId,   setHoveredId]   = useState<string | null>(null)
   const [hoverPos,    setHoverPos]    = useState({ x: 0, y: 0 })
   const [isHoveringCanvas, setIsHoveringCanvas] = useState(false)
@@ -37,6 +33,31 @@ export default function App() {
   // Separate states for hover and persistent expansion
   const [hoveredSquashGroup,  setHoveredSquashGroup]  = useState<SquashGroup | null>(null)
   const [expandedSquashGroup, setExpandedSquashGroup] = useState<SquashGroup | null>(null)
+
+  // ── Session Switch Logic ──────────────────────────────────────────────────
+  // When the session changes, clear transient UI states
+  useEffect(() => {
+    setDialogs({})
+    setHoveredId(null)
+    setHoveredSquashGroup(null)
+    setExpandedSquashGroup(null)
+    setShowSearch(false)
+  }, [currentSessionId])
+
+  // Auto-open root on a FRESH session (one that only has root and no open dialogs)
+  useEffect(() => {
+    if (Object.keys(commits).length === 1 && commits['root'] && Object.keys(dialogs).length === 0) {
+      const width = 860
+      const height = 400
+      setDialogs({
+        root: {
+          x: (window.innerWidth - width) / 2,
+          y: clamp((window.innerHeight - height) / 2, 80, window.innerHeight - 100),
+          initialInput: ""
+        }
+      })
+    }
+  }, [currentSessionId, commits]) // run on session switch or graph reset
 
   // Pinned ids: HEAD + any open dialogs — these nodes are never part of a squash pill
   const openDialogIds = useMemo(() => new Set(Object.keys(dialogs)), [dialogs])
@@ -71,13 +92,7 @@ export default function App() {
       const group = allGroups.get(groupId)
       if (group) {
         setExpandedSquashGroup(group)
-        // Auto-center on the pill and its boundaries
-        const ids = [groupId, group.parentId, group.childId].filter(Boolean) as string[]
-        
-        // Wait for layout to update before fitting
-        setTimeout(() => {
-          window.dispatchEvent(new CustomEvent('graphchat:fit-nodes', { detail: ids }))
-        }, 50)
+        // Auto-centering removed per user request to stabilize navigation
       }
     } else {
       setExpandedSquashGroup(null)
@@ -108,7 +123,7 @@ export default function App() {
   }, [])
 
   // ── Node click → spawn / focus dialog ────────────────────────────────────
-  const handleNodeClick = useCallback((commit: Commit, _screenX?: number, _screenY?: number) => {
+  const handleNodeClick = useCallback((commit: Commit, screenX?: number, screenY?: number) => {
     let targetHEAD = commit.id
     let initialInput = ""
 
@@ -131,7 +146,7 @@ export default function App() {
       const width = 860
       const assumedHeight = 400
       const x = clamp((window.innerWidth - width) / 2, 10, window.innerWidth - (width + 20))
-      const y = clamp((window.innerHeight - assumedHeight) / 2, 10, window.innerHeight - 100)
+      const y = clamp((window.innerHeight - assumedHeight) / 2, 80, window.innerHeight - 100)
       
       return { ...prev, [commit.id]: { x, y, initialInput } }
     })
@@ -177,10 +192,7 @@ export default function App() {
   const handleSidebarTurnClick = useCallback((commit: Commit) => {
     handleNodeClick(commit)
     setExpandedSquashGroup(null) // Close sidebar once a specific node is picked
-    // Auto-center on the newly expanded node
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('graphchat:fit-nodes', { detail: [commit.id] }))
-    }, 50)
+    // Auto-centering removed per user request to stabilize navigation
   }, [handleNodeClick])
 
   // ── Close dialog ──────────────────────────────────────────────────────────

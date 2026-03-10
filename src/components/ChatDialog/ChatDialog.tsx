@@ -6,12 +6,17 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import remarkMath from 'remark-math'
+import rehypeKatex from 'rehype-katex'
 import { useConversationStore } from "../../store/conversationStore";
-import { reconstructMessages, estimateTokens } from "../../lib/context";
-import { streamMessage } from "../../lib/anthropic";
-import { makeSummary, branchColor } from "../../lib/utils";
-import { MessageList } from "./MessageList";
+import { llm, reconstructMessages, estimateTokens } from "../../lib/llm";
+import { makeSummary, branchColor, getMathAtCursor } from "../../lib/utils";
+import { MessageList, MarkdownComponents } from "./MessageList";
 import type { Commit } from "../../types";
+
+import 'katex/dist/katex.min.css'
 
 interface Props {
   commit: Commit;
@@ -21,6 +26,8 @@ interface Props {
   onFocus?: () => void;
 }
 
+const SAFE_TOP = 80;
+
 export const ChatDialog: React.FC<Props> = ({
   commit,
   initialPosition,
@@ -28,10 +35,12 @@ export const ChatDialog: React.FC<Props> = ({
   onClose,
   onFocus,
 }) => {
-  const { commits, addTurn, setHEAD } = useConversationStore();
+  const { sessions, currentSessionId, addTurn, setHEAD } = useConversationStore();
+  const commits = sessions[currentSessionId]?.commits || {};
 
   const [pos, setPos] = useState(initialPosition);
   const [input, setInput] = useState(initialInput);
+  const [activeMath, setActiveMath] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +53,7 @@ export const ChatDialog: React.FC<Props> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const prevHeightRef = useRef<number>(0);
 
-  // ── Vertical Growth Centering ────────────────────────────────────────────
+  // ── Vertical Growth Centering & Initial Safety Clamp ─────────────────────
   useLayoutEffect(() => {
     if (!containerRef.current) return;
 
@@ -61,15 +70,16 @@ export const ChatDialog: React.FC<Props> = ({
           const delta = newHeight - oldHeight;
           setPos((prev) => {
             const newY = prev.y - delta / 2;
-            const safeY = Math.max(10, Math.min(window.innerHeight - newHeight - 10, newY));
+            const safeY = Math.max(SAFE_TOP, Math.min(window.innerHeight - newHeight - 10, newY));
             return { ...prev, y: safeY };
           });
         } else if (oldHeight === 0) {
           // Initial measurement case: ensure it's on screen if it started big
           setPos((prev) => {
             const isOffBottom = prev.y + newHeight > window.innerHeight - 10;
-            if (isOffBottom) {
-              const safeY = Math.max(10, window.innerHeight - newHeight - 10);
+            const isOffTop = prev.y < SAFE_TOP;
+            if (isOffBottom || isOffTop) {
+              const safeY = Math.max(SAFE_TOP, Math.min(window.innerHeight - newHeight - 10, prev.y));
               return { ...prev, y: safeY };
             }
             return prev;
@@ -107,10 +117,10 @@ export const ChatDialog: React.FC<Props> = ({
     return chain;
   }, [commits, tipId]);
 
-  const tokenCount = useMemo(
-    () => estimateTokens(reconstructMessages(commits, tipId)),
-    [commits, tipId],
-  );
+  const tokenCount = useMemo(() => {
+    const conv = reconstructMessages(commits, tipId);
+    return estimateTokens(conv);
+  }, [commits, tipId]);
 
   const bColor = branchColor(commit.branchLabel);
 
@@ -173,14 +183,17 @@ export const ChatDialog: React.FC<Props> = ({
     if (!text || loading) return;
 
     setInput("");
+    setActiveMath(null);
     setError(null);
     setLoading(true);
     setStreamingContent("");
 
     try {
+      const conv = reconstructMessages(commits, tipId);
       let fullAssistantContent = "";
-      // Use the generator for real-time updates
-      for await (const chunk of streamMessage(commits, tipId, text)) {
+      
+      // Use the new llm provider interface
+      for await (const chunk of llm.streamMessage(conv, text)) {
         fullAssistantContent += chunk;
         setStreamingContent(fullAssistantContent);
       }
@@ -206,7 +219,7 @@ export const ChatDialog: React.FC<Props> = ({
         content: fullAssistantContent,
         summary: makeSummary(fullAssistantContent),
         timestamp: Date.now(),
-        model: "claude-sonnet-4-20250514",
+        model: "gemini-3.1-flash-lite", // Branding update
       };
 
       addTurn(userCommit, assistantCommit);
@@ -229,11 +242,25 @@ export const ChatDialog: React.FC<Props> = ({
     }
   };
 
+  const checkMath = useCallback((text: string, pos: number) => {
+    setActiveMath(getMathAtCursor(text, pos));
+  }, []);
+
   // Auto-resize textarea
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(e.target.value);
+    const val = e.target.value;
+    setInput(val);
+    checkMath(val, e.target.selectionStart);
     e.target.style.height = "auto";
     e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+  };
+
+  const handleKeyUp = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    checkMath(input, e.currentTarget.selectionStart);
+  };
+
+  const handleClick = (e: React.MouseEvent<HTMLTextAreaElement>) => {
+    checkMath(input, e.currentTarget.selectionStart);
   };
 
   const canSend = (input.trim().length > 0 || streamingContent) && !loading;
@@ -407,14 +434,76 @@ export const ChatDialog: React.FC<Props> = ({
           padding: "10px 14px 14px",
           borderTop: "1px solid rgba(255,255,255,0.07)",
           flexShrink: 0,
+          position: 'relative'
         }}
       >
+        {/* Math Overlay Preview */}
+        {activeMath && (
+          <div style={{
+            position: 'absolute',
+            bottom: 'calc(100% + 12px)',
+            left: 14,
+            right: 14,
+            padding: '12px 16px',
+            background: 'rgba(15,15,25,0.95)',
+            border: '1px solid rgba(99,102,241,0.3)',
+            borderRadius: 12,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+            zIndex: 1100,
+            backdropFilter: 'blur(12px)',
+            animation: 'dialog-in 0.15s ease-out'
+          }}>
+            <div style={{
+              fontFamily: "'Syne', sans-serif",
+              fontSize: 9,
+              color: 'rgba(99,102,241,0.8)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              marginBottom: 8,
+              display: 'flex',
+              justifyContent: 'space-between'
+            }}>
+              <span>LaTeX Preview</span>
+              <span style={{ opacity: 0.5 }}>Rendering...</span>
+            </div>
+            <div style={{
+              color: '#fff',
+              fontSize: 15,
+              lineHeight: 1.5,
+              display: 'flex',
+              justifyContent: 'center',
+              minHeight: 24
+            }}>
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm, remarkMath]} 
+                rehypePlugins={[rehypeKatex]}
+                components={MarkdownComponents}
+              >
+                {activeMath}
+              </ReactMarkdown>
+            </div>
+            {/* Arrow */}
+            <div style={{
+              position: 'absolute',
+              bottom: -6,
+              left: 30,
+              width: 12,
+              height: 12,
+              background: 'rgba(15,15,25,0.95)',
+              borderRight: '1px solid rgba(99,102,241,0.3)',
+              borderBottom: '1px solid rgba(99,102,241,0.3)',
+              transform: 'rotate(45deg)'
+            }} />
+          </div>
+        )}
+
         <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
           <textarea
             ref={textareaRef}
             value={input}
             onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
+            onKeyUp={handleKeyUp}
+            onClick={handleClick}
             placeholder="Continue this thread…"
             rows={1}
             style={{
@@ -437,6 +526,8 @@ export const ChatDialog: React.FC<Props> = ({
             }}
             onBlur={(e) => {
               e.target.style.borderColor = "rgba(255,255,255,0.1)";
+              // Small delay to allow clicking preview if needed, or just close
+              setTimeout(() => setActiveMath(null), 150);
             }}
           />
 

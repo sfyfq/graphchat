@@ -1,60 +1,215 @@
 import { create } from 'zustand'
-import type { Commit, Edge } from '../types'
-import { SEED_COMMITS, SEED_EDGES } from '../lib/seeds'
+import { persist, createJSONStorage, StateStorage } from 'zustand/middleware'
+import { get, set, del } from 'idb-keyval'
+import type { Commit, Edge, ChatSession } from '../types'
+import { SEED_COMMITS } from '../lib/seeds'
 
-interface ConversationStore {
-  commits:    Record<string, Commit>
-  edges:      Edge[]
-  HEAD:       string
-
-  addCommit:  (commit: Commit) => void
-  addTurn:    (user: Commit, assistant: Commit) => void
-  setHEAD:    (id: string) => void
-  fork:       (fromId: string, label: string) => void
+// Custom storage engine using idb-keyval for IndexedDB
+const storage: StateStorage = {
+  getItem: async (name: string): Promise<string | null> => {
+    return (await get(name)) || null
+  },
+  setItem: async (name: string, value: string): Promise<void> => {
+    await set(name, value)
+  },
+  removeItem: async (name: string): Promise<void> => {
+    await del(name)
+  },
 }
 
-export const useConversationStore = create<ConversationStore>((set) => ({
+interface ConversationState {
+  sessions: Record<string, ChatSession>
+  currentSessionId: string
+}
+
+interface ConversationActions {
+  // Session Management
+  createSession: () => string
+  switchSession: (id: string) => void
+  deleteSession: (id: string) => void
+  renameSession: (id: string, name: string) => void
+
+  // Graph Operations (targets current session)
+  addCommit: (commit: Commit) => void
+  addTurn:   (user: Commit, assistant: Commit) => void
+  setHEAD:   (id: string) => void
+  fork:      (fromId: string, label: string) => void
+}
+
+const createNewSession = (id: string): ChatSession => ({
+  id,
+  name: 'Untitled Chat',
   commits: { root: SEED_COMMITS.root },
-  edges:   [],
-  HEAD:    'root',
+  edges: [],
+  HEAD: 'root',
+  lastModified: Date.now(),
+})
 
-  addCommit: (commit) =>
-    set((state) => ({
-      commits: { ...state.commits, [commit.id]: commit },
-      edges:   commit.parentId
-        ? [...state.edges, { source: commit.parentId, target: commit.id }]
-        : state.edges,
-      HEAD: commit.id,
-    })),
+const INITIAL_ID = crypto.randomUUID()
 
-  addTurn: (user, assistant) =>
-    set((state) => {
-      const newCommits = { 
-        ...state.commits, 
-        [user.id]: user, 
-        [assistant.id]: assistant 
-      }
-      const newEdges = [...state.edges]
-      if (user.parentId) {
-        newEdges.push({ source: user.parentId, target: user.id })
-      }
-      newEdges.push({ source: user.id, target: assistant.id })
+export const useConversationStore = create<ConversationState & ConversationActions>()(
+  persist(
+    (set, get) => ({
+      sessions: { [INITIAL_ID]: createNewSession(INITIAL_ID) },
+      currentSessionId: INITIAL_ID,
 
-      return {
-        commits: newCommits,
-        edges:   newEdges,
-        HEAD:    assistant.id
-      }
-    }),
-
-  setHEAD: (id) => set({ HEAD: id }),
-
-  fork: (fromId, label) =>
-    set((state) => ({
-      commits: {
-        ...state.commits,
-        [fromId]: { ...state.commits[fromId], branchLabel: label },
+      createSession: () => {
+        const id = crypto.randomUUID()
+        const newSession = createNewSession(id)
+        set((state) => ({
+          sessions: { ...state.sessions, [id]: newSession },
+          currentSessionId: id,
+        }))
+        return id
       },
-      HEAD: fromId,
-    })),
-}))
+
+      switchSession: (id) => {
+        if (get().sessions[id]) {
+          set({ currentSessionId: id })
+        }
+      },
+
+      deleteSession: (id) => {
+        set((state) => {
+          const newSessions = { ...state.sessions }
+          delete newSessions[id]
+          
+          let nextId = state.currentSessionId
+          if (id === state.currentSessionId) {
+            const keys = Object.keys(newSessions)
+            if (keys.length > 0) {
+              nextId = keys[0]
+            } else {
+              const freshId = crypto.randomUUID()
+              newSessions[freshId] = createNewSession(freshId)
+              nextId = freshId
+            }
+          }
+          
+          return { sessions: newSessions, currentSessionId: nextId }
+        })
+      },
+
+      renameSession: (id, name) => {
+        set((state) => {
+          if (!state.sessions[id]) return state
+          return {
+            sessions: {
+              ...state.sessions,
+              [id]: { ...state.sessions[id], name }
+            }
+          }
+        })
+      },
+
+      addCommit: (commit) =>
+        set((state) => {
+          const sid = state.currentSessionId
+          const session = state.sessions[sid]
+          if (!session) return state
+
+          const newCommits = { ...session.commits, [commit.id]: commit }
+          const newEdges = [...session.edges]
+          if (commit.parentId) {
+            newEdges.push({ source: commit.parentId, target: commit.id })
+          }
+
+          return {
+            sessions: {
+              ...state.sessions,
+              [sid]: {
+                ...session,
+                commits: newCommits,
+                edges: newEdges,
+                HEAD: commit.id,
+                lastModified: Date.now(),
+              },
+            },
+          }
+        }),
+
+      addTurn: (user, assistant) =>
+        set((state) => {
+          const sid = state.currentSessionId
+          const session = state.sessions[sid]
+          if (!session) return state
+
+          const newCommits = { 
+            ...session.commits, 
+            [user.id]: user, 
+            [assistant.id]: assistant 
+          }
+          const newEdges = [...session.edges]
+          if (user.parentId) {
+            newEdges.push({ source: user.parentId, target: user.id })
+          }
+          newEdges.push({ source: user.id, target: assistant.id })
+
+          // Auto-rename if this is the first turn after root
+          let newName = session.name
+          if (session.name === 'Untitled Chat' && user.parentId === 'root') {
+            newName = assistant.summary || 'New Conversation'
+          }
+
+          return {
+            sessions: {
+              ...state.sessions,
+              [sid]: {
+                ...session,
+                name: newName,
+                commits: newCommits,
+                edges: newEdges,
+                HEAD: assistant.id,
+                lastModified: Date.now(),
+              },
+            },
+          }
+        }),
+
+      setHEAD: (id) =>
+        set((state) => {
+          const sid = state.currentSessionId
+          const session = state.sessions[sid]
+          if (!session || !session.commits[id]) return state
+          return {
+            sessions: {
+              ...state.sessions,
+              [sid]: { ...session, HEAD: id }
+            }
+          }
+        }),
+
+      fork: (fromId, label) =>
+        set((state) => {
+          const sid = state.currentSessionId
+          const session = state.sessions[sid]
+          if (!session || !session.commits[fromId]) return state
+
+          return {
+            sessions: {
+              ...state.sessions,
+              [sid]: {
+                ...session,
+                commits: {
+                  ...session.commits,
+                  [fromId]: { ...session.commits[fromId], branchLabel: label },
+                },
+                HEAD: fromId,
+                lastModified: Date.now(),
+              },
+            },
+          }
+        }),
+    }),
+    {
+      name: 'graphchat-storage',
+      storage: createJSONStorage(() => storage),
+    }
+  )
+)
+
+// Helper selectors for ease of use
+export const useCurrentSession = () => {
+  const { sessions, currentSessionId } = useConversationStore()
+  return sessions[currentSessionId]
+}

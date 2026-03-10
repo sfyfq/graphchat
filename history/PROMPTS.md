@@ -412,3 +412,194 @@ Refactor the initial application state and canvas layout for a better "first-loo
 • Provides an immediate, balanced view of both the interface (dialog) and the data (root node).
 
 **Techniques Applied:** State initialization, viewport-aware layout math.
+**Your Optimized Prompt:**
+Implement a robust multi-session architecture with IndexedDB persistence.
+
+1.  **Data Model (`src/types.ts`)**:
+    - Define `ChatSession` containing `id`, `name`, `commits`, `edges`, `HEAD`, and `lastModified`.
+    - Add optional `attachments` field to `Commit`.
+
+2.  **Persistent Store (`src/store/conversationStore.ts`)**:
+    - Refactor to use `sessions: Record<string, ChatSession>` and `currentSessionId: string`.
+    - Integrate `persist` middleware with a custom storage engine using `idb-keyval`.
+    - Implement `createSession`, `switchSession(id)`, `deleteSession(id)`, and `renameSession(id, name)`.
+    - Update graph manipulation actions (`addTurn`, `addCommit`, `fork`) to update the currently active session.
+
+3.  **UI Integration**:
+    - **Toolbar**: Replace commit count with a "Session Selector" (dropdown) and a "New Chat" (+) button.
+    - **App**: Clear `dialogs`, `hoveredId`, and `activeSquashGroup` states when `currentSessionId` changes.
+    - **Naming**: Automatically name sessions based on the first assistant response summary.
+
+**Key Improvements:**
+• Enables users to manage multiple independent conversation threads.
+• Future-proofs storage for high-volume data (attachments) using IndexedDB.
+• Provides a professional, application-like workflow for session management.
+
+**Techniques Applied:** Refactoring, persistent state patterns, asynchronous storage integration.
+**Your Optimized Prompt:**
+Adjust the `ChatDialog` positioning logic to prevent automatic overlap with the Toolbar/Session menu.
+
+1.  **Constants**:
+    - Define a `SAFE_TOP = 80` (representing the area below the Toolbar).
+    - Continue using `SCREEN_MARGIN = 10` for general viewport edges.
+
+2.  **Initial Spawning (`src/App.tsx`)**:
+    - Update `handleNodeClick` initial `y` calculation.
+    - Change the `clamp` minimum from `10` to `SAFE_TOP`.
+
+3.  **Automatic Growth (`src/components/ChatDialog/ChatDialog.tsx`)**:
+    - In the `ResizeObserver` logic, update the `pos.y` clamping.
+    - Change the `Math.max(10, ...)` to `Math.max(SAFE_TOP, ...)`.
+    - This ensures that as the dialog grows and centers itself, it doesn't "creep" into the Toolbar area.
+
+4.  **Manual Dragging (`src/components/ChatDialog/ChatDialog.tsx`)**:
+    - In the `onMove` handler, keep the clamping as is (or ensure it uses the smaller `10px` margin).
+    - This satisfies the requirement that it "may be moved around anywhere within the viewport."
+
+**Key Improvements:**
+• Prevents the dialog from obscuring critical navigation elements (Session Switcher, Logo) on open.
+• Respects user intent by allowing manual overrides via dragging.
+
+**Techniques Applied:** Logical bifurcation of constraints, layout safety zones.
+**Your Optimized Prompt:**
+Remove all automatic canvas centering and zooming logic tied to squash group interactions in `src/App.tsx`.
+
+1.  **Interaction Refactor**:
+    - In `toggleGroup`, remove the logic that dispatches the `graphchat:fit-nodes` event when a group is expanding.
+    - In `handleSidebarTurnClick`, remove the logic that dispatches the `graphchat:fit-nodes` event when a sidebar turn is clicked.
+
+2.  **Rationale**:
+    - This eliminates disorienting canvas jumps during history exploration.
+    - Users can now navigate the graph and sidebar independently without the camera moving automatically.
+
+3.  **Cleanup**:
+    - Ensure the `Canvas.tsx` listener for `graphchat:fit-nodes` remains, as it may be useful for other features (like the logo auto-fit or future enhancements), but it should no longer be triggered by standard squash/turn interactions.
+
+**Key Improvements:**
+• Provides a more stable and predictable navigation experience.
+• Respects the user's manual zoom and pan settings during exploration.
+
+**Techniques Applied:** Interaction stabilization, event removal.
+**Your Optimized Prompt:**
+Fix the session-reset auto-fit bug in `src/components/Canvas/Canvas.tsx`.
+
+1.  **Problem**: The canvas framing logic (placing `root` in the bottom third) only runs on the very first mount of the component. When switching or deleting sessions, the component stays mounted but the data changes, and the framing logic is skipped because of the `initialised` ref.
+
+2.  **Implementation**:
+    - Inside the `Canvas` component, add a `useEffect` that monitors `currentSession.id`.
+    - When the ID changes, set `initialised.current = false`.
+    - This allows the existing auto-fit `useEffect` (which depends on `layout`) to re-run for the new session's data.
+
+**Key Improvements:**
+• Guarantees consistent initial framing for every session.
+• Fixes the "random positioning" issue experienced after session deletion.
+
+**Techniques Applied:** Ref-state synchronization, lifecycle management.
+ Here is the updated code:
+**Your Optimized Prompt:**
+Fix the session-reset auto-fit bug in `src/components/Canvas/Canvas.tsx`.
+
+1.  **Problem**: The canvas framing logic (placing `root` in the bottom third) only runs on the very first mount of the component. When switching or deleting sessions, the component stays mounted but the data changes, and the framing logic is skipped because of the `initialised` ref.
+
+2.  **Implementation**:
+    - Inside the `Canvas` component, add a `useEffect` that monitors `currentSession.id`.
+    - When the ID changes, set `initialised.current = false`.
+    - This allows the existing auto-fit `useEffect` (which depends on `layout`) to re-run for the new session's data.
+
+**Key Improvements:**
+• Guarantees consistent initial framing for every session.
+• Fixes the "random positioning" issue experienced after session deletion.
+
+**Techniques Applied:** Ref-state synchronization, lifecycle management.
+**Your Optimized Prompt:**
+Refactor the LLM integration into a provider-based architecture.
+
+1.  **Architecture**:
+    - Create `src/lib/llm/` folder.
+    - `src/lib/llm/types.ts`: Define `LLMProvider` interface with `sendMessage` and `streamMessage` methods.
+    - `src/lib/llm/gemini.ts`: Implement `LLMProvider` for Google Gemini using `@google/generative-ai`.
+    - `src/lib/llm/index.ts`: Export a default provider (currently Gemini).
+
+2.  **Implementation Details**:
+    - Use `gemini-3.1-flash-lite-preview` as the default model in `gemini.ts`.
+    - Ensure `LLMProvider` methods accept the conversation history in a format that can be easily mapped to vendor-specific requirements.
+    - Leave provisions for future features like `systemInstruction`, `safetySettings`, and `attachments`.
+
+3.  **App Integration**:
+    - Update `src/components/ChatDialog/ChatDialog.tsx` to import the streaming function from the new `src/lib/llm/index.ts`.
+
+**Key Improvements:**
+• Decouples the application logic from specific LLM vendors.
+• Simplifies the process of adding new AI providers in the future.
+• Centralizes LLM configuration and error handling.
+
+**Techniques Applied:** Interface-based programming, Strategy pattern.
+**Your Optimized Prompt:**
+Implement Markdown rendering for messages in `src/components/ChatDialog/MessageList.tsx`.
+
+1.  **Dependencies**:
+    - Use `react-markdown` for rendering Markdown.
+    - Optionally use `remark-gfm` for GitHub Flavored Markdown (better support for tables, lists, and line breaks).
+
+2.  **Implementation**:
+    - In `MessageList.tsx`, wrap the content of assistant messages and the `streamingContent` in a `ReactMarkdown` component.
+    - User messages can also be wrapped or kept as plain text (wrapping both is usually more consistent).
+    - Use custom components for `react-markdown` to ensure `p`, `ul`, `ol` tags don't have excessive margins that break the bubble layout.
+
+3.  **Styling**:
+    - Ensure `white-space: pre-wrap` or equivalent Markdown behavior is maintained.
+    - Add styles for `bold`, `italic`, and lists within the chat bubble context.
+
+**Key Improvements:**
+• Transforms plain text blobs into readable, structured content.
+• Supports essential formatting like line breaks, bold, and italic.
+• Professional chat experience similar to major LLM interfaces.
+
+**Techniques Applied:** Markdown integration, component-level styling overrides.
+**Your Optimized Prompt:**
+Implement LaTeX support using KaTeX for both message history and live input.
+
+1.  **Dependencies**:
+    - `remark-math`: Markdown plugin for math delimiters.
+    - `rehype-katex`: Rehype plugin to render math using KaTeX.
+    - `katex`: The core rendering library and CSS.
+
+2.  **Rendering History (`src/components/ChatDialog/MessageList.tsx`)**:
+    - Import `remarkMath`, `rehypeKatex`, and `katex/dist/katex.min.css`.
+    - Configure `ReactMarkdown` to use these plugins.
+    - Ensure both completed messages and the `streamingContent` are processed.
+
+3.  **Live Preview (`src/components/ChatDialog/ChatDialog.tsx`)**:
+    - Introduce a `Live Preview` section just above the input textarea.
+    - This section should render the current `input` state using the same `ReactMarkdown` + KaTeX configuration used in `MessageList`.
+    - Only display the preview when `input` is not empty.
+    - Apply styling to differentiate the preview area (e.g., subtle background, italic hint).
+
+**Key Improvements:**
+• Enables complex mathematical notation in conversations.
+• Provides immediate visual feedback for LaTeX as the user types, reducing errors.
+• Maintains visual consistency across user drafts and assistant replies.
+
+**Techniques Applied:** Plugin-based Markdown expansion, real-time preview patterns.
+**Your Optimized Prompt:**
+Refactor the LaTeX live preview into a floating overlay in `src/components/ChatDialog/ChatDialog.tsx`.
+
+1.  **Selection Detection**:
+    - Add state to track the active LaTeX segment at the cursor: `activeMath: string | null`.
+    - In `handleInputChange` and a new `handleKeyUp` (for arrow keys), check if `selectionStart` is within a `$ $` or `$$ $$` block.
+    - If it is, extract that specific math string and set `activeMath`.
+
+2.  **Positioning**:
+    - Implement a way to find the cursor's pixel position within the textarea. *Hint: Using a hidden mirror div or a lightweight utility is standard for this.*
+    - Alternatively, position the overlay at a fixed offset above the textarea if precise cursor tracking is too complex for this turn, but ensure it's an `absolute` overlay that doesn't push layout.
+
+3.  **UI/UX**:
+    - The `Live Preview` should be an absolutely positioned div.
+    - Give it a higher `zIndex`, a subtle shadow, and a dark, blurred background (`backdropFilter`).
+    - Use an "arrow" or "speech bubble" style to point down towards the input.
+
+**Key Improvements:**
+• Non-disruptive UI: The dialog size doesn't jump as the user types math.
+• Focused feedback: Shows exactly what the user is currently editing.
+
+**Techniques Applied:** Floating UI patterns, context-aware selection extraction.

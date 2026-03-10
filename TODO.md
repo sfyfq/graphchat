@@ -1,18 +1,17 @@
-# TODO: Enhance Initial Experience
+# TODO: LaTeX Overlay Preview
 
-## Phase 1: Implementation
+## Phase 1: Math Detection Logic
+- [ ] Implement `getMathAtCursor(text, position)` helper function.
+- [ ] Add `activeMath` state to `ChatDialog`.
+- [ ] Update `handleInputChange` and `onKeyUp` to set `activeMath`.
 
-### Task 1: Update `src/App.tsx`
-- [ ] Initialize `dialogs` state with root node data.
-- [ ] Ensure `commits['root']` availability or handle initial loading gracefully.
+## Phase 2: Overlay UI
+- [ ] Create an absolutely positioned `MathPreviewOverlay` component (or inline div).
+- [ ] Style it as a floating bubble above the textarea.
+- [ ] Remove the old static `Live Preview` block.
 
-### Task 2: Update `src/components/Canvas/Canvas.tsx`
-- [ ] Refactor initial auto-fit `useEffect`:
-    - Find `root` position in `layout`.
-    - Calculate `pan` such that `root.x` is horizontal center and `root.y` is at 70% vertical.
-
-## Phase 2: Validation
-- [ ] Refresh the page.
-- [ ] Verify the root dialog is open and centered.
-- [ ] Verify the root node is visible on the canvas, positioned in the lower third.
+## Phase 3: Validation
+- [ ] Verify the overlay appears only when the cursor is inside `$ $`.
+- [ ] Verify the overlay content updates as you type.
+- [ ] Verify the dialog layout remains stable.
 - [ ] Run `npx tsc`.

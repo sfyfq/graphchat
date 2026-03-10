@@ -411,3 +411,169 @@
 - [ ] Verify the root dialog is open and centered.
 - [ ] Verify the root node is visible on the canvas, positioned in the lower third.
 - [ ] Run `npx tsc`.
+# TODO: Multi-Session & Persistence Implementation
+
+## Phase 1: Types & Library Setup
+- [ ] Update `src/types.ts` with `ChatSession` and `Attachment`.
+- [ ] (Done) Install `idb-keyval`.
+
+## Phase 2: Store Refactoring
+- [ ] Update `conversationStore.ts`:
+    - Implement `State` and `Actions`.
+    - Setup `persist` with `idb-keyval`.
+    - Create initialization logic (ensure 1 session exists).
+    - Update graph actions to be session-aware.
+
+## Phase 3: UI Implementation
+- [ ] Refactor `src/components/Toolbar/Toolbar.tsx`:
+    - Add Session Switcher UI next to logo.
+    - Add "New Session" button.
+- [ ] Update `src/App.tsx`:
+    - Listen for session changes and reset local UI state (dialogs, etc).
+
+## Phase 4: Validation
+- [ ] Create a session, chat, then refresh. Data should persist.
+- [ ] Create a second session. Switch between them.
+- [ ] Verify automatic session naming on the first turn.
+- [ ] Run `npx tsc`.
+# TODO: Adjust Dialog Top Clamping
+
+## Phase 1: Implementation
+
+### Task 1: Update `src/App.tsx`
+- [ ] In `handleNodeClick`, change `y` clamping:
+    - `clamp(..., 10, ...)` -> `clamp(..., 80, ...)`
+
+### Task 2: Update `src/components/ChatDialog/ChatDialog.tsx`
+- [ ] Define `SAFE_TOP = 80`.
+- [ ] In `ResizeObserver` (auto-centering logic):
+    - Change `Math.max(10, ...)` -> `Math.max(SAFE_TOP, ...)`.
+- [ ] In `onMove` (drag logic):
+    - Ensure it still uses `10` or `0` for the top clamp.
+
+## Phase 2: Validation
+- [ ] Open a new dialog. Verify it spawns at or below 80px from the top.
+- [ ] Add messages until it grows. Verify the top edge doesn't cross the 80px line.
+- [ ] Drag the dialog to the very top of the screen (10px). Verify this is still allowed.
+- [ ] Run `npx tsc`.
+# TODO: Stable Navigation - Remove Auto-Zoom
+
+## Phase 1: Implementation
+
+### Task 1: Update `src/App.tsx`
+- [ ] Refactor `toggleGroup`:
+    - Remove the `isExpanding` block that dispatches `graphchat:fit-nodes`.
+- [ ] Refactor `handleSidebarTurnClick`:
+    - Remove the `setTimeout` block that dispatches `graphchat:fit-nodes`.
+
+## Phase 2: Validation
+- [ ] Expand a squash group. Verify the canvas does not move.
+- [ ] Click a turn in the sidebar. Verify the dialog opens but the canvas stays at its current zoom/pan.
+- [ ] Verify manual zoom and pan still work correctly.
+- [ ] Run `npx tsc`.
+# TODO: Fix Session Reset Auto-Fit
+
+## Phase 1: Implementation
+
+### Task 1: Update `src/components/Canvas/Canvas.tsx`
+- [ ] Add a `useEffect` to reset `initialised.current = false` when `currentSession.id` changes.
+
+## Phase 2: Validation
+- [ ] Create multiple sessions.
+- [ ] Delete the current session.
+- [ ] Verify the new active session's root node is correctly positioned in the bottom 1/3.
+- [ ] Switch between sessions and verify consistent framing.
+- [ ] Run `npx tsc`.
+ Here is the updated code:
+# TODO: Fix Session Reset Auto-Fit
+
+## Phase 1: Implementation
+
+### Task 1: Update `src/components/Canvas/Canvas.tsx`
+- [ ] Add a `useEffect` to reset `initialised.current = false` when `currentSession.id` changes.
+
+## Phase 2: Validation
+- [ ] Create multiple sessions.
+- [ ] Delete the current session.
+- [ ] Verify the new active session's root node is correctly positioned in the bottom 1/3.
+- [ ] Switch between sessions and verify consistent framing.
+- [ ] Run `npx tsc`.
+# TODO: LLM Provider Refactor
+
+## Phase 1: Directory Structure & Types
+- [ ] Create `src/lib/llm/` directory.
+- [ ] Implement `src/lib/llm/types.ts`:
+    - Define `LLMMessage` (reusing/refining from `context.ts`).
+    - Define `LLMProvider` interface.
+
+## Phase 2: Provider Implementation
+- [ ] Implement `src/lib/llm/gemini.ts`:
+    - Use `@google/generative-ai`.
+    - Model: `gemini-3.1-flash-lite-preview`.
+    - Implement `sendMessage` and `streamMessage`.
+- [ ] Implement `src/lib/llm/index.ts`:
+    - Export active provider instance.
+
+## Phase 3: App Integration
+- [ ] Update `src/components/ChatDialog/ChatDialog.tsx` to use the new module.
+- [ ] (Optional) Move `reconstructMessages` and `estimateTokens` from `context.ts` to `llm/utils.ts` if it makes sense.
+
+## Phase 4: Validation
+- [ ] Remove old `src/lib/llm.ts`.
+- [ ] Verify streaming works with the new Gemini model.
+- [ ] Run `npx tsc`.
+---
+# TODO: Implement Markdown Support
+
+## Phase 1: Setup
+- [ ] Install `react-markdown` and `remark-gfm`.
+
+## Phase 2: Implementation
+- [ ] Update `src/components/ChatDialog/MessageList.tsx`:
+    - [ ] Import `ReactMarkdown` and `remarkGfm`.
+    - [ ] Define custom components for `ReactMarkdown` to handle styling (remove default margins).
+    - [ ] Apply `ReactMarkdown` to message content and `streamingContent`.
+
+## Phase 3: Validation
+- [ ] Verify line breaks are rendered correctly.
+- [ ] Verify **bold** and *italic* formatting works.
+- [ ] Verify lists and other Markdown features work.
+- [ ] Ensure the scrolling still works correctly with Markdown content.
+- [ ] Run `npx tsc`.
+# TODO: Implement LaTeX Support
+
+## Phase 1: Implementation - Message History
+- [ ] Update `src/components/ChatDialog/MessageList.tsx`:
+    - [ ] Import `remarkMath` and `rehypeKatex`.
+    - [ ] Import `katex/dist/katex.min.css`.
+    - [ ] Update `ReactMarkdown` props to include `remarkMath` and `rehypeKatex`.
+
+## Phase 2: Implementation - Live Preview
+- [ ] Update `src/components/ChatDialog/ChatDialog.tsx`:
+    - [ ] Import `ReactMarkdown`, `remarkMath`, `rehypeKatex`.
+    - [ ] Add a `Preview` area inside the dialog, just above the input zone.
+    - [ ] Render `input` in this area using the Markdown/KaTeX setup.
+    - [ ] Style the preview area for clarity.
+
+## Phase 3: Validation
+- [ ] Type `$x^2$` in the input. Verify it renders as a mathematical formula in the preview.
+- [ ] Send a message with LaTeX. Verify the assistant response (if it contains LaTeX) renders correctly.
+- [ ] Verify both inline `$math$` and block `$$math$$` notation work.
+- [ ] Run `npx tsc`.
+# TODO: LaTeX Overlay Preview
+
+## Phase 1: Math Detection Logic
+- [ ] Implement `getMathAtCursor(text, position)` helper function.
+- [ ] Add `activeMath` state to `ChatDialog`.
+- [ ] Update `handleInputChange` and `onKeyUp` to set `activeMath`.
+
+## Phase 2: Overlay UI
+- [ ] Create an absolutely positioned `MathPreviewOverlay` component (or inline div).
+- [ ] Style it as a floating bubble above the textarea.
+- [ ] Remove the old static `Live Preview` block.
+
+## Phase 3: Validation
+- [ ] Verify the overlay appears only when the cursor is inside `$ $`.
+- [ ] Verify the overlay content updates as you type.
+- [ ] Verify the dialog layout remains stable.
+- [ ] Run `npx tsc`.
