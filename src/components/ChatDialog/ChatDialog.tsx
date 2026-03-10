@@ -35,7 +35,9 @@ export const ChatDialog: React.FC<Props> = ({
   const [streamingContent, setStreamingContent] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const [tipId, setTipId] = useState(commit.id);
+  const [tipId, setTipId] = useState(
+    commit.role === "user" && commit.parentId ? commit.parentId : commit.id
+  );
   const dragging = useRef<{ startX: number; startY: number } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
