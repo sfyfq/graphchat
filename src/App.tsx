@@ -17,8 +17,8 @@ import type { Commit, DialogState } from './types'
 export default function App() {
   const { commits, edges, HEAD, setHEAD } = useConversationStore()
 
-  // Dialogs: map from commitId → position
-  const [dialogs,     setDialogs]     = useState<Record<string, { x: number; y: number }>>({})
+  // Dialogs: map from commitId → { position, initialInput }
+  const [dialogs,     setDialogs]     = useState<Record<string, { x: number; y: number; initialInput?: string }>>({})
   const [hoveredId,   setHoveredId]   = useState<string | null>(null)
   const [hoverPos,    setHoverPos]    = useState({ x: 0, y: 0 })
   const [isHoveringCanvas, setIsHoveringCanvas] = useState(false)
@@ -99,20 +99,22 @@ export default function App() {
 
   // ── Node click → spawn / focus dialog ────────────────────────────────────
   const handleNodeClick = useCallback((commit: Commit, screenX?: number, screenY?: number) => {
-    // If clicking a user node, try to set HEAD to its assistant child instead
     let targetHEAD = commit.id
+    let initialInput = ""
+
     if (commit.role === 'user') {
-      const kids = childrenMap[commit.id] || []
-      const assistantKid = kids.find(k => commits[k]?.role === 'assistant')
-      if (assistantKid) targetHEAD = assistantKid
+      // "Draft/Edit" mode: move HEAD to parent, pre-fill input
+      if (commit.parentId) targetHEAD = commit.parentId
+      initialInput = commit.content
     }
+
     setHEAD(targetHEAD)
 
     setDialogs(prev => {
       if (prev[commit.id]) {
-        // Already open — bring to top by re-inserting at the end
-        const { [commit.id]: pos, ...rest } = prev
-        return { ...rest, [commit.id]: pos }
+        // Already open — bring to top
+        const { [commit.id]: state, ...rest } = prev
+        return { ...rest, [commit.id]: { ...state, initialInput } }
       }
 
       // Spawn: 40px right, 200px above click point, clamped to viewport
@@ -120,9 +122,9 @@ export default function App() {
       const baseSY = screenY ?? window.innerHeight / 2
       const x = clamp(baseSX + 40,  10, window.innerWidth  - 880)
       const y = clamp(baseSY - 200, 10, window.innerHeight - 580)
-      return { ...prev, [commit.id]: { x, y } }
+      return { ...prev, [commit.id]: { x, y, initialInput } }
     })
-  }, [setHEAD, childrenMap, commits])
+  }, [setHEAD])
 
   // ── Focus dialog ──────────────────────────────────────────────────────────
   const focusDialog = useCallback((commitId: string) => {
@@ -181,11 +183,8 @@ export default function App() {
 
   // ── Search → open dialog + pan ────────────────────────────────────────────
   const handleSearchSelect = useCallback((commit: Commit) => {
-    setHEAD(commit.id)
-    const x = clamp(window.innerWidth  / 2 + 40, 10, window.innerWidth  - 450)
-    const y = clamp(window.innerHeight / 2 - 200, 10, window.innerHeight - 580)
-    setDialogs(prev => ({ ...prev, [commit.id]: { x, y } }))
-  }, [setHEAD])
+    handleNodeClick(commit)
+  }, [handleNodeClick])
 
   // ── Hovered commit ────────────────────────────────────────────────────────
   const hoveredCommit = hoveredId ? commits[hoveredId] : null
@@ -246,14 +245,15 @@ export default function App() {
       )}
 
       {/* Chat dialogs */}
-      {Object.entries(dialogs).map(([commitId, pos]) => {
+      {Object.entries(dialogs).map(([commitId, state]) => {
         const commit = commits[commitId]
         if (!commit) return null
         return (
           <ChatDialog
             key={commitId}
             commit={commit}
-            initialPosition={pos}
+            initialPosition={state}
+            initialInput={state.initialInput}
             onClose={() => closeDialog(commitId)}
             onFocus={() => focusDialog(commitId)}
           />

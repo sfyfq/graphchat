@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import { useConversationStore } from "../../store/conversationStore";
 import { reconstructMessages, estimateTokens } from "../../lib/context";
-import { sendMessage } from "../../lib/anthropic";
+import { streamMessage } from "../../lib/anthropic";
 import { makeSummary, branchColor } from "../../lib/utils";
 import { MessageList } from "./MessageList";
 import type { Commit } from "../../types";
@@ -15,6 +15,7 @@ import type { Commit } from "../../types";
 interface Props {
   commit: Commit;
   initialPosition: { x: number; y: number };
+  initialInput?: string;
   onClose: () => void;
   onFocus?: () => void;
 }
@@ -22,19 +23,34 @@ interface Props {
 export const ChatDialog: React.FC<Props> = ({
   commit,
   initialPosition,
+  initialInput = "",
   onClose,
   onFocus,
 }) => {
-  const { commits, addCommit, setHEAD } = useConversationStore();
+  const { commits, addTurn, setHEAD } = useConversationStore();
 
   const [pos, setPos] = useState(initialPosition);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(initialInput);
   const [loading, setLoading] = useState(false);
+  const [streamingContent, setStreamingContent] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const [tipId, setTipId] = useState(commit.id);
   const dragging = useRef<{ startX: number; startY: number } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Sync input if initialInput changes (e.g. user clicks another draft node while dialog open)
+  useEffect(() => {
+    if (initialInput) {
+      setInput(initialInput);
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.style.height = "auto";
+          textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+        }
+      }, 0);
+    }
+  }, [initialInput]);
 
   // Messages for this branch (from root to this commit)
   const messages = useMemo(() => {
@@ -48,7 +64,7 @@ export const ChatDialog: React.FC<Props> = ({
   }, [commits, tipId]);
 
   const tokenCount = useMemo(
-    () => estimateTokens(reconstructMessages(commits, commit.id)),
+    () => estimateTokens(reconstructMessages(commits, tipId)),
     [commits, tipId],
   );
 
@@ -103,7 +119,7 @@ export const ChatDialog: React.FC<Props> = ({
     onClose();
   }, [input, onClose]);
 
-  // ── Send ──────────────────────────────────────────────────────────────────
+  // ── Send (Transactional & Streaming) ──────────────────────────────────────
   const handleSend = useCallback(async () => {
     const text = input.trim();
     if (!text || loading) return;
@@ -111,47 +127,52 @@ export const ChatDialog: React.FC<Props> = ({
     setInput("");
     setError(null);
     setLoading(true);
-
-    // Create user commit as child of this dialog's commit
-    const userId = crypto.randomUUID();
-    const userCommit: Commit = {
-      id: userId,
-      parentId: tipId,
-      role: "user",
-      content: text,
-      summary: makeSummary(text),
-      timestamp: Date.now(),
-      model: "",
-    };
-    addCommit(userCommit);
-    // Don't setHEAD to user node — turns end with assistant
-    setTipId(userId);
+    setStreamingContent("");
 
     try {
-      // Pass the updated commits (with new user commit) for context
-      const updatedCommits = { ...commits, [userId]: userCommit };
-      const responseText = await sendMessage(updatedCommits, userId, text);
+      let fullAssistantContent = "";
+      // Use the generator for real-time updates
+      for await (const chunk of streamMessage(commits, tipId, text)) {
+        fullAssistantContent += chunk;
+        setStreamingContent(fullAssistantContent);
+      }
 
+      // Success: commit the whole turn atomically
+      const userId = crypto.randomUUID();
       const assistantId = crypto.randomUUID();
+
+      const userCommit: Commit = {
+        id: userId,
+        parentId: tipId,
+        role: "user",
+        content: text,
+        summary: makeSummary(text),
+        timestamp: Date.now(),
+        model: "",
+      };
+
       const assistantCommit: Commit = {
         id: assistantId,
         parentId: userId,
         role: "assistant",
-        content: responseText,
-        summary: makeSummary(responseText),
+        content: fullAssistantContent,
+        summary: makeSummary(fullAssistantContent),
         timestamp: Date.now(),
         model: "claude-sonnet-4-20250514",
       };
-      addCommit(assistantCommit);
-      setHEAD(assistantId);
+
+      addTurn(userCommit, assistantCommit);
       setTipId(assistantId);
+      setStreamingContent("");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "API error";
       setError(msg);
+      // Restore input on failure
+      setInput(text);
     } finally {
       setLoading(false);
     }
-  }, [input, loading, commits, addCommit, setHEAD, tipId]);
+  }, [input, loading, commits, addTurn, tipId]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -167,7 +188,7 @@ export const ChatDialog: React.FC<Props> = ({
     e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
   };
 
-  const canSend = input.trim().length > 0 && !loading;
+  const canSend = (input.trim().length > 0 || streamingContent) && !loading;
 
   return (
     <div
@@ -305,7 +326,11 @@ export const ChatDialog: React.FC<Props> = ({
           minHeight: 0,
         }}
       >
-        <MessageList messages={messages} loading={loading} />
+        <MessageList 
+          messages={messages} 
+          loading={loading} 
+          streamingContent={streamingContent}
+        />
       </div>
 
       {/* ── Error ── */}

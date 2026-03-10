@@ -3,18 +3,19 @@ import type { Commit } from '../../types'
 import { timeAgo } from '../../lib/utils'
 
 interface Props {
-  messages: Commit[]
-  loading:  boolean
+  messages:         Commit[]
+  loading:          boolean
+  streamingContent?: string
 }
 
-export const MessageList: React.FC<Props> = ({ messages, loading }) => {
+export const MessageList: React.FC<Props> = ({ messages, loading, streamingContent }) => {
   const endRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages.length, loading])
+  }, [messages.length, loading, streamingContent])
 
-  if (messages.length === 0 && !loading) {
+  if (messages.length === 0 && !loading && !streamingContent) {
     return (
       <div style={{
         textAlign:  'center',
@@ -72,7 +73,35 @@ export const MessageList: React.FC<Props> = ({ messages, loading }) => {
         </div>
       ))}
 
-      {loading && (
+      {/* Streaming assistant message */}
+      {streamingContent && (
+        <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 10 }}>
+          <div style={{
+            maxWidth:     '82%',
+            padding:      '10px 14px',
+            borderRadius: '14px 14px 14px 4px',
+            background:   'rgba(255,255,255,0.06)',
+            border:       '1px solid rgba(255,255,255,0.09)',
+            color:        '#ececec',
+            fontFamily:   "'DM Sans', sans-serif",
+            fontSize:     13.5,
+            lineHeight:   1.65,
+          }}>
+            {streamingContent}
+            <span style={{
+              display:    'inline-block',
+              width:      8,
+              height:     14,
+              background: '#6366f1',
+              marginLeft: 4,
+              animation:  'dot-pulse 0.8s infinite',
+              verticalAlign: 'middle',
+            }} />
+          </div>
+        </div>
+      )}
+
+      {loading && !streamingContent && (
         <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 10 }}>
           <div style={{
             padding:      '12px 16px',

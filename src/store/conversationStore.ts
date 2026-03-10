@@ -8,6 +8,7 @@ interface ConversationStore {
   HEAD:       string
 
   addCommit:  (commit: Commit) => void
+  addTurn:    (user: Commit, assistant: Commit) => void
   setHEAD:    (id: string) => void
   fork:       (fromId: string, label: string) => void
 }
@@ -25,6 +26,26 @@ export const useConversationStore = create<ConversationStore>((set) => ({
         : state.edges,
       HEAD: commit.id,
     })),
+
+  addTurn: (user, assistant) =>
+    set((state) => {
+      const newCommits = { 
+        ...state.commits, 
+        [user.id]: user, 
+        [assistant.id]: assistant 
+      }
+      const newEdges = [...state.edges]
+      if (user.parentId) {
+        newEdges.push({ source: user.parentId, target: user.id })
+      }
+      newEdges.push({ source: user.id, target: assistant.id })
+
+      return {
+        commits: newCommits,
+        edges:   newEdges,
+        HEAD:    assistant.id
+      }
+    }),
 
   setHEAD: (id) => set({ HEAD: id }),
 
