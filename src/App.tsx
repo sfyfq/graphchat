@@ -163,6 +163,7 @@ export default function App() {
 
   const handleSidebarTurnClick = useCallback((commit: Commit) => {
     handleNodeClick(commit)
+    setExpandedSquashGroup(null) // Close sidebar once a specific node is picked
     // Auto-center on the newly expanded node
     setTimeout(() => {
       window.dispatchEvent(new CustomEvent('gitchat:fit-nodes', { detail: [commit.id] }))

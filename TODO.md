@@ -1,17 +1,14 @@
-# TODO: Defer Squash Expansion
+# TODO: Close Sidebar on Turn Click
 
 ## Phase 1: Implementation
 
-### Task 1: Refactor `src/App.tsx`
-- [ ] Remove `expandedGroupIds` calculation.
-- [ ] Update `Canvas` prop: `expandedGroups={new Set()}` (for now, or remove if unused).
-- [ ] Update `toggleGroup` centering:
-    - If expanding, center on `[groupId, group.parentId, group.childId]`.
-- [ ] Update `handleSidebarTurnClick`:
-    - Add `window.dispatchEvent(new CustomEvent('gitchat:fit-nodes', { detail: [commit.id] }))`.
+### Task 1: Update `src/App.tsx`
+- [ ] Modify `handleSidebarTurnClick`:
+    - Add `setExpandedSquashGroup(null)`.
 
 ## Phase 2: Validation
-- [ ] Verify clicking a pill opens the sidebar but the pill remains a pill on the canvas.
-- [ ] Verify clicking a turn in the sidebar opens a dialog and that specific node appears on the canvas.
-- [ ] Verify the view centers on the selected node.
+- [ ] Expand a group.
+- [ ] Click a turn in the sidebar.
+- [ ] Verify the sidebar closes immediately.
+- [ ] Verify the corresponding dialog opens and the node is revealed on canvas.
 - [ ] Run `npx tsc`.
