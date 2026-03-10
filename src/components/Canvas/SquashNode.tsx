@@ -31,9 +31,9 @@ export const SquashNode: React.FC<Props> = ({
   }
 
   const handleMouseEnter = (e: React.MouseEvent<SVGGElement>) => {
-    const rect = (e.currentTarget.ownerSVGElement as SVGSVGElement).getBoundingClientRect()
-    const sx = x * zoom + rect.left
-    const sy = y * zoom + rect.top
+    const rect = e.currentTarget.getBoundingClientRect()
+    const sx = rect.left + rect.width / 2
+    const sy = rect.top + rect.height / 2
     onHoverGroup(group.id, sx, sy)
   }
 

@@ -37,10 +37,10 @@ export const CommitNode: React.FC<Props> = ({
   }
 
   const handleMouseEnter = (e: React.MouseEvent<SVGGElement>) => {
-    const rect = (e.currentTarget.ownerSVGElement as SVGSVGElement)
-      .getBoundingClientRect()
-    const sx = x * zoom + rect.left
-    const sy = y * zoom + rect.top
+    const rect = e.currentTarget.getBoundingClientRect()
+    // Use the center of the node
+    const sx = rect.left + rect.width / 2
+    const sy = rect.top + rect.height / 2
     onHover(commit.id, sx, sy)
   }
 
