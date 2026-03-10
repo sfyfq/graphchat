@@ -110,10 +110,10 @@ export const ChatDialog: React.FC<Props> = ({
     return chain;
   }, [commits, tipId]);
 
-  const tokenCount = useMemo(
-    () => estimateTokens(reconstructMessages(commits, tipId)),
-    [commits, tipId],
-  );
+  const tokenCount = useMemo(() => {
+    const conv = reconstructMessages(commits, tipId);
+    return estimateTokens(conv);
+  }, [commits, tipId]);
 
   const bColor = branchColor(commit.branchLabel);
 
@@ -181,11 +181,11 @@ export const ChatDialog: React.FC<Props> = ({
     setStreamingContent("");
 
     try {
-      const history = reconstructMessages(commits, tipId);
+      const conv = reconstructMessages(commits, tipId);
       let fullAssistantContent = "";
       
       // Use the new llm provider interface
-      for await (const chunk of llm.streamMessage(history, text)) {
+      for await (const chunk of llm.streamMessage(conv, text)) {
         fullAssistantContent += chunk;
         setStreamingContent(fullAssistantContent);
       }

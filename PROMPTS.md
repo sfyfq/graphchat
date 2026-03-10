@@ -1,23 +1,21 @@
 **Your Optimized Prompt:**
-Refactor the LLM integration into a provider-based architecture.
+Fix the Gemini "role 'user'" error by shifting the initial assistant root message to the `systemInstruction`.
 
-1.  **Architecture**:
-    - Create `src/lib/llm/` folder.
-    - `src/lib/llm/types.ts`: Define `LLMProvider` interface with `sendMessage` and `streamMessage` methods.
-    - `src/lib/llm/gemini.ts`: Implement `LLMProvider` for Google Gemini using `@google/generative-ai`.
-    - `src/lib/llm/index.ts`: Export a default provider (currently Gemini).
+1.  **Refactor `src/lib/llm/utils.ts`**:
+    - Update `reconstructMessages` to return an object: `{ systemInstruction: string, history: LLMMessage[] }`.
+    - If the first node in the chronological chain is the `root` node (assistant), extract its content as `systemInstruction`.
+    - Ensure the `history` array only contains subsequent nodes, starting with the first `user` node.
 
-2.  **Implementation Details**:
-    - Use `gemini-3.1-flash-lite-preview` as the default model in `gemini.ts`.
-    - Ensure `LLMProvider` methods accept the conversation history in a format that can be easily mapped to vendor-specific requirements.
-    - Leave provisions for future features like `systemInstruction`, `safetySettings`, and `attachments`.
+2.  **Refactor `src/lib/llm/gemini.ts`**:
+    - Update `sendMessage` and `streamMessage` to handle the new return object from `reconstructMessages`.
+    - Pass the `systemInstruction` when calling `genAI.getGenerativeModel`.
+    - Pass the filtered `history` to `model.startChat`.
 
 3.  **App Integration**:
-    - Update `src/components/ChatDialog/ChatDialog.tsx` to import the streaming function from the new `src/lib/llm/index.ts`.
+    - Update `src/components/ChatDialog/ChatDialog.tsx` if needed to accommodate the change in `reconstructMessages` (it currently uses it for token estimation).
 
 **Key Improvements:**
-• Decouples the application logic from specific LLM vendors.
-• Simplifies the process of adding new AI providers in the future.
-• Centralizes LLM configuration and error handling.
+• Resolves the Gemini API constraint while preserving the context of the welcome message.
+• Aligns with LLM best practices for system instructions.
 
-**Techniques Applied:** Interface-based programming, Strategy pattern.
+**Techniques Applied:** API constraint adaptation, data structure refinement.

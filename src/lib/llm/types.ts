@@ -1,4 +1,5 @@
 import { Part } from "@google/generative-ai";
+import { ReconstructedConversation } from "./utils";
 
 export interface LLMMessage {
   role: 'user' | 'model';
@@ -10,7 +11,7 @@ export interface LLMProvider {
    * Standard one-shot message completion.
    */
   sendMessage: (
-    history: LLMMessage[],
+    conv: ReconstructedConversation,
     newText: string,
   ) => Promise<string>;
 
@@ -18,7 +19,7 @@ export interface LLMProvider {
    * Streaming completion.
    */
   streamMessage: (
-    history: LLMMessage[],
+    conv: ReconstructedConversation,
     newText: string,
   ) => AsyncGenerator<string, void, unknown>;
 }
