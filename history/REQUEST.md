@@ -68,3 +68,8 @@ feature: Atomic turns with streaming and User-node editing.
 - Atomic Commit: Only after the Assistant stream finishes successfully, commit BOTH the User and Assistant nodes to the store.
 - Error handling: If the request fails, the User message stays in the input field; nothing is committed to the graph.
 --- Tue Mar 10 12:15:00 PDT 2026 ---
+bugfix: clicking a user node (draft) should not show that user message in the dialog's message list.
+- When a User node is clicked, the dialog should display the conversation up to its parent Assistant node.
+- The clicked User node's content should only appear in the input textfield.
+--- Tue Mar 10 12:30:00 PDT 2026 ---
+Analysis: `ChatDialog` was initializing its `tipId` state to the clicked node's ID. For User nodes, this caused the message list to include the User message itself. We should initialize `tipId` to the parent ID if the clicked node is a User node.
