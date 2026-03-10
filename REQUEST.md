@@ -1,6 +1,3 @@
-improvement: defer canvas expansion of squash groups.
-- When a squash pill is clicked, open the sidebar but do not automatically expand the nodes on the canvas.
-- Defer expansion until the user clicks a specific turn in the sidebar.
-- Clicking a sidebar turn opens a dialog, which pins the node and makes it visible on the canvas.
-- Adjust auto-centering logic to focus on the pill when the sidebar opens, and on the specific node when a turn is clicked.
---- Tue Mar 10 11:45:00 PDT 2026 ---
+bugfix: when the user clicks on a node from the sidebar to bring up a dialog, nodes on both sides of the active node (HEAD) are squashed, leaving the active sidebar stale. Automatically close the squashGroup sidebar when the user picks a node from there.
+--- Tue Mar 10 12:00:00 PDT 2026 ---
+Analysis: When a turn is clicked in the sidebar, a dialog opens, pinning that node. The graph re-calculates, often splitting the original run into multiple new groups. The sidebar, which holds a snapshot of the original group, becomes visually and logically disconnected from the new canvas state. Closing the sidebar on click provides a clean transition to the newly revealed node.
