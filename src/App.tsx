@@ -128,7 +128,7 @@ export default function App() {
       // Spawn: 40px right, 200px above click point, clamped to viewport
       const baseSX = screenX ?? window.innerWidth / 2
       const baseSY = screenY ?? window.innerHeight / 2
-      const x = clamp(baseSX + 40,  10, window.innerWidth  - 450)
+      const x = clamp(baseSX + 40,  10, window.innerWidth  - 880)
       const y = clamp(baseSY - 200, 10, window.innerHeight - 580)
       return { ...prev, [commit.id]: { x, y } }
     })
