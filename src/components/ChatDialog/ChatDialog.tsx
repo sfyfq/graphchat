@@ -7,8 +7,7 @@ import React, {
   useMemo,
 } from "react";
 import { useConversationStore } from "../../store/conversationStore";
-import { reconstructMessages, estimateTokens } from "../../lib/context";
-import { streamMessage } from "../../lib/llm";
+import { llm, reconstructMessages, estimateTokens } from "../../lib/llm";
 import { makeSummary, branchColor } from "../../lib/utils";
 import { MessageList } from "./MessageList";
 import type { Commit } from "../../types";
@@ -182,9 +181,11 @@ export const ChatDialog: React.FC<Props> = ({
     setStreamingContent("");
 
     try {
+      const history = reconstructMessages(commits, tipId);
       let fullAssistantContent = "";
-      // Use the generator for real-time updates
-      for await (const chunk of streamMessage(commits, tipId, text)) {
+      
+      // Use the new llm provider interface
+      for await (const chunk of llm.streamMessage(history, text)) {
         fullAssistantContent += chunk;
         setStreamingContent(fullAssistantContent);
       }
@@ -210,7 +211,7 @@ export const ChatDialog: React.FC<Props> = ({
         content: fullAssistantContent,
         summary: makeSummary(fullAssistantContent),
         timestamp: Date.now(),
-        model: "claude-sonnet-4-20250514",
+        model: "gemini-3.1-flash-lite", // Branding update
       };
 
       addTurn(userCommit, assistantCommit);
