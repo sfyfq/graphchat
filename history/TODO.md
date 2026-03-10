@@ -50,3 +50,29 @@
     - [ ] Provide the command for the user to perform the first merge to `main`.
 - [ ] **Archive 4-D Files:**
     - [ ] Append methodology files to `history/` and remove locals.
+
+--- Mon Mar  9 17:21:24 PDT 2026 ---
+
+## TODO: Fix Squash Logic and Expanded State
+
+- [ ] **Execution Phase:**
+    - [ ] **Modify `src/lib/squash.ts`:**
+        - [ ] Update `collapsible` definition: Allow `assistant` nodes to be collapsible if strictly linear.
+        - [ ] Set `MIN_SIZE = 1`.
+        - [ ] Ensure that branch tips and fork points remain visible as landmarks.
+    - [ ] **Modify `src/components/Canvas/CommitNode.tsx`:**
+        - [ ] Add `isExpandedRep` and `onCollapse` props.
+        - [ ] Render a small "collapse" icon/button if `isExpandedRep` is true.
+    - [ ] **Modify `src/App.tsx`:**
+        - [ ] Pass `isExpandedRep={expandedGroups.has(commit.id)}` to `CommitNode`.
+        - [ ] Pass `onCollapse={() => toggleGroup(commit.id)}` to `CommitNode`.
+        - [ ] Ensure `expandedGroups` is kept in sync with `allGroups`.
+- [ ] **Validation:**
+    - [ ] Inspect the canvas to ensure long linear conversations are squashed correctly.
+    - [ ] Verify that an expanded group can be collapsed via a UI element.
+    - [ ] Confirm that closing a dialog allows nodes to return to their squashed state if appropriate.
+- [ ] **Approval & Merge:**
+    - [ ] Present the fix to the user.
+    - [ ] Upon approval, merge `bugfix/squash-logic` into `dev`.
+- [ ] **Archive:**
+    - [ ] Append methodology files to `history/` and remove locals.
