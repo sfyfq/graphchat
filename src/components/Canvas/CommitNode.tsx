@@ -20,13 +20,11 @@ interface Props {
 export const CommitNode: React.FC<Props> = ({
   commit, x, y, isHEAD, isOpen, isExpandedRep, onHover, onClick, onCollapse, zoom,
 }) => {
+  const isRoot      = commit.id === 'root'
   const isUser      = commit.role === 'user'
-  const strokeColor = isUser ? '#3b82f6' : '#10b981'
+  const strokeColor = isRoot ? '#f59e0b' : (isUser ? '#3b82f6' : '#10b981')
   const fillOpacity = isHEAD ? 0.22 : 0.10
   const bColor      = branchColor(commit.branchLabel)
-
-  // Skip rendering root placeholder
-  if (commit.id === 'root') return null
 
   const handleClick = (e: React.MouseEvent<SVGGElement>) => {
     e.stopPropagation()
@@ -94,16 +92,33 @@ export const CommitNode: React.FC<Props> = ({
       )}
 
       {/* Node body */}
-      <circle
-        r={NODE_R}
-        fill={
-          isHEAD
-            ? `rgba(99,102,241,${fillOpacity})`
-            : `rgba(${isUser ? '59,130,246' : '16,185,129'},${fillOpacity})`
-        }
-        stroke={isHEAD ? '#6366f1' : strokeColor}
-        strokeWidth={isHEAD ? 2 : 1.5}
-      />
+      {isRoot ? (
+        <rect
+          x={-NODE_R}
+          y={-NODE_R}
+          width={NODE_R * 2}
+          height={NODE_R * 2}
+          rx={8}
+          fill={
+            isHEAD
+              ? `rgba(99,102,241,${fillOpacity})`
+              : `rgba(245,158,11,${fillOpacity})`
+          }
+          stroke={isHEAD ? '#6366f1' : strokeColor}
+          strokeWidth={isHEAD ? 2 : 1.5}
+        />
+      ) : (
+        <circle
+          r={NODE_R}
+          fill={
+            isHEAD
+              ? `rgba(99,102,241,${fillOpacity})`
+              : `rgba(${isUser ? '59,130,246' : '16,185,129'},${fillOpacity})`
+          }
+          stroke={isHEAD ? '#6366f1' : strokeColor}
+          strokeWidth={isHEAD ? 2 : 1.5}
+        />
+      )}
 
       {/* Role icon */}
       <text

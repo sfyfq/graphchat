@@ -41,7 +41,7 @@ export const ChatDialog: React.FC<Props> = ({
     const chain: Commit[] = [];
     let cur: Commit | undefined = commits[tipId];
     while (cur) {
-      if (cur.content && cur.id !== "root") chain.unshift(cur);
+      if (cur.content) chain.unshift(cur);
       cur = cur.parentId ? commits[cur.parentId] : undefined;
     }
     return chain;

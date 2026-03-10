@@ -47,7 +47,7 @@ const IconBtn: React.FC<{
 
 export const Toolbar: React.FC<Props> = ({ onSearchOpen }) => {
   const { commits } = useConversationStore()
-  const commitCount = Object.keys(commits).filter(id => id !== 'root').length
+  const commitCount = Object.keys(commits).length
 
   const zoom = (action: string) => {
     window.dispatchEvent(new CustomEvent('gitchat:zoom', { detail: action }))
@@ -92,7 +92,7 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen }) => {
             fontSize:   10,
             color:      'rgba(255,255,255,0.3)',
           }}>
-            {commitCount} commits
+            {commitCount} {commitCount === 1 ? 'commit' : 'commits'}
           </span>
         </div>
       </div>

@@ -16,3 +16,14 @@ Refine the squash logic to correctly handle linear paths and implement a way to 
 1.  **Fix Squash Logic:** Modify `src/lib/squash.ts` to allow `assistant` nodes to be collapsible if they are part of a strictly linear chain. Set `MIN_SIZE` to 1 to ensure that even short linear segments (like a single user message or a turn) can be squashed if they are between visible landmarks. Ensure no `user -> user` paths are visible.
 2.  **Collapsible State:** Implement a way for users to collapse a group that was previously expanded. Add a "collapse" button or action to the representative node of an expanded group.
 3.  **State Management:** Ensure that expanded groups can be collapsed and that closing dialogs allows nodes to return to their squashed state if they are no longer pinned and not in the `expandedGroups` set.
+feature: the current design doesn't display the root node. I want the root node to represent the welcome message of the assistant. so the changes needed are: make the root visible and shaped differently; and when starting a new chat session, do not load from the seed, just display the root node only.
+--- Mon Mar  9 17:30:00 PDT 2026 ---
+feature: refine the squash logic.
+- MIN_SIZE = 3.
+- SquashGroup size must be odd.
+- SquashGroup must begin and end with a 'user' node.
+- SquashGroup must have exactly one parent node (assistant) and one child node (assistant).
+--- Tue Mar 10 09:18:00 PDT 2026 ---
+bug: when the canvas consists of root-user-assistant-user-assistant-user-assistant, i expect the layout to become root-squashed-assistant, but I get root-user-assistant-squashed-assistant.
+--- Tue Mar 10 09:25:00 PDT 2026 ---
+Analysis: The `computeSquashGroups` function in `src/lib/squash.ts` explicitly excludes nodes whose parent is 'root' from being candidates for squashing. This prevents the first user-assistant pair from being included in a squash group even if they meet all other criteria.

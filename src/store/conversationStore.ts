@@ -13,9 +13,9 @@ interface ConversationStore {
 }
 
 export const useConversationStore = create<ConversationStore>((set) => ({
-  commits: SEED_COMMITS,
-  edges:   SEED_EDGES,
-  HEAD:    'b4', // start at a leaf
+  commits: { root: SEED_COMMITS.root },
+  edges:   [],
+  HEAD:    'root',
 
   addCommit: (commit) =>
     set((state) => ({

@@ -76,3 +76,79 @@
     - [ ] Upon approval, merge `bugfix/squash-logic` into `dev`.
 - [ ] **Archive:**
     - [ ] Append methodology files to `history/` and remove locals.
+# TODO: Visible Root Node Implementation
+
+## Phase 1: Research & Validation
+- [x] Identify where `root` is explicitly skipped in the codebase.
+- [ ] Verify `src/lib/layout.ts` behavior for `root` node positioning.
+- [ ] Confirm `root` node structure in `src/lib/seeds.ts`.
+
+## Phase 2: Implementation
+
+### Task 1: Store Initialization
+- [ ] Modify `src/store/conversationStore.ts`:
+    - Initialize `commits` with only the `root` entry.
+    - Initialize `edges` as an empty array `[]`.
+    - Set `HEAD` to `'root'`.
+
+### Task 2: Canvas Rendering
+- [ ] Modify `src/components/Canvas/CommitNode.tsx`:
+    - Remove `if (commit.id === 'root') return null`.
+    - Add logic to render a unique shape for `root` (e.g., Rounded Rect).
+    - Update colors/icons if needed for the root node.
+- [ ] Modify `src/components/Canvas/Canvas.tsx`:
+    - Remove `if (commit.id === 'root') return null` in the `commits.map` loop.
+    - Ensure edges from `root` are still rendered (they should be, but check `visibleEdges` logic).
+
+### Task 3: Chat & UI Integration
+- [ ] Modify `src/components/ChatDialog/ChatDialog.tsx`:
+    - Update the message chain logic to include the `root` message.
+- [ ] Check `src/components/Search/SearchPanel.tsx`:
+    - Decide if `root` should be searchable (it probably should if it's the welcome message).
+- [ ] Check `src/components/Toolbar/Toolbar.tsx`:
+    - Update commit count logic to include `root` if it's now considered a real node.
+
+## Phase 3: Validation
+- [ ] Verify the root node is visible on startup.
+- [ ] Verify the root node looks different.
+- [ ] Verify clicking the root node opens the chat dialog with the welcome message.
+- [ ] Verify adding a new message from the root node works as expected.
+- [ ] Run lint/type-check.
+# TODO: Refine Squash Logic
+
+## Phase 1: Implementation
+
+### Task 1: Update `src/lib/squash.ts`
+- [ ] Set `MIN_SIZE = 3`.
+- [ ] Modify `computeSquashGroups`:
+    - [ ] Update the `collapsible` identification logic if necessary (though the core "1 parent, 1 child" rule still applies to nodes *inside* the group).
+    - [ ] Update the `walkGroup` / run-growing logic to be more discerning.
+    - [ ] Logic:
+        1. Find a contiguous run of "strictly linear" nodes (1 parent, 1 child, not pinned).
+        2. Identify the parent of the run and the child of the run.
+        3. If parent is not 'assistant' or child is not 'assistant', this run cannot be squashed in its entirety.
+        4. Trim the run to start and end with a 'user' node.
+        5. Ensure the trimmed run has an odd length.
+        6. Check if the resulting trimmed run's length is `>= MIN_SIZE`.
+        7. If valid, create the `SquashGroup`.
+
+## Phase 2: Validation
+- [ ] Verify that created groups always have odd lengths (3, 5, 7...).
+- [ ] Verify that the representative node (first node) is always a 'user' node.
+- [ ] Verify that the node before the group is an 'assistant'.
+- [ ] Verify that the node after the group is an 'assistant'.
+- [ ] Run `npx tsc` to ensure no type regressions.
+# TODO: Fix Squash Logic Root Exclusion Bug
+
+## Phase 1: Implementation
+
+### Task 1: Update `src/lib/squash.ts`
+- [ ] Modify `computeSquashGroups`:
+    - [ ] Locate the loop that populates the `candidates` set.
+    - [ ] Change `if (!parents[id] || parents[id] === 'root') return` to `if (!parents[id]) return`.
+    - [ ] This allows nodes connected to the root to be considered for squashing.
+
+## Phase 2: Validation
+- [ ] Verify the logic with the reported case: `root -> u1 -> a1 -> u2 -> a2 -> u3 -> a3`.
+- [ ] Confirm that `[u1, a1, u2, a2, u3]` is correctly identified as a run and squashed.
+- [ ] Run `npx tsc` to ensure no type regressions.

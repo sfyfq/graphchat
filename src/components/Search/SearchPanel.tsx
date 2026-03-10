@@ -60,7 +60,6 @@ export const SearchPanel: React.FC<Props> = ({
     if (!q) return []
     return Object.values(commits)
       .filter(c =>
-        c.id !== 'root' &&
         (c.content.toLowerCase().includes(q) ||
          (c.summary ?? '').toLowerCase().includes(q)),
       )

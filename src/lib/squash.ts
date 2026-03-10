@@ -10,14 +10,12 @@ export interface SquashGroup {
 /**
  * Compute which commits can be collapsed into squash groups.
  *
- * A commit is collapsible if:
+ * A commit is candidate for squashing if:
  *  - it has exactly one parent
  *  - it has exactly one child
  *  - it is not pinned (branch label, HEAD, or open dialog)
- *
- * Adjacent collapsible commits are merged into a single SquashGroup.
  */
-const MIN_SIZE = 1
+const MIN_SIZE = 3
 
 export function computeSquashGroups(
   commits:    Record<string, Commit>,
@@ -33,19 +31,18 @@ export function computeSquashGroups(
     parents[target] = source
   })
 
-  // Mark collapsible: exactly 1 parent, exactly 1 child, not pinned, not root
-  const collapsible = new Set<string>()
+  // Mark candidate for squashing: exactly 1 parent, exactly 1 child, not pinned, not root
+  const candidates = new Set<string>()
   Object.keys(commits).forEach(id => {
     if (id === 'root') return
     if (pinned.has(id)) return
     if (commits[id].branchLabel) return      // branch roots stay visible
     if (children[id].length !== 1) return    // branch points / tips stay visible
-    if (!parents[id] || parents[id] === 'root') return
-    collapsible.add(id)
+    if (!parents[id]) return
+    candidates.add(id)
   })
 
-  // Walk through commits and group contiguous collapsible runs
-  // We BFS from root to maintain order
+  // Walk through commits and group contiguous candidate runs
   const visited = new Set<string>()
   const groups  = new Map<string, SquashGroup>()
 
@@ -53,31 +50,64 @@ export function computeSquashGroups(
     if (visited.has(startId)) return
     visited.add(startId)
 
-    if (!collapsible.has(startId)) {
-      // Not collapsible — recurse into children individually
+    if (!candidates.has(startId)) {
       children[startId].forEach(child => walkGroup(child))
       return
     }
 
-    // Grow a run upward while still collapsible
+    // Grow a contiguous linear run
     const run: string[] = [startId]
     let cursor = startId
     while (true) {
       const next = children[cursor][0]
-      if (!next || !collapsible.has(next) || visited.has(next)) break
+      if (!next || !candidates.has(next) || visited.has(next)) break
       run.push(next)
       visited.add(next)
       cursor = next
     }
 
-    if (run.length >= MIN_SIZE) {
-      const group: SquashGroup = {
-        id:       run[0],
-        commits:  run.map(id => commits[id]),
-        parentId: parents[run[0]] ?? null,
-        childId:  children[run[run.length - 1]][0] ?? null,
+    // Trim run to satisfy constraints:
+    // 1. Starts with 'user' node
+    // 2. Ends with 'user' node
+    // 3. Length is odd
+    // 4. Parent is 'assistant'
+    // 5. Child is 'assistant'
+
+    let firstIdx = run.findIndex(id => commits[id].role === 'user')
+    let lastIdx  = -1
+    for (let i = run.length - 1; i >= 0; i--) {
+      if (commits[run[i]].role === 'user') {
+        lastIdx = i; break
       }
-      run.forEach(id => groups.set(id, group))
+    }
+
+    if (firstIdx !== -1 && lastIdx !== -1 && lastIdx >= firstIdx) {
+      let subRun = run.slice(firstIdx, lastIdx + 1)
+
+      // If even length, trim one from the end (must be assistant if alternating)
+      // Wait, if it's user -> assistant -> user, length is 3.
+      // if it's user -> assistant, length is 2 -> trim to [user], length 1.
+      if (subRun.length % 2 === 0) {
+        subRun.pop()
+      }
+
+      if (subRun.length >= MIN_SIZE) {
+        const pId = parents[subRun[0]]
+        const cId = children[subRun[subRun.length - 1]][0]
+
+        const pRole = pId ? commits[pId]?.role : null
+        const cRole = cId ? commits[cId]?.role : null
+
+        if (pRole === 'assistant' && cRole === 'assistant') {
+          const group: SquashGroup = {
+            id:       subRun[0],
+            commits:  subRun.map(id => commits[id]),
+            parentId: pId ?? null,
+            childId:  cId ?? null,
+          }
+          subRun.forEach(id => groups.set(id, group))
+        }
+      }
     }
 
     // Continue past the end of the run
@@ -85,7 +115,6 @@ export function computeSquashGroups(
     children[tail].forEach(child => walkGroup(child))
   }
 
-  // Start from root's children
   children['root']?.forEach(child => walkGroup(child))
 
   return groups
@@ -106,3 +135,5 @@ export function hiddenIds(groups: Map<string, SquashGroup>): Set<string> {
   })
   return hidden
 }
+
+

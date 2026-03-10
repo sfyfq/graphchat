@@ -242,9 +242,8 @@ export const Canvas: React.FC<Props> = ({
             )
           })}
 
-          {/* Regular commit nodes — skip hidden and root */}
+          {/* Regular commit nodes — skip hidden */}
           {Object.values(commits).map(commit => {
-            if (commit.id === 'root') return null
             if (hidden.has(commit.id)) return null
             // Also skip if this id is a group rep rendered as a pill
             if (collapsedGroupReps.has(commit.id)) return null
