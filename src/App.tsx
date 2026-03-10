@@ -73,10 +73,10 @@ export default function App() {
     const isExpanding = !expandedGroups.has(groupId)
     
     setExpandedGroups(prev => {
-      const next = new Set(prev)
-      if (next.has(groupId)) next.delete(groupId)
-      else next.add(groupId)
-      return next
+      // If expanding a new one, replace the current one.
+      // If collapsing the current one, empty the set.
+      if (isExpanding) return new Set([groupId])
+      return new Set()
     })
 
     if (isExpanding) {

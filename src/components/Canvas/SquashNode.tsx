@@ -126,6 +126,8 @@ export const SquashTooltip: React.FC<TooltipProps> = ({
       borderRadius:   12,
       padding:        '12px 14px',
       width:          280,
+      maxHeight:      'calc(100vh - 240px)',
+      overflowY:      'auto',
       pointerEvents:  'auto',
       zIndex:         900,
       backdropFilter: 'blur(16px)',
@@ -137,6 +139,11 @@ export const SquashTooltip: React.FC<TooltipProps> = ({
         alignItems:    'center',
         justifyContent: 'space-between',
         marginBottom:  10,
+        position:      'sticky',
+        top:           0,
+        background:    'rgba(9,9,15,0.01)', // tiny bit of bg for sticky
+        paddingBottom: 4,
+        zIndex:        10,
       }}>
         <div style={{
           fontFamily:    "'Syne', sans-serif",
