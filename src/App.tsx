@@ -21,6 +21,7 @@ export default function App() {
   const [dialogs,     setDialogs]     = useState<Record<string, { x: number; y: number }>>({})
   const [hoveredId,   setHoveredId]   = useState<string | null>(null)
   const [hoverPos,    setHoverPos]    = useState({ x: 0, y: 0 })
+  const [isHoveringCanvas, setIsHoveringCanvas] = useState(false)
   const [showSearch,  setShowSearch]  = useState(false)
 
   // Which squash groups the user has manually expanded
@@ -162,6 +163,7 @@ export default function App() {
     screenY:  number,
   ) => {
     setHoveredId(commitId)
+    setIsHoveringCanvas(!!commitId)
     if (commitId) setHoverPos({ x: screenX, y: screenY })
   }, [])
 
@@ -187,6 +189,11 @@ export default function App() {
     setActiveSquashGroup(null)
   }, [toggleGroup])
 
+  const handleSidebarTurnHover = useCallback((id: string | null) => {
+    setHoveredId(id)
+    setIsHoveringCanvas(false)
+  }, [])
+
   const handleSidebarTurnClick = useCallback((commit: Commit) => {
     handleNodeClick(commit)
   }, [handleNodeClick])
@@ -210,7 +217,7 @@ export default function App() {
 
   // ── Hovered commit ────────────────────────────────────────────────────────
   const hoveredCommit = hoveredId ? commits[hoveredId] : null
-  const showTooltip   = hoveredCommit && !dialogs[hoveredId!]
+  const showTooltip   = hoveredCommit && !dialogs[hoveredId!] && isHoveringCanvas
 
   return (
     <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', background: '#080810' }}>
@@ -246,8 +253,9 @@ export default function App() {
           screenY={0}
           isExpanded={expandedGroups.has(activeSquashGroup.id)}
           onCollapse={handleCollapseGroup}
-          onTurnHover={setHoveredId}
+          onTurnHover={handleSidebarTurnHover}
           onTurnClick={handleSidebarTurnClick}
+          hoveredId={hoveredId}
         />
       )}
 
