@@ -523,6 +523,7 @@ export const ChatDialog: React.FC<Props> = ({
             ref={textareaRef}
             value={input}
             onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
             onKeyUp={handleKeyUp}
             onClick={handleClick}
             placeholder="Continue this thread…"
