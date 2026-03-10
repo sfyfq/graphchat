@@ -1,25 +1,20 @@
-# TODO: Multi-Session & Persistence Implementation
+# TODO: Adjust Dialog Top Clamping
 
-## Phase 1: Types & Library Setup
-- [ ] Update `src/types.ts` with `ChatSession` and `Attachment`.
-- [ ] (Done) Install `idb-keyval`.
+## Phase 1: Implementation
 
-## Phase 2: Store Refactoring
-- [ ] Update `conversationStore.ts`:
-    - Implement `State` and `Actions`.
-    - Setup `persist` with `idb-keyval`.
-    - Create initialization logic (ensure 1 session exists).
-    - Update graph actions to be session-aware.
+### Task 1: Update `src/App.tsx`
+- [ ] In `handleNodeClick`, change `y` clamping:
+    - `clamp(..., 10, ...)` -> `clamp(..., 80, ...)`
 
-## Phase 3: UI Implementation
-- [ ] Refactor `src/components/Toolbar/Toolbar.tsx`:
-    - Add Session Switcher UI next to logo.
-    - Add "New Session" button.
-- [ ] Update `src/App.tsx`:
-    - Listen for session changes and reset local UI state (dialogs, etc).
+### Task 2: Update `src/components/ChatDialog/ChatDialog.tsx`
+- [ ] Define `SAFE_TOP = 80`.
+- [ ] In `ResizeObserver` (auto-centering logic):
+    - Change `Math.max(10, ...)` -> `Math.max(SAFE_TOP, ...)`.
+- [ ] In `onMove` (drag logic):
+    - Ensure it still uses `10` or `0` for the top clamp.
 
-## Phase 4: Validation
-- [ ] Create a session, chat, then refresh. Data should persist.
-- [ ] Create a second session. Switch between them.
-- [ ] Verify automatic session naming on the first turn.
+## Phase 2: Validation
+- [ ] Open a new dialog. Verify it spawns at or below 80px from the top.
+- [ ] Add messages until it grows. Verify the top edge doesn't cross the 80px line.
+- [ ] Drag the dialog to the very top of the screen (10px). Verify this is still allowed.
 - [ ] Run `npx tsc`.

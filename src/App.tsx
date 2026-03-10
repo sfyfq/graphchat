@@ -152,7 +152,7 @@ export default function App() {
       const width = 860
       const assumedHeight = 400
       const x = clamp((window.innerWidth - width) / 2, 10, window.innerWidth - (width + 20))
-      const y = clamp((window.innerHeight - assumedHeight) / 2, 10, window.innerHeight - 100)
+      const y = clamp((window.innerHeight - assumedHeight) / 2, 80, window.innerHeight - 100)
       
       return { ...prev, [commit.id]: { x, y, initialInput } }
     })

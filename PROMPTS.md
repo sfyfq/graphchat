@@ -1,24 +1,25 @@
 **Your Optimized Prompt:**
-Implement a robust multi-session architecture with IndexedDB persistence.
+Adjust the `ChatDialog` positioning logic to prevent automatic overlap with the Toolbar/Session menu.
 
-1.  **Data Model (`src/types.ts`)**:
-    - Define `ChatSession` containing `id`, `name`, `commits`, `edges`, `HEAD`, and `lastModified`.
-    - Add optional `attachments` field to `Commit`.
+1.  **Constants**:
+    - Define a `SAFE_TOP = 80` (representing the area below the Toolbar).
+    - Continue using `SCREEN_MARGIN = 10` for general viewport edges.
 
-2.  **Persistent Store (`src/store/conversationStore.ts`)**:
-    - Refactor to use `sessions: Record<string, ChatSession>` and `currentSessionId: string`.
-    - Integrate `persist` middleware with a custom storage engine using `idb-keyval`.
-    - Implement `createSession`, `switchSession(id)`, `deleteSession(id)`, and `renameSession(id, name)`.
-    - Update graph manipulation actions (`addTurn`, `addCommit`, `fork`) to update the currently active session.
+2.  **Initial Spawning (`src/App.tsx`)**:
+    - Update `handleNodeClick` initial `y` calculation.
+    - Change the `clamp` minimum from `10` to `SAFE_TOP`.
 
-3.  **UI Integration**:
-    - **Toolbar**: Replace commit count with a "Session Selector" (dropdown) and a "New Chat" (+) button.
-    - **App**: Clear `dialogs`, `hoveredId`, and `activeSquashGroup` states when `currentSessionId` changes.
-    - **Naming**: Automatically name sessions based on the first assistant response summary.
+3.  **Automatic Growth (`src/components/ChatDialog/ChatDialog.tsx`)**:
+    - In the `ResizeObserver` logic, update the `pos.y` clamping.
+    - Change the `Math.max(10, ...)` to `Math.max(SAFE_TOP, ...)`.
+    - This ensures that as the dialog grows and centers itself, it doesn't "creep" into the Toolbar area.
+
+4.  **Manual Dragging (`src/components/ChatDialog/ChatDialog.tsx`)**:
+    - In the `onMove` handler, keep the clamping as is (or ensure it uses the smaller `10px` margin).
+    - This satisfies the requirement that it "may be moved around anywhere within the viewport."
 
 **Key Improvements:**
-• Enables users to manage multiple independent conversation threads.
-• Future-proofs storage for high-volume data (attachments) using IndexedDB.
-• Provides a professional, application-like workflow for session management.
+• Prevents the dialog from obscuring critical navigation elements (Session Switcher, Logo) on open.
+• Respects user intent by allowing manual overrides via dragging.
 
-**Techniques Applied:** Refactoring, persistent state patterns, asynchronous storage integration.
+**Techniques Applied:** Logical bifurcation of constraints, layout safety zones.
