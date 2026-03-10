@@ -97,7 +97,7 @@ export const ChatDialog: React.FC<Props> = ({
       const newY = e.clientY - dragging.current.startY;
       setPos({
         x: Math.max(0, Math.min(window.innerWidth - 870, newX)),
-        y: Math.max(0, Math.min(window.innerHeight - 100, newY)),
+        y: Math.max(0, Math.min(window.innerHeight - 60, newY)),
       });
     };
     const onUp = () => {
@@ -201,7 +201,7 @@ export const ChatDialog: React.FC<Props> = ({
         left: pos.x,
         top: pos.y,
         width: 860,
-        maxHeight: 560,
+        maxHeight: "min(85vh, 900px)",
         background: "rgba(11,11,17,0.97)",
         border: "1px solid rgba(255,255,255,0.1)",
         borderRadius: 16,

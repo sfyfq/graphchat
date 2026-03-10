@@ -98,7 +98,7 @@ export default function App() {
   }, [])
 
   // ── Node click → spawn / focus dialog ────────────────────────────────────
-  const handleNodeClick = useCallback((commit: Commit, screenX?: number, screenY?: number) => {
+  const handleNodeClick = useCallback((commit: Commit, _screenX?: number, _screenY?: number) => {
     let targetHEAD = commit.id
     let initialInput = ""
 
@@ -117,11 +117,12 @@ export default function App() {
         return { ...rest, [commit.id]: { ...state, initialInput } }
       }
 
-      // Spawn: 40px right, 200px above click point, clamped to viewport
-      const baseSX = screenX ?? window.innerWidth / 2
-      const baseSY = screenY ?? window.innerHeight / 2
-      const x = clamp(baseSX + 40,  10, window.innerWidth  - 880)
-      const y = clamp(baseSY - 200, 10, window.innerHeight - 580)
+      // New Spawn: center on screen
+      const width = 860
+      const assumedHeight = 400
+      const x = clamp((window.innerWidth - width) / 2, 10, window.innerWidth - (width + 20))
+      const y = clamp((window.innerHeight - assumedHeight) / 2, 10, window.innerHeight - 100)
+      
       return { ...prev, [commit.id]: { x, y, initialInput } }
     })
   }, [setHEAD])
