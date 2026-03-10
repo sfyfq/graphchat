@@ -24,7 +24,7 @@ export const CommitNode: React.FC<Props> = ({
   const isRoot      = commit.id === 'root'
   const isUser      = commit.role === 'user'
   const strokeColor = isRoot ? '#f59e0b' : (isUser ? '#3b82f6' : '#10b981')
-  const fillOpacity = isHEAD ? 0.22 : 0.10
+  const fillOpacity = isHEAD ? 0.25 : 0.10
   const bColor      = branchColor(commit.branchLabel)
 
   const handleClick = (e: React.MouseEvent<SVGGElement>) => {
@@ -64,28 +64,35 @@ export const CommitNode: React.FC<Props> = ({
           <circle
             r={NODE_R + 12}
             fill="none"
-            stroke="rgba(99,102,241,0.2)"
-            strokeWidth={1}
+            stroke="rgba(99,102,241,0.3)"
+            strokeWidth={1.5}
           >
             <animate
               attributeName="r"
-              values={`${NODE_R + 7};${NODE_R + 16};${NODE_R + 7}`}
-              dur="2.4s"
+              values={`${NODE_R + 7};${NODE_R + 20};${NODE_R + 7}`}
+              dur="2s"
               repeatCount="indefinite"
             />
             <animate
               attributeName="opacity"
-              values="0.5;0.05;0.5"
-              dur="2.4s"
+              values="0.6;0;0.6"
+              dur="2s"
               repeatCount="indefinite"
             />
           </circle>
           <circle
-            r={NODE_R + 5}
+            r={NODE_R + 6}
             fill="none"
-            stroke="rgba(99,102,241,0.45)"
-            strokeWidth={1.5}
-          />
+            stroke="rgba(99,102,241,0.6)"
+            strokeWidth={2}
+          >
+            <animate
+              attributeName="stroke-width"
+              values="1.5;3;1.5"
+              dur="2s"
+              repeatCount="indefinite"
+            />
+          </circle>
         </>
       )}
 
@@ -113,8 +120,9 @@ export const CommitNode: React.FC<Props> = ({
               ? `rgba(99,102,241,${fillOpacity})`
               : `rgba(245,158,11,${fillOpacity})`
           }
-          stroke={isHEAD ? '#6366f1' : strokeColor}
-          strokeWidth={isHEAD ? 2 : 1.5}
+          stroke={isHEAD ? '#818cf8' : strokeColor}
+          strokeWidth={isHEAD ? 3 : 1.5}
+          style={isHEAD ? { filter: 'drop-shadow(0 0 8px rgba(99,102,241,0.6))' } : {}}
         />
       ) : (
         <circle
@@ -124,8 +132,9 @@ export const CommitNode: React.FC<Props> = ({
               ? `rgba(99,102,241,${fillOpacity})`
               : `rgba(${isUser ? '59,130,246' : '16,185,129'},${fillOpacity})`
           }
-          stroke={isHEAD ? '#6366f1' : strokeColor}
-          strokeWidth={isHEAD ? 2 : 1.5}
+          stroke={isHEAD ? '#818cf8' : strokeColor}
+          strokeWidth={isHEAD ? 3 : 1.5}
+          style={isHEAD ? { filter: 'drop-shadow(0 0 8px rgba(99,102,241,0.6))' } : {}}
         />
       )}
 
@@ -136,11 +145,32 @@ export const CommitNode: React.FC<Props> = ({
         fontSize={13}
         fontFamily="'DM Mono', monospace"
         fontWeight="500"
-        fill="rgba(255,255,255,0.65)"
+        fill={isHEAD ? "#fff" : "rgba(255,255,255,0.65)"}
         style={{ pointerEvents: 'none', userSelect: 'none' }}
       >
         {isUser ? 'U' : '✦'}
       </text>
+
+      {/* HEAD label pill */}
+      {isHEAD && (
+        <g transform={`translate(0, -${NODE_R + 18})`}>
+          <rect
+            x={-18} y={-7} width={36} height={14} rx={7}
+            fill="#6366f1"
+          />
+          <text
+            textAnchor="middle"
+            dominantBaseline="central"
+            fontSize={8}
+            fontFamily="'DM Mono', monospace"
+            fontWeight="800"
+            fill="#fff"
+            style={{ pointerEvents: 'none', userSelect: 'none' }}
+          >
+            HEAD
+          </text>
+        </g>
+      )}
 
       {/* Branch label pill */}
       {commit.branchLabel && (
