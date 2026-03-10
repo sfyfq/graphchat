@@ -21,6 +21,8 @@ interface Props {
   onFocus?: () => void;
 }
 
+const SAFE_TOP = 80;
+
 export const ChatDialog: React.FC<Props> = ({
   commit,
   initialPosition,
@@ -62,15 +64,16 @@ export const ChatDialog: React.FC<Props> = ({
           const delta = newHeight - oldHeight;
           setPos((prev) => {
             const newY = prev.y - delta / 2;
-            const safeY = Math.max(10, Math.min(window.innerHeight - newHeight - 10, newY));
+            const safeY = Math.max(SAFE_TOP, Math.min(window.innerHeight - newHeight - 10, newY));
             return { ...prev, y: safeY };
           });
         } else if (oldHeight === 0) {
           // Initial measurement case: ensure it's on screen if it started big
           setPos((prev) => {
             const isOffBottom = prev.y + newHeight > window.innerHeight - 10;
-            if (isOffBottom) {
-              const safeY = Math.max(10, window.innerHeight - newHeight - 10);
+            const isOffTop = prev.y < SAFE_TOP;
+            if (isOffBottom || isOffTop) {
+              const safeY = Math.max(SAFE_TOP, Math.min(window.innerHeight - newHeight - 10, prev.y));
               return { ...prev, y: safeY };
             }
             return prev;
