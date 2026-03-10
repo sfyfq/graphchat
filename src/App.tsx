@@ -52,7 +52,7 @@ export default function App() {
       setDialogs({
         root: {
           x: (window.innerWidth - width) / 2,
-          y: (window.innerHeight - height) / 2,
+          y: clamp((window.innerHeight - height) / 2, 80, window.innerHeight - 100),
           initialInput: ""
         }
       })
