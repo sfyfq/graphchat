@@ -38,6 +38,11 @@ export const Canvas: React.FC<Props> = ({
   const canvasRef   = useRef<HTMLDivElement>(null)
   const initialised = useRef(false)
 
+  // Reset initialised flag when session changes to trigger auto-fit for the new graph
+  useEffect(() => {
+    initialised.current = false
+  }, [currentSession?.id])
+
   // Pinned ids: HEAD + any open dialogs — these are never collapsed
   const pinned = useMemo<Set<string>>(() => {
     const s = new Set(openDialogIds)

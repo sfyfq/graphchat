@@ -1,15 +1,27 @@
-# TODO: Stable Navigation - Remove Auto-Zoom
+# TODO: Fix Session Reset Auto-Fit
 
 ## Phase 1: Implementation
 
-### Task 1: Update `src/App.tsx`
-- [ ] Refactor `toggleGroup`:
-    - Remove the `isExpanding` block that dispatches `graphchat:fit-nodes`.
-- [ ] Refactor `handleSidebarTurnClick`:
-    - Remove the `setTimeout` block that dispatches `graphchat:fit-nodes`.
+### Task 1: Update `src/components/Canvas/Canvas.tsx`
+- [ ] Add a `useEffect` to reset `initialised.current = false` when `currentSession.id` changes.
 
 ## Phase 2: Validation
-- [ ] Expand a squash group. Verify the canvas does not move.
-- [ ] Click a turn in the sidebar. Verify the dialog opens but the canvas stays at its current zoom/pan.
-- [ ] Verify manual zoom and pan still work correctly.
+- [ ] Create multiple sessions.
+- [ ] Delete the current session.
+- [ ] Verify the new active session's root node is correctly positioned in the bottom 1/3.
+- [ ] Switch between sessions and verify consistent framing.
+- [ ] Run `npx tsc`.
+ Here is the updated code:
+# TODO: Fix Session Reset Auto-Fit
+
+## Phase 1: Implementation
+
+### Task 1: Update `src/components/Canvas/Canvas.tsx`
+- [ ] Add a `useEffect` to reset `initialised.current = false` when `currentSession.id` changes.
+
+## Phase 2: Validation
+- [ ] Create multiple sessions.
+- [ ] Delete the current session.
+- [ ] Verify the new active session's root node is correctly positioned in the bottom 1/3.
+- [ ] Switch between sessions and verify consistent framing.
 - [ ] Run `npx tsc`.
