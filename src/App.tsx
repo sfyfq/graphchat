@@ -18,7 +18,17 @@ export default function App() {
   const { commits, edges, HEAD, setHEAD } = useConversationStore()
 
   // Dialogs: map from commitId → { position, initialInput }
-  const [dialogs,     setDialogs]     = useState<Record<string, { x: number; y: number; initialInput?: string }>>({})
+  const [dialogs,     setDialogs]     = useState<Record<string, { x: number; y: number; initialInput?: string }>>(() => {
+    const width = 860
+    const height = 400
+    return {
+      root: {
+        x: (window.innerWidth - width) / 2,
+        y: (window.innerHeight - height) / 2,
+        initialInput: ""
+      }
+    }
+  })
   const [hoveredId,   setHoveredId]   = useState<string | null>(null)
   const [hoverPos,    setHoverPos]    = useState({ x: 0, y: 0 })
   const [isHoveringCanvas, setIsHoveringCanvas] = useState(false)

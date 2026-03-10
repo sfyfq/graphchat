@@ -1,19 +1,21 @@
 **Your Optimized Prompt:**
-Fix the initial positioning bug in `src/components/ChatDialog/ChatDialog.tsx` to ensure dialogs with existing content spawn within the viewport.
+Refactor the initial application state and canvas layout for a better "first-look" experience.
 
-1.  **Logic Update**:
-    - Refactor the `ResizeObserver` in `useLayoutEffect`.
-    - Handle the case where `oldHeight === 0` (the first measurement).
-    - On the first measurement, check if the dialog's current bottom (`pos.y + newHeight`) exceeds the window height.
-    - If it does, update `pos.y` to a safe value (e.g., `window.innerHeight - newHeight - 10`).
-    - This ensures that a heavily populated dialog doesn't "start" partially off-screen.
+1.  **Auto-open Root Dialog (`src/App.tsx`)**:
+    - Initialize the `dialogs` state with the `root` node already open.
+    - `x = (window.innerWidth - 860) / 2`
+    - `y = (window.innerHeight - 400) / 2`
+    - `initialInput = ""`
 
-2.  **Consistency**:
-    - Ensure this initial correction doesn't conflict with the `delta / 2` centering logic used for subsequent growth.
-    - Maintain the rule that we don't auto-move the dialog if the user is currently dragging it.
+2.  **Initial Canvas Positioning (`src/components/Canvas/Canvas.tsx`)**:
+    - Update the "Auto-fit on first render" `useEffect`.
+    - Instead of centering the whole graph, specifically calculate the pan to place the `root` node at:
+        - `x = window.innerWidth / 2`
+        - `y = window.innerHeight * 0.7` (approx bottom 1/3).
+    - Account for the current `zoom` (which starts at 1).
 
 **Key Improvements:**
-• Guarantees that every dialog, whether fresh or historical, is fully visible upon opening.
-• Eliminates the need for manual repositioning immediately after opening an old thread.
+• Removes the need for the user's first action to be a click.
+• Provides an immediate, balanced view of both the interface (dialog) and the data (root node).
 
-**Techniques Applied:** Robust viewport clamping, initial state correction.
+**Techniques Applied:** State initialization, viewport-aware layout math.

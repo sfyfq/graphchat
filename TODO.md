@@ -1,17 +1,18 @@
-# TODO: Fix Initial Dialog Positioning
+# TODO: Enhance Initial Experience
 
 ## Phase 1: Implementation
 
-### Task 1: Update `src/components/ChatDialog/ChatDialog.tsx`
-- [ ] Refactor `ResizeObserver` callback:
-    - If `oldHeight === 0`:
-        - Calculate if bottom exceeds bounds: `pos.y + newHeight > window.innerHeight - 10`.
-        - If so, update `pos.y` to `window.innerHeight - newHeight - 10` (clamped to min 10).
-    - Else (standard delta centering):
-        - Continue using the existing `delta / 2` logic.
+### Task 1: Update `src/App.tsx`
+- [ ] Initialize `dialogs` state with root node data.
+- [ ] Ensure `commits['root']` availability or handle initial loading gracefully.
+
+### Task 2: Update `src/components/Canvas/Canvas.tsx`
+- [ ] Refactor initial auto-fit `useEffect`:
+    - Find `root` position in `layout`.
+    - Calculate `pan` such that `root.x` is horizontal center and `root.y` is at 70% vertical.
 
 ## Phase 2: Validation
-- [ ] Open an existing node with many turns.
-- [ ] Verify the dialog is fully within the viewport immediately.
-- [ ] Verify a new dialog still opens in the center.
+- [ ] Refresh the page.
+- [ ] Verify the root dialog is open and centered.
+- [ ] Verify the root node is visible on the canvas, positioned in the lower third.
 - [ ] Run `npx tsc`.
