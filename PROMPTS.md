@@ -1,22 +1,35 @@
-**Your Optimized Prompt:**
-Refactor the LaTeX live preview into a floating overlay in `src/components/ChatDialog/ChatDialog.tsx`.
+# Feature: Enhanced Stats & Shared Attachment Library
 
-1.  **Selection Detection**:
-    - Add state to track the active LaTeX segment at the cursor: `activeMath: string | null`.
-    - In `handleInputChange` and a new `handleKeyUp` (for arrow keys), check if `selectionStart` is within a `$ $` or `$$ $$` block.
-    - If it is, extract that specific math string and set `activeMath`.
+## Objective
+Convert the static Legend into a dynamic "Session Stats" panel and implement a global "Attachment Library" system where binary files are stored separately in IndexedDB and referenced by ID.
 
-2.  **Positioning**:
-    - Implement a way to find the cursor's pixel position within the textarea. *Hint: Using a hidden mirror div or a lightweight utility is standard for this.*
-    - Alternatively, position the overlay at a fixed offset above the textarea if precise cursor tracking is too complex for this turn, but ensure it's an `absolute` overlay that doesn't push layout.
+## 1. Data Layer & Storage
+- Update `src/types.ts`:
+    - `Attachment` should have optional `width`, `height`, and `duration`.
+    - `Commit` should store `attachmentIds: string[]` instead of full objects.
+    - `ChatSession` remains focused on graph structure.
+- Implementation for `src/lib/storage.ts`:
+    - Create a dedicated file for blob storage using `idb-keyval`.
+    - Functions: `saveBlob(id, blob)`, `getBlob(id)`, `deleteBlob(id)`.
 
-3.  **UI/UX**:
-    - The `Live Preview` should be an absolutely positioned div.
-    - Give it a higher `zIndex`, a subtle shadow, and a dark, blurred background (`backdropFilter`).
-    - Use an "arrow" or "speech bubble" style to point down towards the input.
+## 2. Store Logic (`src/store/conversationStore.ts`)
+- Add a `library: Record<string, AttachmentMetadata>` to the global state.
+- Update `addCommit` and `addTurn` to handle `attachmentIds`.
+- Add actions: `uploadAttachment(file)`, `addToSession(sessionId, attachmentId)`.
 
-**Key Improvements:**
-• Non-disruptive UI: The dialog size doesn't jump as the user types math.
-• Focused feedback: Shows exactly what the user is currently editing.
+## 3. Session Stats Panel (`src/components/Toolbar/Toolbar.tsx`)
+- Replace the Legend/Instruction box with a "Session Stats" panel.
+- **Metrics to calculate:**
+    - **Turns:** Count of assistant commits.
+    - **Tokens:** (Text Chars / 4) + (258 per image) + (32 per sec of audio).
+    - **Depth:** Path length from current `HEAD` to `root`.
+    - **Branches:** Count of nodes with a `branchLabel`.
+    - **Nodes:** Total commits in the session.
+    - **Last Updated:** Relative time using `timeAgo`.
+- **Visuals:** Keep the aesthetic of the existing floating panel (blurred background, Syne font headers).
 
-**Techniques Applied:** Floating UI patterns, context-aware selection extraction.
+## 4. Library Sidebar (`src/components/Library/LibrarySidebar.tsx`)
+- Create a slide-over sidebar (right side).
+- Show "This Session" vs "Global Library" sections.
+- Display file previews (thumbnails for images, icons for others).
+- Show metadata (size, dimensions/duration if available).

@@ -5,6 +5,9 @@ export interface Attachment {
   name: string
   type: string // mime type
   size: number
+  width?: number
+  height?: number
+  duration?: number // for audio/video
 }
 
 export interface Commit {
@@ -16,7 +19,7 @@ export interface Commit {
   branchLabel?: string
   timestamp:    number
   model:        string
-  attachments?: Attachment[]
+  attachmentIds?: string[]
 }
 
 export interface ChatSession {

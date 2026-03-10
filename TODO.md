@@ -1,17 +1,20 @@
-# TODO: LaTeX Overlay Preview
+# TODO: Session Stats & Attachment Library
 
-## Phase 1: Math Detection Logic
-- [ ] Implement `getMathAtCursor(text, position)` helper function.
-- [ ] Add `activeMath` state to `ChatDialog`.
-- [ ] Update `handleInputChange` and `onKeyUp` to set `activeMath`.
+- [x] **Phase 1: Foundation (Data & Storage)**
+    - [x] Update `src/types.ts` with new metadata fields and relationship.
+    - [x] Create `src/lib/storage.ts` for Blob management.
+    - [x] Update `src/lib/utils.ts` with the new token estimation logic.
 
-## Phase 2: Overlay UI
-- [ ] Create an absolutely positioned `MathPreviewOverlay` component (or inline div).
-- [ ] Style it as a floating bubble above the textarea.
-- [ ] Remove the old static `Live Preview` block.
+- [x] **Phase 2: State (Store Refactor)**
+    - [x] Add `library` to `useConversationStore`.
+    - [x] Refactor `addCommit` / `addTurn` actions for attachment IDs.
+    - [x] Create `uploadAttachment` action with metadata extraction (Promise-based).
 
-## Phase 3: Validation
-- [ ] Verify the overlay appears only when the cursor is inside `$ $`.
-- [ ] Verify the overlay content updates as you type.
-- [ ] Verify the dialog layout remains stable.
-- [ ] Run `npx tsc`.
+- [x] **Phase 3: UI (Stats & Toolbar)**
+    - [x] Implement `Toolbar.tsx` with dynamic stats calculations.
+    - [x] Add `useMemo` hooks for calculating Tokens, Depth, and Nodes.
+
+- [x] **Phase 4: Sidebar (Library)**
+    - [x] Create `src/components/Library/LibrarySidebar.tsx`.
+    - [x] Integrate Sidebar button into the `Toolbar` (top-right).
+    - [x] Add image thumbnail previews using the blob storage.

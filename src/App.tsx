@@ -1,4 +1,5 @@
-import React, {
+import * as React from 'react'
+import {
   useState, useCallback, useEffect, useMemo,
 } from 'react'
 import { Canvas }      from './components/Canvas/Canvas'
@@ -6,6 +7,7 @@ import { ChatDialog }  from './components/ChatDialog/ChatDialog'
 import { Tooltip }     from './components/Tooltip'
 import { SearchPanel } from './components/Search/SearchPanel'
 import { Toolbar }     from './components/Toolbar/Toolbar'
+import { LibrarySidebar } from './components/Library/LibrarySidebar'
 import { SquashTooltip } from './components/Canvas/SquashNode'
 import { useConversationStore } from './store/conversationStore'
 import { computeLayout }        from './lib/layout'
@@ -29,6 +31,7 @@ export default function App() {
   const [hoverPos,    setHoverPos]    = useState({ x: 0, y: 0 })
   const [isHoveringCanvas, setIsHoveringCanvas] = useState(false)
   const [showSearch,  setShowSearch]  = useState(false)
+  const [showLibrary, setShowLibrary] = useState(false)
 
   // Separate states for hover and persistent expansion
   const [hoveredSquashGroup,  setHoveredSquashGroup]  = useState<SquashGroup | null>(null)
@@ -42,6 +45,7 @@ export default function App() {
     setHoveredSquashGroup(null)
     setExpandedSquashGroup(null)
     setShowSearch(false)
+    setShowLibrary(false)
   }, [currentSessionId])
 
   // Auto-open root on a FRESH session (one that only has root and no open dialogs)
@@ -116,7 +120,10 @@ export default function App() {
         e.preventDefault()
         setShowSearch(s => !s)
       }
-      if (e.key === 'Escape') setShowSearch(false)
+      if (e.key === 'Escape') {
+        setShowSearch(false)
+        setShowLibrary(false)
+      }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
@@ -228,7 +235,15 @@ export default function App() {
       />
 
       {/* Toolbar (logo, search btn, zoom controls, legend) */}
-      <Toolbar onSearchOpen={() => setShowSearch(true)} />
+      <Toolbar 
+        onSearchOpen={() => setShowSearch(true)} 
+        onLibraryToggle={() => setShowLibrary(!showLibrary)}
+      />
+
+      <LibrarySidebar 
+        isOpen={showLibrary} 
+        onClose={() => setShowLibrary(false)} 
+      />
 
       {/* Hover tooltip */}
       {showTooltip && (

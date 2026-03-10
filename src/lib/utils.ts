@@ -23,7 +23,8 @@ export function getMathAtCursor(text: string, pos: number): string | null {
   if (!text) return null;
 
   // Check for $$...$$ block math first
-  const blockRegex = /\$\$(.*?)\$\$/gs;
+  // Using [\s\S] instead of /s flag for better compatibility
+  const blockRegex = /\$\$([\s\S]*?)\$\$/g;
   let match;
   while ((match = blockRegex.exec(text)) !== null) {
     const start = match.index;
@@ -83,4 +84,37 @@ export function branchColor(label: string | undefined): string {
  */
 export function clamp(val: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, val))
+}
+
+/**
+ * Estimate the number of tokens in a string (approx 4 chars/token).
+ */
+export function estimateTokens(text: string): number {
+  if (!text) return 0
+  // Simple heuristic: 4 chars per token for English
+  return Math.ceil(text.length / 4)
+}
+
+/**
+ * Calculate tokens for an attachment based on its metadata.
+ */
+export function estimateAttachmentTokens(type: string, width?: number, height?: number, duration?: number): number {
+  if (type.startsWith('image/')) {
+    if (!width || !height) return 258 // fallback
+    const tilesX = Math.ceil(width / 768)
+    const tilesY = Math.ceil(height / 768)
+    return tilesX * tilesY * 258
+  }
+  
+  if (type.startsWith('audio/')) {
+    if (!duration) return 0
+    return Math.ceil(duration * 32)
+  }
+
+  if (type.startsWith('video/')) {
+    if (!duration) return 0
+    return Math.ceil(duration * 263)
+  }
+
+  return 0 // Other types default to 0 for now
 }
