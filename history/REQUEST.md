@@ -147,3 +147,13 @@ Analysis: Currently, the preview is a static block above the textarea. To make i
 1. Logic to detect if the cursor is within math delimiters.
 2. A way to calculate the (x, y) coordinates of the cursor relative to the textarea or container.
 3. A floating div that uses these coordinates for absolute positioning.
+# Request: Enhanced Session Stats Panel
+
+Convert the current legend box in the `Toolbar` component into a more useful "Session Stats" panel.
+
+## Requirements:
+- Display the number of turns in the current session.
+- Display the total number of estimated tokens.
+- Remove the static text explaining how to use the application (scroll, zoom, etc.).
+- Add other relevant session-level metrics.
+- Maintain the aesthetic of the existing floating panel.
