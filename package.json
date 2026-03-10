@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "idb-keyval": "^6.2.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

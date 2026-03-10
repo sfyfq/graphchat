@@ -8,7 +8,7 @@ import React, {
 } from "react";
 import { useConversationStore } from "../../store/conversationStore";
 import { reconstructMessages, estimateTokens } from "../../lib/context";
-import { streamMessage } from "../../lib/anthropic";
+import { streamMessage } from "../../lib/llm";
 import { makeSummary, branchColor } from "../../lib/utils";
 import { MessageList } from "./MessageList";
 import type { Commit } from "../../types";
