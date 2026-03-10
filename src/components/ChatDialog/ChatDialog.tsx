@@ -6,11 +6,17 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import remarkMath from 'remark-math'
+import rehypeKatex from 'rehype-katex'
 import { useConversationStore } from "../../store/conversationStore";
 import { llm, reconstructMessages, estimateTokens } from "../../lib/llm";
 import { makeSummary, branchColor } from "../../lib/utils";
-import { MessageList } from "./MessageList";
+import { MessageList, MarkdownComponents } from "./MessageList";
 import type { Commit } from "../../types";
+
+import 'katex/dist/katex.min.css'
 
 interface Props {
   commit: Commit;
@@ -414,6 +420,43 @@ export const ChatDialog: React.FC<Props> = ({
           flexShrink: 0,
         }}
       >
+        {/* Live Preview */}
+        {input.trim() && (
+          <div style={{
+            marginBottom: 12,
+            padding: '10px 12px',
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.05)',
+            borderRadius: 10,
+            maxHeight: 120,
+            overflowY: 'auto'
+          }}>
+            <div style={{
+              fontFamily: "'Syne', sans-serif",
+              fontSize: 9,
+              color: 'rgba(255,255,255,0.25)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              marginBottom: 6
+            }}>
+              Live Preview
+            </div>
+            <div style={{
+              color: '#bbb',
+              fontSize: 13,
+              lineHeight: 1.5
+            }}>
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm, remarkMath]} 
+                rehypePlugins={[rehypeKatex]}
+                components={MarkdownComponents}
+              >
+                {input}
+              </ReactMarkdown>
+            </div>
+          </div>
+        )}
+
         <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
           <textarea
             ref={textareaRef}

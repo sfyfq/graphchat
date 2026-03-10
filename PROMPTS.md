@@ -1,22 +1,25 @@
 **Your Optimized Prompt:**
-Implement Markdown rendering for messages in `src/components/ChatDialog/MessageList.tsx`.
+Implement LaTeX support using KaTeX for both message history and live input.
 
 1.  **Dependencies**:
-    - Use `react-markdown` for rendering Markdown.
-    - Optionally use `remark-gfm` for GitHub Flavored Markdown (better support for tables, lists, and line breaks).
+    - `remark-math`: Markdown plugin for math delimiters.
+    - `rehype-katex`: Rehype plugin to render math using KaTeX.
+    - `katex`: The core rendering library and CSS.
 
-2.  **Implementation**:
-    - In `MessageList.tsx`, wrap the content of assistant messages and the `streamingContent` in a `ReactMarkdown` component.
-    - User messages can also be wrapped or kept as plain text (wrapping both is usually more consistent).
-    - Use custom components for `react-markdown` to ensure `p`, `ul`, `ol` tags don't have excessive margins that break the bubble layout.
+2.  **Rendering History (`src/components/ChatDialog/MessageList.tsx`)**:
+    - Import `remarkMath`, `rehypeKatex`, and `katex/dist/katex.min.css`.
+    - Configure `ReactMarkdown` to use these plugins.
+    - Ensure both completed messages and the `streamingContent` are processed.
 
-3.  **Styling**:
-    - Ensure `white-space: pre-wrap` or equivalent Markdown behavior is maintained.
-    - Add styles for `bold`, `italic`, and lists within the chat bubble context.
+3.  **Live Preview (`src/components/ChatDialog/ChatDialog.tsx`)**:
+    - Introduce a `Live Preview` section just above the input textarea.
+    - This section should render the current `input` state using the same `ReactMarkdown` + KaTeX configuration used in `MessageList`.
+    - Only display the preview when `input` is not empty.
+    - Apply styling to differentiate the preview area (e.g., subtle background, italic hint).
 
 **Key Improvements:**
-• Transforms plain text blobs into readable, structured content.
-• Supports essential formatting like line breaks, bold, and italic.
-• Professional chat experience similar to major LLM interfaces.
+• Enables complex mathematical notation in conversations.
+• Provides immediate visual feedback for LaTeX as the user types, reducing errors.
+• Maintains visual consistency across user drafts and assistant replies.
 
-**Techniques Applied:** Markdown integration, component-level styling overrides.
+**Techniques Applied:** Plugin-based Markdown expansion, real-time preview patterns.

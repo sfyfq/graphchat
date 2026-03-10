@@ -1,17 +1,20 @@
-# TODO: Implement Markdown Support
+# TODO: Implement LaTeX Support
 
-## Phase 1: Setup
-- [ ] Install `react-markdown` and `remark-gfm`.
-
-## Phase 2: Implementation
+## Phase 1: Implementation - Message History
 - [ ] Update `src/components/ChatDialog/MessageList.tsx`:
-    - [ ] Import `ReactMarkdown` and `remarkGfm`.
-    - [ ] Define custom components for `ReactMarkdown` to handle styling (remove default margins).
-    - [ ] Apply `ReactMarkdown` to message content and `streamingContent`.
+    - [ ] Import `remarkMath` and `rehypeKatex`.
+    - [ ] Import `katex/dist/katex.min.css`.
+    - [ ] Update `ReactMarkdown` props to include `remarkMath` and `rehypeKatex`.
+
+## Phase 2: Implementation - Live Preview
+- [ ] Update `src/components/ChatDialog/ChatDialog.tsx`:
+    - [ ] Import `ReactMarkdown`, `remarkMath`, `rehypeKatex`.
+    - [ ] Add a `Preview` area inside the dialog, just above the input zone.
+    - [ ] Render `input` in this area using the Markdown/KaTeX setup.
+    - [ ] Style the preview area for clarity.
 
 ## Phase 3: Validation
-- [ ] Verify line breaks are rendered correctly.
-- [ ] Verify **bold** and *italic* formatting works.
-- [ ] Verify lists and other Markdown features work.
-- [ ] Ensure the scrolling still works correctly with Markdown content.
+- [ ] Type `$x^2$` in the input. Verify it renders as a mathematical formula in the preview.
+- [ ] Send a message with LaTeX. Verify the assistant response (if it contains LaTeX) renders correctly.
+- [ ] Verify both inline `$math$` and block `$$math$$` notation work.
 - [ ] Run `npx tsc`.
