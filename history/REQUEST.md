@@ -79,3 +79,8 @@ feature: rename project from gitchat to graphchat and add MIT license.
 - Update history files for consistency.
 - Create an MIT LICENSE file.
 --- Tue Mar 10 12:45:00 PDT 2026 ---
+improvement: center dialog on open and allow vertical expansion.
+- Initial position should be centered on the screen.
+- The dialog height should be dynamic, growing as messages are added, up to a reasonable limit (e.g., 85% of viewport height).
+- Update drag and spawn boundaries to handle the new dimensions.
+--- Tue Mar 10 13:00:00 PDT 2026 ---
