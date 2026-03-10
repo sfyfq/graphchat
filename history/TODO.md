@@ -271,7 +271,7 @@
 - [ ] Update `toggleGroup` centering:
     - If expanding, center on `[groupId, group.parentId, group.childId]`.
 - [ ] Update `handleSidebarTurnClick`:
-    - Add `window.dispatchEvent(new CustomEvent('gitchat:fit-nodes', { detail: [commit.id] }))`.
+    - Add `window.dispatchEvent(new CustomEvent('graphchat:fit-nodes', { detail: [commit.id] }))`.
 
 ## Phase 2: Validation
 - [ ] Verify clicking a pill opens the sidebar but the pill remains a pill on the canvas.
@@ -331,3 +331,27 @@
 - [ ] Verify the User message is in the input box.
 - [ ] Verify the User message is **not** the last message in the chat history list.
 - [ ] Run `npx tsc`.
+# TODO: Rebrand to GraphChat
+
+## Phase 1: Global Renaming
+- [ ] Replace "gitchat" with "graphchat" in:
+    - [ ] `package.json`
+    - [ ] `index.html`
+    - [ ] `README.md`
+    - [ ] `src/App.tsx`
+    - [ ] `src/components/Canvas/Canvas.tsx`
+    - [ ] `src/components/Toolbar/Toolbar.tsx`
+    - [ ] `history/PROMPTS.md`
+    - [ ] `history/TODO.md`
+- [ ] Replace "GitChat" with "GraphChat" in:
+    - [ ] `index.html`
+    - [ ] `README.md`
+    - [ ] `src/components/Toolbar/Toolbar.tsx`
+
+## Phase 2: License Creation
+- [ ] Create `LICENSE` file with MIT text.
+
+## Phase 3: Validation
+- [ ] Run `npm install` to update `package-lock.json`.
+- [ ] Run `npx tsc`.
+- [ ] Verify branding in UI (Toolbar logo).

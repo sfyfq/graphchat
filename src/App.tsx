@@ -66,7 +66,7 @@ export default function App() {
         
         // Wait for layout to update before fitting
         setTimeout(() => {
-          window.dispatchEvent(new CustomEvent('gitchat:fit-nodes', { detail: ids }))
+          window.dispatchEvent(new CustomEvent('graphchat:fit-nodes', { detail: ids }))
         }, 50)
       }
     } else {
@@ -168,7 +168,7 @@ export default function App() {
     setExpandedSquashGroup(null) // Close sidebar once a specific node is picked
     // Auto-center on the newly expanded node
     setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('gitchat:fit-nodes', { detail: [commit.id] }))
+      window.dispatchEvent(new CustomEvent('graphchat:fit-nodes', { detail: [commit.id] }))
     }, 50)
   }, [handleNodeClick])
 

@@ -73,3 +73,9 @@ bugfix: clicking a user node (draft) should not show that user message in the di
 - The clicked User node's content should only appear in the input textfield.
 --- Tue Mar 10 12:30:00 PDT 2026 ---
 Analysis: `ChatDialog` was initializing its `tipId` state to the clicked node's ID. For User nodes, this caused the message list to include the User message itself. We should initialize `tipId` to the parent ID if the clicked node is a User node.
+feature: rename project from gitchat to graphchat and add MIT license.
+- Replace all occurrences of "gitchat" and "GitChat" with "graphchat" and "GraphChat".
+- Update package.json, README.md, index.html, and code files (custom events, logo).
+- Update history files for consistency.
+- Create an MIT LICENSE file.
+--- Tue Mar 10 12:45:00 PDT 2026 ---

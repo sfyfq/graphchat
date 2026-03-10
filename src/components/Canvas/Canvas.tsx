@@ -163,8 +163,8 @@ export const Canvas: React.FC<Props> = ({
         return newZ
       })
     }
-    window.addEventListener('gitchat:zoom', handler as EventListener)
-    return () => window.removeEventListener('gitchat:zoom', handler as EventListener)
+    window.addEventListener('graphchat:zoom', handler as EventListener)
+    return () => window.removeEventListener('graphchat:zoom', handler as EventListener)
   }, [layout])
 
   // Centering event listener
@@ -196,12 +196,12 @@ export const Canvas: React.FC<Props> = ({
       })
       setZoom(newZoom)
     }
-    window.addEventListener('gitchat:fit-nodes', handler as EventListener)
-    return () => window.removeEventListener('gitchat:fit-nodes', handler as EventListener)
+    window.addEventListener('graphchat:fit-nodes', handler as EventListener)
+    return () => window.removeEventListener('graphchat:fit-nodes', handler as EventListener)
   }, [layout])
 
   useEffect(() => {
-    window.dispatchEvent(new CustomEvent('gitchat:zoom-value', { detail: zoom }))
+    window.dispatchEvent(new CustomEvent('graphchat:zoom-value', { detail: zoom }))
   }, [zoom])
 
   const handleSquashHoverInternal = useCallback((
