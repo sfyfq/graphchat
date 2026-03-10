@@ -2,6 +2,7 @@ import React, {
   useState,
   useRef,
   useEffect,
+  useLayoutEffect,
   useCallback,
   useMemo,
 } from "react";
@@ -40,6 +41,47 @@ export const ChatDialog: React.FC<Props> = ({
   );
   const dragging = useRef<{ startX: number; startY: number } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const prevHeightRef = useRef<number>(0);
+
+  // ── Vertical Growth Centering ────────────────────────────────────────────
+  useLayoutEffect(() => {
+    if (!containerRef.current) return;
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+
+      const newHeight = entry.contentRect.height;
+      const oldHeight = prevHeightRef.current;
+
+      if (!dragging.current) {
+        if (oldHeight > 0 && Math.abs(newHeight - oldHeight) > 1) {
+          // Standard case: growing/shrinking from content changes
+          const delta = newHeight - oldHeight;
+          setPos((prev) => {
+            const newY = prev.y - delta / 2;
+            const safeY = Math.max(10, Math.min(window.innerHeight - newHeight - 10, newY));
+            return { ...prev, y: safeY };
+          });
+        } else if (oldHeight === 0) {
+          // Initial measurement case: ensure it's on screen if it started big
+          setPos((prev) => {
+            const isOffBottom = prev.y + newHeight > window.innerHeight - 10;
+            if (isOffBottom) {
+              const safeY = Math.max(10, window.innerHeight - newHeight - 10);
+              return { ...prev, y: safeY };
+            }
+            return prev;
+          });
+        }
+      }
+      prevHeightRef.current = newHeight;
+    });
+
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   // Sync input if initialInput changes (e.g. user clicks another draft node while dialog open)
   useEffect(() => {
@@ -95,9 +137,13 @@ export const ChatDialog: React.FC<Props> = ({
       if (!dragging.current) return;
       const newX = e.clientX - dragging.current.startX;
       const newY = e.clientY - dragging.current.startY;
+      
+      const width = 860;
+      const height = containerRef.current?.offsetHeight ?? 400;
+
       setPos({
-        x: Math.max(0, Math.min(window.innerWidth - 870, newX)),
-        y: Math.max(0, Math.min(window.innerHeight - 100, newY)),
+        x: Math.max(0, Math.min(window.innerWidth - (width + 10), newX)),
+        y: Math.max(0, Math.min(window.innerHeight - (height + 10), newY)),
       });
     };
     const onUp = () => {
@@ -194,6 +240,7 @@ export const ChatDialog: React.FC<Props> = ({
 
   return (
     <div
+      ref={containerRef}
       className="no-pan"
       onMouseDown={onFocus}
       style={{
@@ -201,7 +248,7 @@ export const ChatDialog: React.FC<Props> = ({
         left: pos.x,
         top: pos.y,
         width: 860,
-        maxHeight: 560,
+        maxHeight: "min(85vh, 900px)",
         background: "rgba(11,11,17,0.97)",
         border: "1px solid rgba(255,255,255,0.1)",
         borderRadius: 16,

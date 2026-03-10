@@ -1,96 +1,73 @@
 # GraphChat
 
-A git-architected LLM chatbot with an infinite canvas UI. Every conversation turn is an immutable commit. Branch from any point, explore alternate threads, and navigate your full conversation history as a zoomable tree — canopy pointing up.
+GraphChat is a git-architected LLM chatbot featuring an infinite canvas UI. By treating every conversation turn as an immutable commit, it allows you to visualize, navigate, and branch your AI interactions as a zoomable tree.
 
 ---
 
-## Quick Start
+## Key Features
+
+- **Infinite Zoomable Canvas**: Navigate your conversation history as a structured DAG (Directed Acyclic Graph) with intuitive pan and zoom controls.
+- **Non-Destructive Branching**: Click any historical node to branch off. Explore alternate prompts and alternate AI responses without ever losing your original context.
+- **Smart History Squashing**: Long linear conversation runs are automatically squashed into compact pills, keeping your graph clean and readable even as threads grow.
+- **Persistent Sidebar Explorer**: Dive into squashed history using a dedicated sidebar. Review turns, highlight nodes on the canvas, or jump back into a specific moment in time.
+- **Atomic Transactional Turns**: Conversation turns (User + Assistant) are committed atomically only after a successful response. If a request fails, your message stays in the input field and the graph remains pristine.
+- **Real-time Streaming**: Enjoy modern chat UX with word-by-word response streaming.
+- **Global Search**: Instantly find any message or summary across all branches using the global search panel (`⌘K` / `Ctrl+K`).
+- **Visual Context**: High-visibility "HEAD" markers and unique shaping for root messages ensure you always know where you are in the conversation tree.
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v18+)
+- An Anthropic API Key
+
+### Setup
+
+1. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+2. **Configure Environment**
+   Create a `.env.local` file in the root directory:
+   ```bash
+   VITE_ANTHROPIC_API_KEY=your_sk_ant_key_here
+   ```
+
+3. **Start Development Server**
+   ```bash
+   npm run dev
+   ```
+   Open `http://localhost:5173` in your browser.
+
+---
+
+## Deployment
+
+### Build for Production
+
+To generate a production-ready bundle:
 
 ```bash
-# 1. Install dependencies
-npm install
-
-# 2. Add your Anthropic API key
-cp .env.local.example .env.local
-# Edit .env.local and replace sk-ant-... with your real key
-
-# 3. Run
-npm run dev
+npm run build
 ```
 
-Open `http://localhost:5173`.
+The output will be located in the `dist/` directory, which can be hosted on any static site provider (Vercel, Netlify, GitHub Pages, etc.).
 
----
-
-## How to Use
-
-| Action | How |
-|--------|-----|
-| **Pan** | Click and drag on empty canvas |
-| **Zoom** | Scroll / trackpad pinch, or use + − ⊙ buttons |
-| **Open a thread** | Click any node |
-| **Chat** | Type in the dialog, press Enter to send |
-| **Branch** | Click any older node and start chatting — a new branch grows |
-| **Search** | ⌘K (or Ctrl+K) |
-| **Close dialog** | × button in dialog header |
-
----
-
-## Architecture
-
-```
-src/
-  types.ts                    # Commit, Edge, Layout types
-  main.tsx / App.tsx          # Root wiring
-  store/
-    conversationStore.ts      # Zustand store (commits, edges, HEAD)
-  lib/
-    context.ts                # reconstructMessages() — pure function
-    layout.ts                 # Tree layout engine (canopy-up DAG)
-    anthropic.ts              # Anthropic API wrapper
-    utils.ts                  # timeAgo, truncate, branchColor, etc.
-    seeds.ts                  # Demo conversation data
-  components/
-    Canvas/
-      Canvas.tsx              # SVG infinite canvas, pan/zoom
-      CommitNode.tsx          # SVG node component
-      EdgePath.tsx            # SVG bezier edge
-    ChatDialog/
-      ChatDialog.tsx          # Draggable overlay dialog
-      MessageList.tsx         # Message bubbles
-    Search/
-      SearchPanel.tsx         # ⌘K full-text search
-    Toolbar/
-      Toolbar.tsx             # Logo, zoom controls, legend
-    Tooltip.tsx               # Hover tooltip
-```
-
-### Core Invariant
-
-Context for any node is reconstructed by walking `parentId` pointers from that node back to root:
-
-```ts
-reconstructMessages(commits, headId)
-// → walks parentId chain → returns messages[] for Anthropic API
-```
-
-Branching is free: two nodes with the same `parentId` automatically create a fork in the graph. No special logic required.
-
----
-
-## Environment Variables
+### Environment Variables
 
 | Variable | Description |
 |----------|-------------|
-| `VITE_ANTHROPIC_API_KEY` | Your Anthropic API key (`sk-ant-...`) |
+| `VITE_ANTHROPIC_API_KEY` | Your Anthropic API key |
 
-⚠️ **Prototype only** — the API key is exposed in the browser bundle via `dangerouslyAllowBrowser: true`. Do not deploy publicly. For production, proxy API calls through a backend.
+> [!WARNING]
+> **Security Note**: This prototype executes API calls directly from the browser. In a production environment, you should proxy these requests through a backend to keep your API keys secure.
 
 ---
 
-## Build
+## License
 
-```bash
-npm run build   # outputs to dist/
-npm run preview # preview the production build
-```
+This project is licensed under the [MIT License](LICENSE).

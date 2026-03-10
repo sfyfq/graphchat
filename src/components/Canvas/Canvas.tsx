@@ -95,12 +95,23 @@ export const Canvas: React.FC<Props> = ({
   useEffect(() => {
     if (initialised.current || Object.keys(layout).length === 0) return
     initialised.current = true
-    const positions = Object.values(layout)
-    const xs = positions.map(p => p.x)
-    const ys = positions.map(p => p.y)
-    const cx = (Math.min(...xs) + Math.max(...xs)) / 2
-    const cy = (Math.min(...ys) + Math.max(...ys)) / 2
-    setPan({ x: window.innerWidth / 2 - cx, y: window.innerHeight * 0.52 - cy })
+    
+    // Specifically target the root node for initial framing
+    const rootPos = layout['root']
+    if (rootPos) {
+      setPan({
+        x: window.innerWidth / 2 - rootPos.x * zoom,
+        y: window.innerHeight * 0.7 - rootPos.y * zoom,
+      })
+    } else {
+      // Fallback: center whole graph
+      const positions = Object.values(layout)
+      const xs = positions.map(p => p.x)
+      const ys = positions.map(p => p.y)
+      const cx = (Math.min(...xs) + Math.max(...xs)) / 2
+      const cy = (Math.min(...ys) + Math.max(...ys)) / 2
+      setPan({ x: window.innerWidth / 2 - cx, y: window.innerHeight * 0.52 - cy })
+    }
   }, [layout])
 
   // Pan
