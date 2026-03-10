@@ -1,21 +1,24 @@
 **Your Optimized Prompt:**
-Refactor the initial application state and canvas layout for a better "first-look" experience.
+Implement a robust multi-session architecture with IndexedDB persistence.
 
-1.  **Auto-open Root Dialog (`src/App.tsx`)**:
-    - Initialize the `dialogs` state with the `root` node already open.
-    - `x = (window.innerWidth - 860) / 2`
-    - `y = (window.innerHeight - 400) / 2`
-    - `initialInput = ""`
+1.  **Data Model (`src/types.ts`)**:
+    - Define `ChatSession` containing `id`, `name`, `commits`, `edges`, `HEAD`, and `lastModified`.
+    - Add optional `attachments` field to `Commit`.
 
-2.  **Initial Canvas Positioning (`src/components/Canvas/Canvas.tsx`)**:
-    - Update the "Auto-fit on first render" `useEffect`.
-    - Instead of centering the whole graph, specifically calculate the pan to place the `root` node at:
-        - `x = window.innerWidth / 2`
-        - `y = window.innerHeight * 0.7` (approx bottom 1/3).
-    - Account for the current `zoom` (which starts at 1).
+2.  **Persistent Store (`src/store/conversationStore.ts`)**:
+    - Refactor to use `sessions: Record<string, ChatSession>` and `currentSessionId: string`.
+    - Integrate `persist` middleware with a custom storage engine using `idb-keyval`.
+    - Implement `createSession`, `switchSession(id)`, `deleteSession(id)`, and `renameSession(id, name)`.
+    - Update graph manipulation actions (`addTurn`, `addCommit`, `fork`) to update the currently active session.
+
+3.  **UI Integration**:
+    - **Toolbar**: Replace commit count with a "Session Selector" (dropdown) and a "New Chat" (+) button.
+    - **App**: Clear `dialogs`, `hoveredId`, and `activeSquashGroup` states when `currentSessionId` changes.
+    - **Naming**: Automatically name sessions based on the first assistant response summary.
 
 **Key Improvements:**
-• Removes the need for the user's first action to be a click.
-• Provides an immediate, balanced view of both the interface (dialog) and the data (root node).
+• Enables users to manage multiple independent conversation threads.
+• Future-proofs storage for high-volume data (attachments) using IndexedDB.
+• Provides a professional, application-like workflow for session management.
 
-**Techniques Applied:** State initialization, viewport-aware layout math.
+**Techniques Applied:** Refactoring, persistent state patterns, asynchronous storage integration.

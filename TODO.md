@@ -1,18 +1,25 @@
-# TODO: Enhance Initial Experience
+# TODO: Multi-Session & Persistence Implementation
 
-## Phase 1: Implementation
+## Phase 1: Types & Library Setup
+- [ ] Update `src/types.ts` with `ChatSession` and `Attachment`.
+- [ ] (Done) Install `idb-keyval`.
 
-### Task 1: Update `src/App.tsx`
-- [ ] Initialize `dialogs` state with root node data.
-- [ ] Ensure `commits['root']` availability or handle initial loading gracefully.
+## Phase 2: Store Refactoring
+- [ ] Update `conversationStore.ts`:
+    - Implement `State` and `Actions`.
+    - Setup `persist` with `idb-keyval`.
+    - Create initialization logic (ensure 1 session exists).
+    - Update graph actions to be session-aware.
 
-### Task 2: Update `src/components/Canvas/Canvas.tsx`
-- [ ] Refactor initial auto-fit `useEffect`:
-    - Find `root` position in `layout`.
-    - Calculate `pan` such that `root.x` is horizontal center and `root.y` is at 70% vertical.
+## Phase 3: UI Implementation
+- [ ] Refactor `src/components/Toolbar/Toolbar.tsx`:
+    - Add Session Switcher UI next to logo.
+    - Add "New Session" button.
+- [ ] Update `src/App.tsx`:
+    - Listen for session changes and reset local UI state (dialogs, etc).
 
-## Phase 2: Validation
-- [ ] Refresh the page.
-- [ ] Verify the root dialog is open and centered.
-- [ ] Verify the root node is visible on the canvas, positioned in the lower third.
+## Phase 4: Validation
+- [ ] Create a session, chat, then refresh. Data should persist.
+- [ ] Create a second session. Switch between them.
+- [ ] Verify automatic session naming on the first turn.
 - [ ] Run `npx tsc`.

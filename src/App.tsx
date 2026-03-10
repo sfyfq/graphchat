@@ -15,20 +15,16 @@ import { branchColor, clamp }   from './lib/utils'
 import type { Commit, DialogState } from './types'
 
 export default function App() {
-  const { commits, edges, HEAD, setHEAD } = useConversationStore()
+  const { sessions, currentSessionId, setHEAD } = useConversationStore()
+  const currentSession = sessions[currentSessionId]
+  
+  // Fallback to empty defaults to prevent "undefined" errors during initial load/persist sync
+  const commits = currentSession?.commits || {}
+  const edges   = currentSession?.edges || []
+  const HEAD    = currentSession?.HEAD || 'root'
 
   // Dialogs: map from commitId → { position, initialInput }
-  const [dialogs,     setDialogs]     = useState<Record<string, { x: number; y: number; initialInput?: string }>>(() => {
-    const width = 860
-    const height = 400
-    return {
-      root: {
-        x: (window.innerWidth - width) / 2,
-        y: (window.innerHeight - height) / 2,
-        initialInput: ""
-      }
-    }
-  })
+  const [dialogs,     setDialogs]     = useState<Record<string, { x: number; y: number; initialInput?: string }>>({})
   const [hoveredId,   setHoveredId]   = useState<string | null>(null)
   const [hoverPos,    setHoverPos]    = useState({ x: 0, y: 0 })
   const [isHoveringCanvas, setIsHoveringCanvas] = useState(false)
@@ -37,6 +33,31 @@ export default function App() {
   // Separate states for hover and persistent expansion
   const [hoveredSquashGroup,  setHoveredSquashGroup]  = useState<SquashGroup | null>(null)
   const [expandedSquashGroup, setExpandedSquashGroup] = useState<SquashGroup | null>(null)
+
+  // ── Session Switch Logic ──────────────────────────────────────────────────
+  // When the session changes, clear transient UI states
+  useEffect(() => {
+    setDialogs({})
+    setHoveredId(null)
+    setHoveredSquashGroup(null)
+    setExpandedSquashGroup(null)
+    setShowSearch(false)
+  }, [currentSessionId])
+
+  // Auto-open root on a FRESH session (one that only has root and no open dialogs)
+  useEffect(() => {
+    if (Object.keys(commits).length === 1 && commits['root'] && Object.keys(dialogs).length === 0) {
+      const width = 860
+      const height = 400
+      setDialogs({
+        root: {
+          x: (window.innerWidth - width) / 2,
+          y: (window.innerHeight - height) / 2,
+          initialInput: ""
+        }
+      })
+    }
+  }, [currentSessionId, commits]) // run on session switch or graph reset
 
   // Pinned ids: HEAD + any open dialogs — these nodes are never part of a squash pill
   const openDialogIds = useMemo(() => new Set(Object.keys(dialogs)), [dialogs])
@@ -108,7 +129,7 @@ export default function App() {
   }, [])
 
   // ── Node click → spawn / focus dialog ────────────────────────────────────
-  const handleNodeClick = useCallback((commit: Commit, _screenX?: number, _screenY?: number) => {
+  const handleNodeClick = useCallback((commit: Commit, screenX?: number, screenY?: number) => {
     let targetHEAD = commit.id
     let initialInput = ""
 

@@ -1,5 +1,12 @@
 export type Role = 'user' | 'assistant'
 
+export interface Attachment {
+  id:   string // hash or unique identifier
+  name: string
+  type: string // mime type
+  size: number
+}
+
 export interface Commit {
   id:           string
   parentId:     string | null
@@ -9,6 +16,16 @@ export interface Commit {
   branchLabel?: string
   timestamp:    number
   model:        string
+  attachments?: Attachment[]
+}
+
+export interface ChatSession {
+  id:           string
+  name:         string
+  commits:      Record<string, Commit>
+  edges:        Edge[]
+  HEAD:         string
+  lastModified: number
 }
 
 export interface Edge {
@@ -27,8 +44,9 @@ export interface Layout {
 
 export interface DialogState {
   commitId: string
-  x: number
-  y: number
+  x: number;
+  y: number;
+  initialInput?: string;
 }
 
 export interface CanvasTransform {

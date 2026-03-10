@@ -28,7 +28,8 @@ export const ChatDialog: React.FC<Props> = ({
   onClose,
   onFocus,
 }) => {
-  const { commits, addTurn, setHEAD } = useConversationStore();
+  const { sessions, currentSessionId, addTurn, setHEAD } = useConversationStore();
+  const commits = sessions[currentSessionId]?.commits || {};
 
   const [pos, setPos] = useState(initialPosition);
   const [input, setInput] = useState(initialInput);
@@ -44,7 +45,7 @@ export const ChatDialog: React.FC<Props> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const prevHeightRef = useRef<number>(0);
 
-  // ── Vertical Growth Centering ────────────────────────────────────────────
+  // ── Vertical Growth Centering & Initial Safety Clamp ─────────────────────
   useLayoutEffect(() => {
     if (!containerRef.current) return;
 
