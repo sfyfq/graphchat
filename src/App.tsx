@@ -42,12 +42,6 @@ export default function App() {
     [commits, edges, pinned],
   )
 
-  // Anchor set: the specific commit IDs currently being explored in the sidebar
-  const expandedNodeIds = useMemo(() => {
-    if (!expandedSquashGroup) return new Set<string>()
-    return new Set(expandedSquashGroup.commits.map(c => c.id))
-  }, [expandedSquashGroup])
-
   // Cleanup: if the expanded group's origin node is gone, close the sidebar
   useEffect(() => {
     if (expandedSquashGroup && !commits[expandedSquashGroup.id]) {
@@ -67,12 +61,8 @@ export default function App() {
       const group = allGroups.get(groupId)
       if (group) {
         setExpandedSquashGroup(group)
-        // Auto-center on group + parent + child
-        const ids = [
-          ...group.commits.map(c => c.id),
-          group.parentId,
-          group.childId
-        ].filter(Boolean) as string[]
+        // Auto-center on the pill and its boundaries
+        const ids = [groupId, group.parentId, group.childId].filter(Boolean) as string[]
         
         // Wait for layout to update before fitting
         setTimeout(() => {
@@ -173,6 +163,10 @@ export default function App() {
 
   const handleSidebarTurnClick = useCallback((commit: Commit) => {
     handleNodeClick(commit)
+    // Auto-center on the newly expanded node
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('gitchat:fit-nodes', { detail: [commit.id] }))
+    }, 50)
   }, [handleNodeClick])
 
   // ── Close dialog ──────────────────────────────────────────────────────────
@@ -196,17 +190,6 @@ export default function App() {
   const hoveredCommit = hoveredId ? commits[hoveredId] : null
   const showTooltip   = hoveredCommit && !dialogs[hoveredId!] && isHoveringCanvas
 
-  // Expand Groups: A group is forced open if any of its members are anchored by the sidebar
-  const expandedGroupIds = useMemo(() => {
-    const s = new Set<string>()
-    allGroups.forEach(g => {
-      if (g.commits.some(c => expandedNodeIds.has(c.id))) {
-        s.add(g.id)
-      }
-    })
-    return s
-  }, [allGroups, expandedNodeIds])
-
   return (
     <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', background: '#080810' }}>
 
@@ -216,7 +199,7 @@ export default function App() {
         onNodeHover={handleNodeHover}
         onSquashHover={handleSquashHover}
         openDialogIds={openDialogIds}
-        expandedGroups={expandedGroupIds}
+        expandedGroups={new Set()}
         toggleGroup={toggleGroup}
         hoveredId={hoveredId}
       />

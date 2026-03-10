@@ -47,3 +47,7 @@ feature: ensure no components are overlapping, specifically adjacent squashGroup
 - Increase H_GAP in layout logic to accommodate the width of SquashNode pills.
 - SquashNode width is 144px (PILL_W * 2), while H_GAP is currently 96px.
 --- Tue Mar 10 11:15:00 PDT 2026 ---
+feature: make the dialog window twice wider.
+- Increase ChatDialog width from 430px to 860px.
+- Adjust clamping logic in App.tsx and ChatDialog.tsx to accommodate the new width.
+--- Tue Mar 10 11:30:00 PDT 2026 ---

@@ -1,16 +1,17 @@
-# TODO: Double Chat Dialog Width
+# TODO: Defer Squash Expansion
 
 ## Phase 1: Implementation
 
-### Task 1: Update `src/components/ChatDialog/ChatDialog.tsx`
-- [ ] Change `width` from `430` to `860`.
-- [ ] Update drag boundary: `window.innerWidth - 440` -> `window.innerWidth - 870`.
-
-### Task 2: Update `src/App.tsx`
-- [ ] Update spawn boundary: `window.innerWidth - 450` -> `window.innerWidth - 880`.
+### Task 1: Refactor `src/App.tsx`
+- [ ] Remove `expandedGroupIds` calculation.
+- [ ] Update `Canvas` prop: `expandedGroups={new Set()}` (for now, or remove if unused).
+- [ ] Update `toggleGroup` centering:
+    - If expanding, center on `[groupId, group.parentId, group.childId]`.
+- [ ] Update `handleSidebarTurnClick`:
+    - Add `window.dispatchEvent(new CustomEvent('gitchat:fit-nodes', { detail: [commit.id] }))`.
 
 ## Phase 2: Validation
-- [ ] Verify dialog is wider.
-- [ ] Verify dragging still respects screen edges correctly.
-- [ ] Verify new dialogs spawn within visible bounds.
+- [ ] Verify clicking a pill opens the sidebar but the pill remains a pill on the canvas.
+- [ ] Verify clicking a turn in the sidebar opens a dialog and that specific node appears on the canvas.
+- [ ] Verify the view centers on the selected node.
 - [ ] Run `npx tsc`.
