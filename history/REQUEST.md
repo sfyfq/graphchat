@@ -60,3 +60,11 @@ improvement: defer canvas expansion of squash groups.
 bugfix: when the user clicks on a node from the sidebar to bring up a dialog, nodes on both sides of the active node (HEAD) are squashed, leaving the active sidebar stale. Automatically close the squashGroup sidebar when the user picks a node from there.
 --- Tue Mar 10 12:00:00 PDT 2026 ---
 Analysis: When a turn is clicked in the sidebar, a dialog opens, pinning that node. The graph re-calculates, often splitting the original run into multiple new groups. The sidebar, which holds a snapshot of the original group, becomes visually and logically disconnected from the new canvas state. Closing the sidebar on click provides a clean transition to the newly revealed node.
+feature: Atomic turns with streaming and User-node editing.
+- HEAD must always point to an Assistant node.
+- Clicking a User node: Set HEAD to parent Assistant, pre-fill dialog input with user node content.
+- Clicking an Assistant node: Set HEAD to self, empty dialog input.
+- Sending a message: Do not commit User node immediately. Wait for Assistant response (streaming).
+- Atomic Commit: Only after the Assistant stream finishes successfully, commit BOTH the User and Assistant nodes to the store.
+- Error handling: If the request fails, the User message stays in the input field; nothing is committed to the graph.
+--- Tue Mar 10 12:15:00 PDT 2026 ---
