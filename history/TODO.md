@@ -612,3 +612,9 @@
     - [x] Update `src/components/ChatDialog/ChatDialog.tsx` to check for key before sending.
     - [x] Implement retry/modal trigger logic in the `catch` block of `handleSend`.
     - [x] Add specific error detection for "Invalid API Key" responses.
+# TODO: Fix Branch Counting
+
+- [ ] **Bugfix: Topological Branch Counting**
+    - [ ] Modify `src/components/Toolbar/Toolbar.tsx`.
+    - [ ] Implement leaf-node detection logic in `useMemo`.
+    - [ ] Verify the branch count accurately reflects the graph paths.

@@ -166,3 +166,11 @@ Implement a mechanism for the user to provide an LLM API key if it's missing fro
 - **Storage:** Store the provided API key in memory only (using a non-persistent Zustand store).
 - **Security:** Do not persist the key to LocalStorage or IndexedDB.
 - **User Experience:** Use a clean UI (e.g., a modal or inline prompt) within the ChatDialog or as a global overlay.
+# Request: Fix Branch Counting Logic
+
+The "Session Stats" panel currently shows an incorrect number of branches (e.g., 1 instead of 3). This is because it only counts nodes with an explicit `branchLabel`.
+
+## Requirements:
+- Redefine "Branches" to reflect the actual number of active conversation paths in the graph.
+- A branch should be defined as a **leaf node** (a node that has no outgoing edges/children).
+- Ensure the logic works correctly for branched graphs where some paths are longer than others.
