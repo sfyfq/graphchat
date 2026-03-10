@@ -27,8 +27,9 @@ export default function App() {
   // Which squash groups the user has manually expanded
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
 
-  // Currently focused squash group for the sidebar tooltip
-  const [activeSquashGroup, setActiveSquashGroup] = useState<SquashGroup | null>(null)
+  // Separate states for hover and persistent expansion
+  const [hoveredSquashGroup,  setHoveredSquashGroup]  = useState<SquashGroup | null>(null)
+  const [expandedSquashGroup, setExpandedSquashGroup] = useState<SquashGroup | null>(null)
 
   // Pinned ids: HEAD + any open dialogs — these are never collapsed
   const openDialogIds = useMemo(() => new Set(Object.keys(dialogs)), [dialogs])
@@ -38,11 +39,11 @@ export default function App() {
     // If we have an active squash group (expanded or being hovered),
     // and we're interacting with it via a dialog, pin all its members
     // to prevent the generic squash logic from carving it up.
-    if (activeSquashGroup && openDialogIds.size > 0) {
-      activeSquashGroup.commits.forEach(c => s.add(c.id))
+    if (expandedSquashGroup && openDialogIds.size > 0) {
+      expandedSquashGroup.commits.forEach(c => s.add(c.id))
     }
     return s
-  }, [HEAD, openDialogIds, activeSquashGroup?.id]) // depend on id to avoid excessive re-runs
+  }, [HEAD, openDialogIds, expandedSquashGroup?.id])
 
   // Compute squash groups
   const allGroups = useMemo(
@@ -64,9 +65,15 @@ export default function App() {
           changed = true
         }
       })
+      if (changed) {
+        // Also clear persistent object if its ID was evicted
+        if (expandedSquashGroup && !allGroups.has(expandedSquashGroup.id)) {
+          setExpandedSquashGroup(null)
+        }
+      }
       return changed ? next : prev
     })
-  }, [allGroups, openDialogIds.size])
+  }, [allGroups, openDialogIds.size, expandedSquashGroup])
 
   // Toggle expand/collapse a group
   const toggleGroup = useCallback((groupId: string) => {
@@ -82,6 +89,7 @@ export default function App() {
     if (isExpanding) {
       const group = allGroups.get(groupId)
       if (group) {
+        setExpandedSquashGroup(group)
         // Auto-center on group + parent + child
         const ids = [
           ...group.commits.map(c => c.id),
@@ -94,6 +102,8 @@ export default function App() {
           window.dispatchEvent(new CustomEvent('gitchat:fit-nodes', { detail: ids }))
         }, 50)
       }
+    } else {
+      setExpandedSquashGroup(null)
     }
   }, [allGroups, expandedGroups])
 
@@ -172,21 +182,11 @@ export default function App() {
     screenX: number,
     screenY: number,
   ) => {
-    if (group) {
-      setActiveSquashGroup(group)
-    } else {
-      // If the currently active group is NOT expanded, we can hide it on mouse leave.
-      // If it IS expanded, we keep it in the sidebar until they click the circled X.
-      setActiveSquashGroup(prev => {
-        if (prev && expandedGroups.has(prev.id)) return prev
-        return null
-      })
-    }
-  }, [expandedGroups])
+    setHoveredSquashGroup(group)
+  }, [])
 
   const handleCollapseGroup = useCallback((groupId: string) => {
     toggleGroup(groupId)
-    setActiveSquashGroup(null)
   }, [toggleGroup])
 
   const handleSidebarTurnHover = useCallback((id: string | null) => {
@@ -245,14 +245,28 @@ export default function App() {
         />
       )}
 
-      {/* Squash sidebar tooltip */}
-      {activeSquashGroup && (
+      {/* Persistent Expanded Sidebar */}
+      {expandedSquashGroup && (
         <SquashTooltip
-          group={activeSquashGroup}
+          group={expandedSquashGroup}
           screenX={0}
           screenY={0}
-          isExpanded={expandedGroups.has(activeSquashGroup.id)}
+          isExpanded={true}
           onCollapse={handleCollapseGroup}
+          onTurnHover={handleSidebarTurnHover}
+          onTurnClick={handleSidebarTurnClick}
+          hoveredId={hoveredId}
+        />
+      )}
+
+      {/* Transient Hover Overlay (only if not already expanded) */}
+      {hoveredSquashGroup && hoveredSquashGroup.id !== expandedSquashGroup?.id && (
+        <SquashTooltip
+          group={hoveredSquashGroup}
+          screenX={0}
+          screenY={0}
+          isExpanded={false}
+          onCollapse={() => {}}
           onTurnHover={handleSidebarTurnHover}
           onTurnClick={handleSidebarTurnClick}
           hoveredId={hoveredId}
