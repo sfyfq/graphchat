@@ -1,22 +1,19 @@
 **Your Optimized Prompt:**
-Refactor the `ChatDialog` positioning and sizing logic for better initial visibility and dynamic growth.
+Fix the initial positioning bug in `src/components/ChatDialog/ChatDialog.tsx` to ensure dialogs with existing content spawn within the viewport.
 
-1.  **Centering on Open (`src/App.tsx`)**:
-    - Update `handleNodeClick` to calculate initial `x` and `y` coordinates that center the dialog on the screen.
-    - Dialog width is `860px`. Assume an initial height of approximately `400px` for centering purposes.
-    - `x = (window.innerWidth - 860) / 2`
-    - `y = (window.innerHeight - 400) / 2` (clamped to ensure it stays on screen).
+1.  **Logic Update**:
+    - Refactor the `ResizeObserver` in `useLayoutEffect`.
+    - Handle the case where `oldHeight === 0` (the first measurement).
+    - On the first measurement, check if the dialog's current bottom (`pos.y + newHeight`) exceeds the window height.
+    - If it does, update `pos.y` to a safe value (e.g., `window.innerHeight - newHeight - 10`).
+    - This ensures that a heavily populated dialog doesn't "start" partially off-screen.
 
-2.  **Vertical Expansion (`src/components/ChatDialog/ChatDialog.tsx`)**:
-    - Increase `maxHeight` from `560` to a more generous value like `Math.min(window.innerHeight * 0.85, 900)`.
-    - Ensure the container uses `height: 'auto'` (implicit with flex and no fixed height) so it only takes as much space as needed.
-    - Update the drag clamping logic to respect the dynamic height if possible, or use a safe constant for the bottom edge.
-
-3.  **Spawning Logic**:
-    - Update the clamping in `App.tsx` to allow centered spawning even on smaller screens.
+2.  **Consistency**:
+    - Ensure this initial correction doesn't conflict with the `delta / 2` centering logic used for subsequent growth.
+    - Maintain the rule that we don't auto-move the dialog if the user is currently dragging it.
 
 **Key Improvements:**
-• Provides a "hero" focus when opening a thread.
-• Optimizes screen real estate by only occupying the height necessary for the current conversation.
+• Guarantees that every dialog, whether fresh or historical, is fully visible upon opening.
+• Eliminates the need for manual repositioning immediately after opening an old thread.
 
-**Techniques Applied:** Dynamic layout calculation, viewport-relative sizing.
+**Techniques Applied:** Robust viewport clamping, initial state correction.

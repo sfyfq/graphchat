@@ -1,21 +1,17 @@
-# TODO: Center and Dynamically Resize Chat Dialogs
+# TODO: Fix Initial Dialog Positioning
 
 ## Phase 1: Implementation
 
-### Task 1: Update `src/App.tsx`
-- [ ] Refactor `handleNodeClick` initial position logic:
-    - Calculate `centeredX` and `centeredY`.
-    - Use `860` for width and `400` as a placeholder for initial height.
-    - Update the `clamp` boundaries for spawning.
-
-### Task 2: Update `src/components/ChatDialog/ChatDialog.tsx`
-- [ ] Update `maxHeight` in the style object to `min(85vh, 900px)`.
-- [ ] Ensure the container correctly grows with content (verify `flex` and `overflow` interaction).
-- [ ] Update `onMove` drag clamping to use the new width and a safer height boundary.
+### Task 1: Update `src/components/ChatDialog/ChatDialog.tsx`
+- [ ] Refactor `ResizeObserver` callback:
+    - If `oldHeight === 0`:
+        - Calculate if bottom exceeds bounds: `pos.y + newHeight > window.innerHeight - 10`.
+        - If so, update `pos.y` to `window.innerHeight - newHeight - 10` (clamped to min 10).
+    - Else (standard delta centering):
+        - Continue using the existing `delta / 2` logic.
 
 ## Phase 2: Validation
-- [ ] Open a new dialog and verify it starts in the center of the screen.
-- [ ] Send multiple messages and verify the dialog height increases automatically.
-- [ ] Verify it stops growing at the `maxHeight` limit and starts scrolling.
-- [ ] Drag the dialog and verify it stays within screen bounds.
+- [ ] Open an existing node with many turns.
+- [ ] Verify the dialog is fully within the viewport immediately.
+- [ ] Verify a new dialog still opens in the center.
 - [ ] Run `npx tsc`.
