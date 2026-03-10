@@ -577,3 +577,44 @@
 - [ ] Verify the overlay content updates as you type.
 - [ ] Verify the dialog layout remains stable.
 - [ ] Run `npx tsc`.
+# TODO: Session Stats & Attachment Library
+
+- [x] **Phase 1: Foundation (Data & Storage)**
+    - [x] Update `src/types.ts` with new metadata fields and relationship.
+    - [x] Create `src/lib/storage.ts` for Blob management.
+    - [x] Update `src/lib/utils.ts` with the new token estimation logic.
+
+- [x] **Phase 2: State (Store Refactor)**
+    - [x] Add `library` to `useConversationStore`.
+    - [x] Refactor `addCommit` / `addTurn` actions for attachment IDs.
+    - [x] Create `uploadAttachment` action with metadata extraction (Promise-based).
+
+- [x] **Phase 3: UI (Stats & Toolbar)**
+    - [x] Implement `Toolbar.tsx` with dynamic stats calculations.
+    - [x] Add `useMemo` hooks for calculating Tokens, Depth, and Nodes.
+
+- [x] **Phase 4: Sidebar (Library)**
+    - [x] Create `src/components/Library/LibrarySidebar.tsx`.
+    - [x] Integrate Sidebar button into the `Toolbar` (top-right).
+    - [x] Add image thumbnail previews using the blob storage.
+# TODO: Dynamic API Key Provisioning
+
+- [x] **Phase 1: Foundation & State**
+    - [x] Create `src/store/configStore.ts` for in-memory settings.
+    - [x] Refactor `src/lib/llm/gemini.ts` to use dynamic key resolution from the store.
+
+- [x] **Phase 2: UI (Modal)**
+    - [x] Create `src/components/Modals/ApiKeyModal.tsx` with styling consistent with current UI.
+    - [x] Add basic validation logic.
+    - [x] Mount the modal in `src/App.tsx`.
+
+- [x] **Phase 3: Integration & Error Handling**
+    - [x] Update `src/components/ChatDialog/ChatDialog.tsx` to check for key before sending.
+    - [x] Implement retry/modal trigger logic in the `catch` block of `handleSend`.
+    - [x] Add specific error detection for "Invalid API Key" responses.
+# TODO: Fix Branch Counting
+
+- [ ] **Bugfix: Topological Branch Counting**
+    - [ ] Modify `src/components/Toolbar/Toolbar.tsx`.
+    - [ ] Implement leaf-node detection logic in `useMemo`.
+    - [ ] Verify the branch count accurately reflects the graph paths.

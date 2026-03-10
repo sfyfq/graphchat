@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react'
+import * as React from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useConversationStore } from '../../store/conversationStore'
+import { estimateTokens, estimateAttachmentTokens, timeAgo } from '../../lib/utils'
 
 interface Props {
   onSearchOpen: () => void
+  onLibraryToggle: () => void
 }
 
 const BTN: React.CSSProperties = {
@@ -21,7 +24,7 @@ const BTN: React.CSSProperties = {
 }
 
 const IconBtn: React.FC<{
-  label: string
+  label: string | React.ReactNode
   onClick: (e: React.MouseEvent) => void
   title?: string
   style?: React.CSSProperties
@@ -46,9 +49,9 @@ const IconBtn: React.FC<{
   </button>
 )
 
-export const Toolbar: React.FC<Props> = ({ onSearchOpen }) => {
+export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
   const { 
-    sessions, currentSessionId, 
+    sessions, currentSessionId, library,
     createSession, switchSession, deleteSession 
   } = useConversationStore()
   
@@ -57,6 +60,46 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen }) => {
 
   const currentSession = sessions[currentSessionId]
   const sessionList = Object.values(sessions).sort((a, b) => b.lastModified - a.lastModified)
+
+  const stats = useMemo(() => {
+    if (!currentSession) return []
+    const commits = Object.values(currentSession.commits)
+    const turns = commits.filter(c => c.role === 'assistant').length
+    
+    // Calculate total tokens: text tokens + attachment tokens
+    const totalTokens = commits.reduce((acc, c) => {
+      let tokens = estimateTokens(c.content)
+      if (c.attachmentIds) {
+        c.attachmentIds.forEach(id => {
+          const att = library[id]
+          if (att) {
+            tokens += estimateAttachmentTokens(att.type, att.width, att.height, att.duration)
+          }
+        })
+      }
+      return acc + tokens
+    }, 0)
+    
+    // Calculate current path depth (root to HEAD)
+    let depth = 0
+    let currId: string | null = currentSession.HEAD
+    while (currId && currentSession.commits[currId]) {
+      depth++
+      currId = currentSession.commits[currId].parentId
+    }
+
+    // A branch is defined as a leaf node (a node with no children)
+    const sourceIds = new Set(currentSession.edges.map(e => e.source))
+    const branches = commits.filter(c => !sourceIds.has(c.id)).length
+
+    return [
+      { label: 'Turns',    value: turns },
+      { label: 'Tokens',   value: totalTokens.toLocaleString() },
+      { label: 'Depth',    value: depth },
+      { label: 'Branches', value: branches },
+      { label: 'Nodes',    value: commits.length },
+    ]
+  }, [currentSession, library])
 
   useEffect(() => {
     const clickOutside = (e: MouseEvent) => {
@@ -222,7 +265,7 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen }) => {
           className="no-pan"
           style={{
             ...BTN,
-            padding: '9px 14px',
+            padding: '0 14px',
             gap:     8,
             height:  38,
           }}
@@ -251,12 +294,20 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen }) => {
           </kbd>
         </button>
 
+        <IconBtn 
+          label={<span style={{ fontSize: 14 }}>📁</span>} 
+          onClick={onLibraryToggle} 
+          title="Shared Library" 
+        />
+        
+        <div style={{ width: 1, background: 'rgba(255,255,255,0.08)', margin: '4px 2px' }} />
+
         <IconBtn label="−" onClick={() => zoom('out')}  title="Zoom out" />
         <IconBtn label="+" onClick={() => zoom('in')}   title="Zoom in" />
         <IconBtn label="⊙" onClick={() => zoom('reset')} title="Reset view" />
       </div>
 
-      {/* ── Bottom-left: legend ── */}
+      {/* ── Bottom-left: Session Stats ── */}
       <div
         className="no-pan"
         style={{
@@ -266,64 +317,60 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen }) => {
           background:     'rgba(10,10,16,0.88)',
           border:         '1px solid rgba(255,255,255,0.08)',
           borderRadius:   12,
-          padding:        '12px 16px',
+          padding:        '14px 18px',
           zIndex:         500,
           backdropFilter: 'blur(12px)',
+          minWidth:       170,
         }}
       >
         <div style={{
           fontFamily:    "'Syne', sans-serif",
-          fontSize:      9,
-          color:         'rgba(255,255,255,0.28)',
+          fontSize:      10,
+          fontWeight:    700,
+          color:         'rgba(255,255,255,0.3)',
           textTransform: 'uppercase',
           letterSpacing: '0.12em',
-          marginBottom:  9,
+          marginBottom:  12,
+          display:       'flex',
+          alignItems:    'center',
+          justifyContent: 'space-between'
         }}>
-          Legend
+          <span>Session Stats</span>
+          <div style={{ display: 'flex', gap: 4 }}>
+             <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#3b82f6' }} title="User message" />
+             <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981' }} title="Assistant reply" />
+          </div>
         </div>
 
-        {[
-          ['U',  '#3b82f6', 'User message'],
-          ['✦', '#10b981', 'Assistant reply'],
-        ].map(([icon, color, label]) => (
-          <div key={label as string} style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 6 }}>
-            <div style={{
-              width:          22,
-              height:         22,
-              borderRadius:   '50%',
-              background:     `${color as string}1a`,
-              border:         `1.5px solid ${color as string}`,
-              display:        'flex',
-              alignItems:     'center',
-              justifyContent: 'center',
-              fontSize:       9,
-              color:          'rgba(255,255,255,0.65)',
-              fontFamily:     "'DM Mono', monospace",
-            }}>
-              {icon}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+          {stats.map(s => (
+            <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <span style={{ 
+                fontSize: 12, 
+                color: 'rgba(255,255,255,0.25)', 
+                fontFamily: "'DM Sans', sans-serif" 
+              }}>{s.label}</span>
+              <span style={{ 
+                fontSize: 12, 
+                color: 'rgba(255,255,255,0.65)', 
+                fontFamily: "'DM Mono', monospace" 
+              }}>{s.value}</span>
             </div>
-            <span style={{
-              fontFamily: "'DM Sans', sans-serif",
-              fontSize:   12,
-              color:      'rgba(255,255,255,0.4)',
-            }}>
-              {label}
+          ))}
+          
+          <div style={{ 
+            marginTop: 4, 
+            paddingTop: 8, 
+            borderTop: '1px solid rgba(255,255,255,0.06)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase' }}>Updated</span>
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
+              {currentSession ? timeAgo(currentSession.lastModified) : '--'}
             </span>
           </div>
-        ))}
-
-        <div style={{
-          borderTop:  '1px solid rgba(255,255,255,0.07)',
-          marginTop:  6,
-          paddingTop: 8,
-          fontFamily: "'DM Mono', monospace",
-          fontSize:   10,
-          color:      'rgba(255,255,255,0.18)',
-          lineHeight: 1.8,
-        }}>
-          scroll · zoom<br />
-          drag · pan<br />
-          click · open chat
         </div>
       </div>
     </>

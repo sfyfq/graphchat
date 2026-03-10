@@ -1,8 +1,9 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage, StateStorage } from 'zustand/middleware'
 import { get, set, del } from 'idb-keyval'
-import type { Commit, Edge, ChatSession } from '../types'
+import type { Commit, Edge, ChatSession, Attachment } from '../types'
 import { SEED_COMMITS } from '../lib/seeds'
+import { saveBlob } from '../lib/storage'
 
 // Custom storage engine using idb-keyval for IndexedDB
 const storage: StateStorage = {
@@ -20,6 +21,7 @@ const storage: StateStorage = {
 interface ConversationState {
   sessions: Record<string, ChatSession>
   currentSessionId: string
+  library: Record<string, Attachment> // Shared attachment library
 }
 
 interface ConversationActions {
@@ -34,6 +36,10 @@ interface ConversationActions {
   addTurn:   (user: Commit, assistant: Commit) => void
   setHEAD:   (id: string) => void
   fork:      (fromId: string, label: string) => void
+
+  // Attachment Management
+  uploadAttachment: (file: File) => Promise<string>
+  addToSession: (sessionId: string, attachmentId: string) => void
 }
 
 const createNewSession = (id: string): ChatSession => ({
@@ -52,6 +58,7 @@ export const useConversationStore = create<ConversationState & ConversationActio
     (set, get) => ({
       sessions: { [INITIAL_ID]: createNewSession(INITIAL_ID) },
       currentSessionId: INITIAL_ID,
+      library: {},
 
       createSession: () => {
         const id = crypto.randomUUID()
@@ -200,6 +207,53 @@ export const useConversationStore = create<ConversationState & ConversationActio
             },
           }
         }),
+
+      uploadAttachment: async (file) => {
+        const id = crypto.randomUUID()
+        const attachment: Attachment = {
+          id,
+          name: file.name,
+          type: file.type,
+          size: file.size,
+        }
+
+        // Extract image dimensions
+        if (file.type.startsWith('image/')) {
+          const dimensions = await new Promise<{ width: number; height: number }>((resolve) => {
+            const img = new Image()
+            img.onload = () => resolve({ width: img.width, height: img.height })
+            img.src = URL.createObjectURL(file)
+          })
+          attachment.width = dimensions.width
+          attachment.height = dimensions.height
+        }
+
+        // Extract audio/video duration
+        if (file.type.startsWith('audio/') || file.type.startsWith('video/')) {
+          const duration = await new Promise<number>((resolve) => {
+            const media = document.createElement(file.type.startsWith('audio/') ? 'audio' : 'video')
+            media.onloadedmetadata = () => resolve(media.duration)
+            media.src = URL.createObjectURL(file)
+          })
+          attachment.duration = duration
+        }
+
+        // Save blob to separate IndexedDB storage
+        await saveBlob(id, file)
+
+        // Add to library in global state
+        set((state) => ({
+          library: { ...state.library, [id]: attachment }
+        }))
+
+        return id
+      },
+
+      addToSession: (sessionId, attachmentId) => {
+        // This is a placeholder for linking an existing library item to a session's "current context"
+        // if we decide to have session-level library visibility. 
+        // For now, it's enough that a Commit references an ID from the global library.
+      },
     }),
     {
       name: 'graphchat-storage',

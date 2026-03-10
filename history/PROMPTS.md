@@ -603,3 +603,76 @@ Refactor the LaTeX live preview into a floating overlay in `src/components/ChatD
 • Focused feedback: Shows exactly what the user is currently editing.
 
 **Techniques Applied:** Floating UI patterns, context-aware selection extraction.
+# Feature: Enhanced Stats & Shared Attachment Library
+
+## Objective
+Convert the static Legend into a dynamic "Session Stats" panel and implement a global "Attachment Library" system where binary files are stored separately in IndexedDB and referenced by ID.
+
+## 1. Data Layer & Storage
+- Update `src/types.ts`:
+    - `Attachment` should have optional `width`, `height`, and `duration`.
+    - `Commit` should store `attachmentIds: string[]` instead of full objects.
+    - `ChatSession` remains focused on graph structure.
+- Implementation for `src/lib/storage.ts`:
+    - Create a dedicated file for blob storage using `idb-keyval`.
+    - Functions: `saveBlob(id, blob)`, `getBlob(id)`, `deleteBlob(id)`.
+
+## 2. Store Logic (`src/store/conversationStore.ts`)
+- Add a `library: Record<string, AttachmentMetadata>` to the global state.
+- Update `addCommit` and `addTurn` to handle `attachmentIds`.
+- Add actions: `uploadAttachment(file)`, `addToSession(sessionId, attachmentId)`.
+
+## 3. Session Stats Panel (`src/components/Toolbar/Toolbar.tsx`)
+- Replace the Legend/Instruction box with a "Session Stats" panel.
+- **Metrics to calculate:**
+    - **Turns:** Count of assistant commits.
+    - **Tokens:** (Text Chars / 4) + (258 per image) + (32 per sec of audio).
+    - **Depth:** Path length from current `HEAD` to `root`.
+    - **Branches:** Count of nodes with a `branchLabel`.
+    - **Nodes:** Total commits in the session.
+    - **Last Updated:** Relative time using `timeAgo`.
+- **Visuals:** Keep the aesthetic of the existing floating panel (blurred background, Syne font headers).
+
+## 4. Library Sidebar (`src/components/Library/LibrarySidebar.tsx`)
+- Create a slide-over sidebar (right side).
+- Show "This Session" vs "Global Library" sections.
+- Display file previews (thumbnails for images, icons for others).
+- Show metadata (size, dimensions/duration if available).
+# Feature: Dynamic API Key Modal & In-Memory Storage
+
+## Objective
+Implement a centralized modal to collect and validate an LLM API key when missing or invalid, storing it only in memory for the current browser session.
+
+## 1. State Management (`src/store/configStore.ts`)
+- Create a new Zustand store **without** the `persist` middleware.
+- **State:** `apiKey: string | null`, `showKeyModal: boolean`.
+- **Actions:** `setApiKey(key)`, `toggleKeyModal(show)`.
+- **Initialization:** Initialize `apiKey` with `import.meta.env.VITE_LLM_API_KEY || null`.
+
+## 2. Gemini Provider Refactor (`src/lib/llm/gemini.ts`)
+- Remove the static `genAI` instance.
+- Create a helper to get or initialize the `GoogleGenerativeAI` instance using the latest key from `configStore`.
+- Update `sendMessage` and `streamMessage` to use this dynamic initialization.
+
+## 3. API Key Modal (`src/components/Modals/ApiKeyModal.tsx`)
+- Create a visually consistent modal (glassmorphism style).
+- **Validation:** Ensure the key is not empty and follows basic Gemini key patterns (if applicable).
+- **UX:** Provide a clear "Save" button and a link to get a key from Google AI Studio.
+
+## 4. Integration Logic (`src/components/ChatDialog/ChatDialog.tsx`)
+- In `handleSend`:
+    - Check if `apiKey` is present in `configStore`.
+    - If missing, call `toggleKeyModal(true)` and abort the send (or wait for the key).
+    - In the `catch` block for LLM calls:
+        - If the error indicates an "Invalid API Key" (e.g., 401/403), trigger the modal and clear the invalid key.
+# Bugfix: Topological Branch Counting
+
+## Objective
+Update the branch counting logic in `Toolbar.tsx` to count the number of "leaf nodes" (nodes without children) in the graph, accurately reflecting the number of unique conversation paths.
+
+## Implementation Details
+- Update `src/components/Toolbar/Toolbar.tsx`:
+    - Inside the `stats` useMemo hook:
+        - Identify all node IDs that act as a `source` in the `currentSession.edges` array.
+        - Filter `currentSession.commits` to find nodes whose IDs are **not** in the set of source IDs.
+        - The count of these "leaf" nodes is the true branch count.
