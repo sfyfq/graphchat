@@ -126,3 +126,9 @@ feature: Structured LLM API support with multi-vendor capability.
 - Support both standard and streaming messages.
 --- Tue Mar 10 15:30:00 PDT 2026 ---
 Analysis: The current single-file integration in `src/lib/llm.ts` is insufficient for a multi-vendor future. We need a provider-based architecture where each vendor (Gemini, Anthropic, OpenAI) implements a common interface. This allows the application to remain agnostic of the specific LLM being used.
+feature: Implement Markdown support for assistant replies.
+- Support line breaks, bold, italic, and other Markdown features.
+- Use `react-markdown` for rendering.
+- Apply custom styling to ensure Markdown elements fit well within chat bubbles.
+- Update `MessageList.tsx` to handle both finished messages and streaming content.
+--- Tue Mar 10 16:00:00 PDT 2026 ---
