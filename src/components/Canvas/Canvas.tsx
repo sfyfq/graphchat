@@ -8,7 +8,7 @@ import type { SquashGroup }     from '../../lib/squash'
 import { branchColor, clamp }   from '../../lib/utils'
 import { CommitNode }           from './CommitNode'
 import { EdgePath }             from './EdgePath'
-import { SquashNode, SquashTooltip } from './SquashNode'
+import { SquashNode }           from './SquashNode'
 import type { Commit, Layout }  from '../../types'
 
 const ZOOM_MIN = 0.12
@@ -17,23 +17,19 @@ const ZOOM_MAX = 3.0
 interface Props {
   onNodeClick:    (commit: Commit, screenX: number, screenY: number) => void
   onNodeHover:    (commitId: string | null, screenX: number, screenY: number) => void
+  onSquashHover:  (group: SquashGroup | null, screenX: number, screenY: number) => void
   openDialogIds:  Set<string>
   expandedGroups: Set<string>
   toggleGroup:    (groupId: string) => void
 }
 
 export const Canvas: React.FC<Props> = ({
-  onNodeClick, onNodeHover, openDialogIds, expandedGroups, toggleGroup
+  onNodeClick, onNodeHover, onSquashHover, openDialogIds, expandedGroups, toggleGroup
 }) => {
   const { commits, edges, HEAD } = useConversationStore()
 
   const [pan,  setPan]  = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
-
-  // Squash hover state (separate from regular node hover)
-  const [squashHover, setSquashHover] = useState<{
-    group: SquashGroup; screenX: number; screenY: number
-  } | null>(null)
 
   const isPanning   = useRef(false)
   const lastMouse   = useRef({ x: 0, y: 0 })
@@ -174,16 +170,15 @@ export const Canvas: React.FC<Props> = ({
     window.dispatchEvent(new CustomEvent('gitchat:zoom-value', { detail: zoom }))
   }, [zoom])
 
-  // Squash pill hover
-  const handleSquashHover = useCallback((
+  const handleSquashHoverInternal = useCallback((
     groupId: string | null,
     screenX: number,
     screenY: number,
   ) => {
-    if (!groupId) { setSquashHover(null); return }
-    const group = collapsedGroupReps.get(groupId)
-    if (group) setSquashHover({ group, screenX, screenY })
-  }, [collapsedGroupReps])
+    if (!groupId) { onSquashHover(null, 0, 0); return }
+    const group = allGroups.get(groupId)
+    if (group) onSquashHover(group, screenX, screenY)
+  }, [allGroups, onSquashHover])
 
   const handleNodeClick = useCallback(
     (commit: Commit, screenX: number, screenY: number) => {
@@ -282,22 +277,13 @@ export const Canvas: React.FC<Props> = ({
                 expanded={false}
                 zoom={zoom}
                 onToggle={toggleGroup}
-                onHoverGroup={handleSquashHover}
+                onHoverGroup={handleSquashHoverInternal}
               />
             )
           })}
 
         </g>
       </svg>
-
-      {/* Squash tooltip (HTML overlay, outside SVG transform) */}
-      {squashHover && (
-        <SquashTooltip
-          group={squashHover.group}
-          screenX={squashHover.screenX}
-          screenY={squashHover.screenY}
-        />
-      )}
 
       <ZoomIndicator zoom={zoom} />
     </div>

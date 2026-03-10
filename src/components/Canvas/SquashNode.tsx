@@ -102,41 +102,80 @@ export const SquashNode: React.FC<Props> = ({
 
 // ── Squash tooltip ────────────────────────────────────────────────────────────
 interface TooltipProps {
-  group:   SquashGroup
-  screenX: number
-  screenY: number
+  group:      SquashGroup
+  screenX:    number
+  screenY:    number
+  isExpanded: boolean
+  onCollapse: (groupId: string) => void
 }
 
-export const SquashTooltip: React.FC<TooltipProps> = ({ group, screenX, screenY }) => {
-  const nearRight = screenX > window.innerWidth - 300
-  const left = nearRight ? screenX - 270 : screenX + 20
-  const top  = Math.max(10, screenY - 14)
-
+export const SquashTooltip: React.FC<TooltipProps> = ({
+  group, isExpanded, onCollapse,
+}) => {
   return (
     <div style={{
       position:       'fixed',
-      left,
-      top,
+      left:           20,
+      top:            74,
       background:     'rgba(9,9,15,0.97)',
       border:         '1px solid rgba(255,255,255,0.12)',
       borderRadius:   12,
       padding:        '12px 14px',
-      maxWidth:       260,
-      pointerEvents:  'none',
+      width:          280,
+      pointerEvents:  isExpanded ? 'auto' : 'none',
       zIndex:         900,
       backdropFilter: 'blur(16px)',
       boxShadow:      '0 8px 32px rgba(0,0,0,0.7)',
       animation:      'tooltip-in 0.1s ease',
     }}>
       <div style={{
-        fontFamily:    "'Syne', sans-serif",
-        fontSize:      10,
-        color:         'rgba(255,255,255,0.35)',
-        textTransform: 'uppercase',
-        letterSpacing: '0.09em',
-        marginBottom:  8,
+        display:       'flex',
+        alignItems:    'center',
+        justifyContent: 'space-between',
+        marginBottom:  10,
       }}>
-        {group.commits.length} squashed turns · click to expand
+        <div style={{
+          fontFamily:    "'Syne', sans-serif",
+          fontSize:      10,
+          color:         'rgba(255,255,255,0.35)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.09em',
+        }}>
+          {isExpanded
+            ? `${group.commits.length} expanded turns`
+            : `${group.commits.length} squashed turns · click to expand`}
+        </div>
+
+        {isExpanded && (
+          <button
+            onClick={() => onCollapse(group.id)}
+            style={{
+              background: 'rgba(255,255,255,0.05)',
+              border:     '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '50%',
+              width:      18,
+              height:     18,
+              display:    'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color:      'rgba(255,255,255,0.5)',
+              cursor:     'pointer',
+              fontSize:   12,
+              padding:    0,
+              lineHeight: 1,
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.12)'
+              e.currentTarget.style.color = '#fff'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
+              e.currentTarget.style.color = 'rgba(255,255,255,0.5)'
+            }}
+          >
+            ×
+          </button>
+        )}
       </div>
 
       {/* Mini timeline */}

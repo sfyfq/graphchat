@@ -6,9 +6,11 @@ import { ChatDialog }  from './components/ChatDialog/ChatDialog'
 import { Tooltip }     from './components/Tooltip'
 import { SearchPanel } from './components/Search/SearchPanel'
 import { Toolbar }     from './components/Toolbar/Toolbar'
+import { SquashTooltip } from './components/Canvas/SquashNode'
 import { useConversationStore } from './store/conversationStore'
 import { computeLayout }        from './lib/layout'
 import { computeSquashGroups, hiddenIds } from './lib/squash'
+import type { SquashGroup } from './lib/squash'
 import { branchColor, clamp }   from './lib/utils'
 import type { Commit, DialogState } from './types'
 
@@ -23,6 +25,9 @@ export default function App() {
 
   // Which squash groups the user has manually expanded
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
+
+  // Currently focused squash group for the sidebar tooltip
+  const [activeSquashGroup, setActiveSquashGroup] = useState<SquashGroup | null>(null)
 
   // Pinned ids: HEAD + any open dialogs — these are never collapsed
   const openDialogIds = useMemo(() => new Set(Object.keys(dialogs)), [dialogs])
@@ -130,6 +135,28 @@ export default function App() {
     if (commitId) setHoverPos({ x: screenX, y: screenY })
   }, [])
 
+  const handleSquashHover = useCallback((
+    group:   SquashGroup | null,
+    screenX: number,
+    screenY: number,
+  ) => {
+    if (group) {
+      setActiveSquashGroup(group)
+    } else {
+      // If the currently active group is NOT expanded, we can hide it on mouse leave.
+      // If it IS expanded, we keep it in the sidebar until they click the circled X.
+      setActiveSquashGroup(prev => {
+        if (prev && expandedGroups.has(prev.id)) return prev
+        return null
+      })
+    }
+  }, [expandedGroups])
+
+  const handleCollapseGroup = useCallback((groupId: string) => {
+    toggleGroup(groupId)
+    setActiveSquashGroup(null)
+  }, [toggleGroup])
+
   // ── Close dialog ──────────────────────────────────────────────────────────
   const closeDialog = useCallback((commitId: string) => {
     setDialogs(prev => {
@@ -158,6 +185,7 @@ export default function App() {
       <Canvas
         onNodeClick={handleNodeClick}
         onNodeHover={handleNodeHover}
+        onSquashHover={handleSquashHover}
         openDialogIds={openDialogIds}
         expandedGroups={expandedGroups}
         toggleGroup={toggleGroup}
@@ -172,6 +200,17 @@ export default function App() {
           commit={hoveredCommit!}
           screenX={hoverPos.x}
           screenY={hoverPos.y}
+        />
+      )}
+
+      {/* Squash sidebar tooltip */}
+      {activeSquashGroup && (
+        <SquashTooltip
+          group={activeSquashGroup}
+          screenX={0}
+          screenY={0}
+          isExpanded={expandedGroups.has(activeSquashGroup.id)}
+          onCollapse={handleCollapseGroup}
         />
       )}
 

@@ -141,23 +141,6 @@ export const CommitNode: React.FC<Props> = ({
         {isUser ? 'U' : '✦'}
       </text>
 
-      {/* Collapse button (for expanded groups) */}
-      {isExpandedRep && (
-        <g
-          transform={`translate(${NODE_R - 6}, -${NODE_R - 6})`}
-          onClick={handleCollapse}
-        >
-          <circle r={8} fill="rgba(8,8,16,0.95)" stroke="rgba(255,255,255,0.25)" strokeWidth={1} />
-          <text
-            textAnchor="middle" dominantBaseline="central"
-            fontSize={12} fill="rgba(255,255,255,0.7)"
-            style={{ pointerEvents: 'none', userSelect: 'none' }}
-          >
-            ×
-          </text>
-        </g>
-      )}
-
       {/* Branch label pill */}
       {commit.branchLabel && (
         <g transform={`translate(0,${NODE_R + 16})`}>
