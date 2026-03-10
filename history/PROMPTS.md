@@ -244,7 +244,7 @@ Refactor the squash group expansion logic to defer canvas un-squashing until a s
 
 2.  **Interaction Updates**:
     - Update `toggleGroup`: When a pill is clicked, auto-center on the pill (`groupId`) and its immediate parent/child, rather than the entire (hidden) node list.
-    - Update `handleSidebarTurnClick`: After opening the dialog, trigger a `gitchat:fit-nodes` event for the specific commit ID to ensure the newly expanded node is centered in the view.
+    - Update `handleSidebarTurnClick`: After opening the dialog, trigger a `graphchat:fit-nodes` event for the specific commit ID to ensure the newly expanded node is centered in the view.
 
 3.  **Cleanup**:
     - Remove any redundant `expandedGroups` (Set) state if it's no longer used for canvas rendering.
@@ -323,3 +323,30 @@ Fix the "User-node message list" bug in `src/components/ChatDialog/ChatDialog.ts
 • Prevents the confusing UI where a message appears both in the chat history and in the editable input box simultaneously.
 
 **Techniques Applied:** State initialization refinement.
+**Your Optimized Prompt:**
+Perform a global rebranding of the project and add a license.
+
+1.  **Rename**:
+    - Project Name: "gitchat" -> "graphchat".
+    - Branding: "GitChat" -> "GraphChat".
+    - Custom Events: `gitchat:*` -> `graphchat:*`.
+    - Update the logo in `src/components/Toolbar/Toolbar.tsx`.
+
+2.  **Files to Update**:
+    - `package.json`
+    - `README.md`
+    - `index.html`
+    - `src/App.tsx`
+    - `src/components/Canvas/Canvas.tsx`
+    - `src/components/Toolbar/Toolbar.tsx`
+    - `history/*.md` (for historical consistency).
+
+3.  **License**:
+    - Create a `LICENSE` file in the root directory with the MIT License text.
+    - Year: 2026, Name: Yifeng Qiu (based on git commits).
+
+**Key Improvements:**
+• Ensures consistent naming across the entire codebase and historical records.
+• Formally licenses the project.
+
+**Techniques Applied:** Global search and replace, legal documentation.

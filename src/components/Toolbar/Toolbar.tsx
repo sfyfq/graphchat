@@ -50,7 +50,7 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen }) => {
   const commitCount = Object.keys(commits).length
 
   const zoom = (action: string) => {
-    window.dispatchEvent(new CustomEvent('gitchat:zoom', { detail: action }))
+    window.dispatchEvent(new CustomEvent('graphchat:zoom', { detail: action }))
   }
 
   return (
@@ -82,7 +82,7 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen }) => {
             color:         '#fff',
             letterSpacing: '-0.03em',
           }}>
-            git<span style={{ color: '#6366f1' }}>chat</span>
+            graph<span style={{ color: '#6366f1' }}>chat</span>
           </span>
 
           <div style={{ width: 1, height: 14, background: 'rgba(255,255,255,0.1)' }} />

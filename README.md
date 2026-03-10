@@ -1,4 +1,4 @@
-# GitChat
+# GraphChat
 
 A git-architected LLM chatbot with an infinite canvas UI. Every conversation turn is an immutable commit. Branch from any point, explore alternate threads, and navigate your full conversation history as a zoomable tree — canopy pointing up.
 
