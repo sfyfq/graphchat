@@ -1,19 +1,17 @@
-# TODO: Fix Gemini History Role Constraint
+# TODO: Implement Markdown Support
 
-## Phase 1: Utils Refactor
-- [ ] Update `src/lib/llm/utils.ts`:
-    - Modify `reconstructMessages` to return `{ systemInstruction: string, history: LLMMessage[] }`.
-    - Logic: if first node is assistant, set as `systemInstruction` and skip in `history`.
+## Phase 1: Setup
+- [ ] Install `react-markdown` and `remark-gfm`.
 
-## Phase 2: Provider Refactor
-- [ ] Update `src/lib/llm/gemini.ts`:
-    - Update `sendMessage` and `streamMessage` to use the new object.
-    - Pass `systemInstruction` to `getGenerativeModel`.
+## Phase 2: Implementation
+- [ ] Update `src/components/ChatDialog/MessageList.tsx`:
+    - [ ] Import `ReactMarkdown` and `remarkGfm`.
+    - [ ] Define custom components for `ReactMarkdown` to handle styling (remove default margins).
+    - [ ] Apply `ReactMarkdown` to message content and `streamingContent`.
 
-## Phase 3: ChatDialog Integration
-- [ ] Update `src/components/ChatDialog/ChatDialog.tsx`:
-    - Handle the new return type of `reconstructMessages` for token estimation and message sending.
-
-## Phase 4: Validation
-- [ ] Verify message sending works without the "role 'user'" error.
+## Phase 3: Validation
+- [ ] Verify line breaks are rendered correctly.
+- [ ] Verify **bold** and *italic* formatting works.
+- [ ] Verify lists and other Markdown features work.
+- [ ] Ensure the scrolling still works correctly with Markdown content.
 - [ ] Run `npx tsc`.
