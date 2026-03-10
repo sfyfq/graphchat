@@ -79,6 +79,9 @@ export default function App() {
   const toggleGroup = useCallback((groupId: string) => {
     const isExpanding = !expandedGroups.has(groupId)
     
+    // Clear ephemeral hover state immediately on click
+    setHoveredSquashGroup(null)
+
     setExpandedGroups(prev => {
       // If expanding a new one, replace the current one.
       // If collapsing the current one, empty the set.
