@@ -2,22 +2,45 @@ import { geminiProvider } from './gemini';
 import { mockProvider }   from './MockProvider';
 import { proxyProvider }  from './ProxyProvider';
 import { useAuthStore }   from '../../store/authStore';
+import { useConfigStore } from '../../store/configStore';
 import { LLMProvider }    from './types';
 
 /**
- * A dynamic LLM provider that switches between the secure proxy 
- * and a mock provider based on the user's whitelist status.
+ * A dynamic LLM provider that switches based on priority:
+ * 1. Local API Key (useConfigStore) -> geminiProvider
+ * 2. Authenticated Session (useAuthStore) -> proxyProvider
+ * 3. Guest -> mockProvider
  */
 export const llm: LLMProvider = {
   sendMessage: (conv, newText) => {
-    const { isWhitelisted, idToken } = useAuthStore.getState();
-    const provider = (isWhitelisted && idToken) ? proxyProvider : mockProvider;
-    return provider.sendMessage(conv, newText);
+    const localKey = useConfigStore.getState().apiKey;
+    const { idToken, user } = useAuthStore.getState();
+
+    console.log('[LLM Selector] sendMessage', { 
+      hasLocalKey: !!localKey, 
+      hasIdToken: !!idToken, 
+      hasUser: !!user 
+    });
+
+    if (localKey) return geminiProvider.sendMessage(conv, newText);
+    if (idToken) return proxyProvider.sendMessage(conv, newText);
+    
+    return mockProvider.sendMessage(conv, newText);
   },
   streamMessage: (conv, newText) => {
-    const { isWhitelisted, idToken } = useAuthStore.getState();
-    const provider = (isWhitelisted && idToken) ? proxyProvider : mockProvider;
-    return provider.streamMessage(conv, newText);
+    const localKey = useConfigStore.getState().apiKey;
+    const { idToken, user } = useAuthStore.getState();
+
+    console.log('[LLM Selector] streamMessage', { 
+      hasLocalKey: !!localKey, 
+      hasIdToken: !!idToken, 
+      hasUser: !!user 
+    });
+
+    if (localKey) return geminiProvider.streamMessage(conv, newText);
+    if (idToken) return proxyProvider.streamMessage(conv, newText);
+
+    return mockProvider.streamMessage(conv, newText);
   }
 };
 

@@ -239,3 +239,26 @@ Configure and deploy the Cloudflare Worker for the GraphChat secure proxy.
 - **Configuration:** Create a `worker/wrangler.json` file.
 - **Environment Secrets:** Provide instructions for setting `GEMINI_API_KEY`, `ALLOWED_EMAILS`, and `GOOGLE_CLIENT_ID` securely in Cloudflare.
 - **Deployment Guide:** Step-by-step instructions for deploying the TypeScript worker using Wrangler.
+# Request: Fix LLM Provider Selection & Mock Mode Trap
+
+The application currently defaults to MOCK MODE even after sign-in if the whitelist validation hasn't completed or if a local API key is present but ignored.
+
+## Requirements:
+- **Prioritize Local Key:** If `useConfigStore.apiKey` is present, use `geminiProvider` (local mode) as the highest priority.
+- **Graceful Transition:** If the user is logged in but `isWhitelisted` is not yet determined, wait or provide a better fallback than immediate mock mode.
+- **Explicit Mode Selection:**
+    1. If `VITE_LLM_API_KEY` (local) exists -> `geminiProvider`.
+    2. If `idToken` exists AND `isWhitelisted` is true -> `proxyProvider`.
+    3. Else -> `mockProvider`.
+- **Bugfix:** Ensure that signing in actually triggers the switch to the real LLM once whitelisted.
+# Request: Fix LLM Provider Selection & Mock Mode Trap
+
+The application currently defaults to MOCK MODE even after sign-in because it strictly requires `isWhitelisted` to be true before even attempting the proxy.
+
+## Requirements:
+- **Priority Shift:** Prioritize `idToken` presence over `isWhitelisted` status in the provider selector.
+- **Self-Healing:** Update `isWhitelisted` to true upon any successful 200 response from the Worker.
+- **Robust Selection:**
+    1. Local Key -> Gemini
+    2. ID Token -> Proxy
+    3. Else -> Mock

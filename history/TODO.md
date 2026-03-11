@@ -702,3 +702,23 @@
 - [x] **Phase 2: Documentation**
     - [x] Create `worker/README.md` with step-by-step deployment guide.
     - [x] Include detailed instructions for secret management.
+# TODO: Fix LLM Provider Selection
+
+- [x] **Phase 1: Logic Refactor (index.ts)**
+    - [x] Update `src/lib/llm/index.ts` with correct priority logic (Local Key > Proxy > Mock).
+
+- [x] **Phase 2: Error Handling (ProxyProvider)**
+    - [x] Update `src/lib/llm/ProxyProvider.ts` to handle 401 status.
+
+- [x] **Phase 3: UX Refinement (Toolbar)**
+    - [x] Add a `isValidating` state to `Toolbar.tsx` to show a loading indicator during whitelist check.
+    - [x] Ensure `validateToken` is triggered correctly.
+# TODO: Remove Mock Mode Trap
+
+- [x] **Phase 1: Logic Refactor (index.ts)**
+    - [x] Remove `isWhitelisted` requirement from `llm` provider selection.
+    - [x] Direct all authenticated users (with `idToken`) to `proxyProvider`.
+
+- [x] **Phase 2: Self-Healing Whitelist (ProxyProvider)**
+    - [x] Update `ProxyProvider.ts` to call `setWhitelisted(true)` on successful 200 responses.
+    - [x] Verify both `sendMessage` and `streamMessage` handle this.

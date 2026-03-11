@@ -6,7 +6,7 @@ const WORKER_URL = import.meta.env.VITE_WORKER_URL || ''
 
 export class ProxyProvider implements LLMProvider {
   async sendMessage(conv: ReconstructedConversation, newText: string): Promise<string> {
-    const { idToken, setWhitelisted } = useAuthStore.getState()
+    const { idToken, setWhitelisted, logout } = useAuthStore.getState()
     
     const response = await fetch(`${WORKER_URL}/chat`, {
       method: 'POST',
@@ -16,6 +16,11 @@ export class ProxyProvider implements LLMProvider {
       },
       body: JSON.stringify({ conv, newText })
     })
+
+    if (response.status === 401) {
+      logout()
+      throw new Error("AUTH_EXPIRED")
+    }
 
     if (response.status === 403) {
       setWhitelisted(false)
@@ -27,12 +32,15 @@ export class ProxyProvider implements LLMProvider {
       throw new Error(err || "Failed to fetch from proxy")
     }
 
+    // Successfully reached the real LLM via proxy
+    setWhitelisted(true)
+
     const data = await response.json()
     return data.text
   }
 
   async* streamMessage(conv: ReconstructedConversation, newText: string): AsyncGenerator<string, void, unknown> {
-    const { idToken, setWhitelisted } = useAuthStore.getState()
+    const { idToken, setWhitelisted, logout } = useAuthStore.getState()
 
     const response = await fetch(`${WORKER_URL}/stream`, {
       method: 'POST',
@@ -43,6 +51,11 @@ export class ProxyProvider implements LLMProvider {
       body: JSON.stringify({ conv, newText })
     })
 
+    if (response.status === 401) {
+      logout()
+      throw new Error("AUTH_EXPIRED")
+    }
+
     if (response.status === 403) {
       setWhitelisted(false)
       throw new Error("UNAUTHORIZED_EMAIL")
@@ -52,6 +65,9 @@ export class ProxyProvider implements LLMProvider {
       const err = await response.text()
       throw new Error(err || "Failed to connect to stream")
     }
+
+    // Successfully reached the real LLM via proxy
+    setWhitelisted(true)
 
     const reader = response.body?.getReader()
     if (!reader) throw new Error("No response body")

@@ -4,6 +4,7 @@ import { GoogleLogin, googleLogout } from '@react-oauth/google'
 import { jwtDecode } from 'jwt-decode'
 import { useConversationStore } from '../../store/conversationStore'
 import { useAuthStore } from '../../store/authStore'
+import { useConfigStore } from '../../store/configStore'
 import { estimateTokens, estimateAttachmentTokens, timeAgo } from '../../lib/utils'
 import { GoogleProfile } from '../../types'
 
@@ -62,9 +63,12 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
   } = useConversationStore()
 
   const { user, idToken, isWhitelisted, login, logout, setWhitelisted } = useAuthStore()
+  const { apiKey } = useConfigStore()
   
   const [showSessions, setShowSessions] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
+  const [isValidating, setIsValidating] = useState(false)
+  
   const menuRef = useRef<HTMLDivElement>(null)
   const profileRef = useRef<HTMLDivElement>(null)
 
@@ -123,6 +127,7 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
 
   // Whitelist Handshake
   const validateToken = async (token: string) => {
+    setIsValidating(true)
     try {
       const res = await fetch(`${WORKER_URL}/validate`, {
         method: 'POST',
@@ -132,6 +137,8 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
     } catch (e) {
       console.error("Auth validation failed", e)
       setWhitelisted(false)
+    } finally {
+      setIsValidating(false)
     }
   }
 
@@ -150,6 +157,20 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
     googleLogout()
     logout()
     setShowProfile(false)
+  }
+
+  const getStatusText = () => {
+    if (apiKey) return 'Local Key Active'
+    if (isValidating) return 'Validating Access...'
+    if (isWhitelisted) return 'Friend Mode Active'
+    return 'Guest Mode (Mock AI)'
+  }
+
+  const getStatusColor = () => {
+    if (apiKey) return '#60a5fa' // blue
+    if (isValidating) return '#fbbf24' // amber/yellow
+    if (isWhitelisted) return '#4ade80' // green
+    return '#f87171' // red
   }
 
   return (
@@ -309,7 +330,7 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
                   height: 38,
                   padding: 0,
                   overflow: 'hidden',
-                  border: isWhitelisted ? '2px solid #6366f1' : '1px solid rgba(255,255,255,0.1)'
+                  border: (isWhitelisted || apiKey) ? '2px solid #6366f1' : '1px solid rgba(255,255,255,0.1)'
                 }}
               >
                 <img src={user.picture} style={{ width: '100%', height: '100%' }} alt={user.name} />
@@ -333,7 +354,7 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
                   
                   <div style={{ 
                     fontSize: 10, 
-                    color: isWhitelisted ? '#4ade80' : '#f87171',
+                    color: getStatusColor(),
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
                     marginBottom: 12,
@@ -341,8 +362,14 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
                     alignItems: 'center',
                     gap: 6
                   }}>
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: isWhitelisted ? '#4ade80' : '#f87171' }} />
-                    {isWhitelisted ? 'Friend Mode Active' : 'Guest Mode (Mock AI)'}
+                    <div style={{ 
+                      width: 6, 
+                      height: 6, 
+                      borderRadius: '50%', 
+                      background: getStatusColor(),
+                      animation: isValidating ? 'dot-pulse 1s infinite' : 'none'
+                    }} />
+                    {getStatusText()}
                   </div>
 
                   <button 
