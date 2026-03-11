@@ -9,9 +9,10 @@ import { timeAgo } from '../../lib/utils'
 import 'katex/dist/katex.min.css'
 
 interface Props {
-  messages:         Commit[]
-  loading:          boolean
-  streamingContent?: string
+  messages:           Commit[]
+  loading:            boolean
+  streamingContent?:  string
+  pendingUserContent?: string
 }
 
 export const MarkdownComponents: any = {
@@ -34,14 +35,16 @@ export const MarkdownComponents: any = {
   ),
 }
 
-export const MessageList: React.FC<Props> = ({ messages, loading, streamingContent }) => {
+export const MessageList: React.FC<Props> = ({ 
+  messages, loading, streamingContent, pendingUserContent 
+}) => {
   const endRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages.length, loading, streamingContent])
+  }, [messages.length, loading, streamingContent, pendingUserContent])
 
-  if (messages.length === 0 && !loading && !streamingContent) {
+  if (messages.length === 0 && !loading && !streamingContent && !pendingUserContent) {
     return (
       <div style={{
         textAlign:  'center',
@@ -104,6 +107,40 @@ export const MessageList: React.FC<Props> = ({ messages, loading, streamingConte
           </div>
         </div>
       ))}
+
+      {/* Pending (uncommitted) user message */}
+      {pendingUserContent && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
+          <div style={{
+            maxWidth:     '82%',
+            padding:      '10px 14px',
+            borderRadius: '14px 14px 4px 14px',
+            background:   'linear-gradient(135deg, #2563eb, #4f46e5)',
+            color:        '#ececec',
+            fontFamily:   "'DM Sans', sans-serif",
+            fontSize:     13.5,
+            lineHeight:   1.65,
+            opacity:      0.7, // Visual indicator that it's pending
+          }}>
+            <ReactMarkdown 
+              remarkPlugins={[remarkGfm, remarkMath]} 
+              rehypePlugins={[rehypeKatex]}
+              components={MarkdownComponents}
+            >
+              {pendingUserContent}
+            </ReactMarkdown>
+            <div style={{
+              fontSize:   10,
+              color:      'rgba(255,255,255,0.3)',
+              marginTop:  5,
+              textAlign:  'right',
+              fontFamily: "'DM Mono', monospace",
+            }}>
+              sending...
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Streaming assistant message */}
       {streamingContent && (

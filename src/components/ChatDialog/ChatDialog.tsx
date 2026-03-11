@@ -47,6 +47,7 @@ export const ChatDialog: React.FC<Props> = ({
   const [activeMath, setActiveMath] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
+  const [pendingUserContent, setPendingUserContent] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const [tipId, setTipId] = useState(
@@ -210,6 +211,7 @@ export const ChatDialog: React.FC<Props> = ({
     }
 
     setInput("");
+    setPendingUserContent(text);
     setActiveMath(null);
     setError(null);
     setLoading(true);
@@ -252,6 +254,7 @@ export const ChatDialog: React.FC<Props> = ({
       addTurn(userCommit, assistantCommit);
       setTipId(assistantId);
       setStreamingContent("");
+      setPendingUserContent("");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "API error";
       
@@ -271,6 +274,7 @@ export const ChatDialog: React.FC<Props> = ({
       
       // Restore input on failure
       setInput(text);
+      setPendingUserContent("");
     } finally {
       setLoading(false);
     }
@@ -481,6 +485,7 @@ export const ChatDialog: React.FC<Props> = ({
           messages={messages} 
           loading={loading} 
           streamingContent={streamingContent}
+          pendingUserContent={pendingUserContent}
         />
       </div>
 
