@@ -618,3 +618,9 @@
     - [ ] Modify `src/components/Toolbar/Toolbar.tsx`.
     - [ ] Implement leaf-node detection logic in `useMemo`.
     - [ ] Verify the branch count accurately reflects the graph paths.
+# TODO: Fix ChatDialog Enter to Send
+
+- [ ] **Bugfix: Restore onKeyDown Prop**
+    - [ ] Modify `src/components/ChatDialog/ChatDialog.tsx`.
+    - [ ] Add `onKeyDown={handleKeyDown}` to the `textarea`.
+    - [ ] Verify `handleKeyDown` logic for Enter vs Shift+Enter.
