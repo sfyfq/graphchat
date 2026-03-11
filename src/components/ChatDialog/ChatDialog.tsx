@@ -191,14 +191,14 @@ export const ChatDialog: React.FC<Props> = ({
     const summary = currentInput || makeSummary(lastMsgContent) || "Empty chat";
 
     onMinimize({
-      commitId: commit.id,
+      commitId: tipId,
       x: pos.x,
       y: pos.y,
       initialInput: input,
       color: bColor,
       summary: summary
     });
-  }, [onMinimize, commit.id, pos, input, messages, bColor]);
+  }, [onMinimize, tipId, pos, input, messages, bColor]);
 
   // ── Send (Transactional & Streaming) ──────────────────────────────────────
   const handleSend = useCallback(async () => {
