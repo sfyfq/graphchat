@@ -278,3 +278,11 @@ Assistant messages received via the Cloudflare Worker proxy are not being format
 - **Robust Stream Parsing:** Refactor the Worker's stream processing to correctly decode Gemini's NDJSON output.
 - **Unescape Content:** Ensure that JSON-escaped characters (like `\n`) are properly unescaped before being sent to the frontend.
 - **Preserve Markdown:** Verify that the resulting text preserves all Markdown syntax for the frontend renderer.
+# Request: Fix Cloudflare Pages Build Conflict
+
+The Cloudflare Pages build is failing because it incorrectly identifies the repository as a Worker project due to the presence of `worker/wrangler.json`.
+
+## Requirements:
+- **De-conflict Build:** Rename `worker/wrangler.json` to something non-standard (e.g., `wrangler.proxy.json`) so the Pages builder ignores it.
+- **Update Documentation:** Update `worker/README.md` to reflect the new config filename for manual deployment.
+- **Verification:** Ensure the Worker can still be deployed manually with the new filename.
