@@ -205,11 +205,6 @@ export const ChatDialog: React.FC<Props> = ({
     const text = input.trim();
     if (!text || loading) return;
 
-    if (!apiKey) {
-      setShowKeyModal(true);
-      return;
-    }
-
     setInput("");
     setPendingUserContent(text);
     setActiveMath(null);
@@ -258,16 +253,18 @@ export const ChatDialog: React.FC<Props> = ({
     } catch (err) {
       const msg = err instanceof Error ? err.message : "API error";
       
-      // Detect API Key issues
+      // Detect API Key issues - only if we are using the local GeminiProvider directly
+      // In proxy mode, the Worker handles the key.
       const isKeyError = msg.includes("MISSING_API_KEY") || 
                          msg.includes("API_KEY_INVALID") || 
                          msg.includes("403") || 
                          msg.includes("401");
 
       if (isKeyError) {
-        setApiKey(null); // Clear the invalid key
-        setShowKeyModal(true);
-        setError("Invalid or missing API key. Please provide a new one.");
+        // If it's a 403 from the Proxy, the ProxyProvider already handles clearing whitelist.
+        // We only show the modal if the user might want to provide their own key as fallback.
+        // For now, let's just show the error.
+        setError("Access denied or API key invalid.");
       } else {
         setError(msg);
       }
@@ -278,7 +275,7 @@ export const ChatDialog: React.FC<Props> = ({
     } finally {
       setLoading(false);
     }
-  }, [input, loading, commits, addTurn, tipId, apiKey, setShowKeyModal, setApiKey]);
+  }, [input, loading, commits, addTurn, tipId]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
