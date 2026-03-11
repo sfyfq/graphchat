@@ -24,6 +24,7 @@ interface Props {
   initialPosition: { x: number; y: number };
   initialInput?: string;
   onClose: () => void;
+  onMinimize?: (state: DialogState & { color: string; summary: string }) => void;
   onFocus?: () => void;
 }
 
@@ -34,6 +35,7 @@ export const ChatDialog: React.FC<Props> = ({
   initialPosition,
   initialInput = "",
   onClose,
+  onMinimize,
   onFocus,
 }) => {
   const { sessions, currentSessionId, addTurn } = useConversationStore();
@@ -178,6 +180,24 @@ export const ChatDialog: React.FC<Props> = ({
     }
     onClose();
   }, [input, onClose]);
+
+  const handleMinimize = useCallback(() => {
+    if (!onMinimize) return;
+    
+    // Summary logic: use current input if present, otherwise last message content
+    const currentInput = input.trim();
+    const lastMsgContent = messages[messages.length - 1]?.content || "";
+    const summary = currentInput || makeSummary(lastMsgContent) || "Empty chat";
+
+    onMinimize({
+      commitId: commit.id,
+      x: pos.x,
+      y: pos.y,
+      initialInput: input,
+      color: bColor,
+      summary: summary
+    });
+  }, [onMinimize, commit.id, pos, input, messages, bColor]);
 
   // ── Send (Transactional & Streaming) ──────────────────────────────────────
   const handleSend = useCallback(async () => {
@@ -388,30 +408,64 @@ export const ChatDialog: React.FC<Props> = ({
           {messages.length} turns
         </span>
 
-        {/* Close */}
-        <button
-          onClick={handleClose}
-          style={{
-            background: "none",
-            border: "none",
-            color: "rgba(255,255,255,0.35)",
-            cursor: "pointer",
-            fontSize: 20,
-            lineHeight: 1,
-            padding: "0 0 0 10px",
-            transition: "color 0.15s",
-            flexShrink: 0,
-          }}
-          onMouseEnter={(e) => {
-            (e.target as HTMLButtonElement).style.color = "#fff";
-          }}
-          onMouseLeave={(e) => {
-            (e.target as HTMLButtonElement).style.color =
-              "rgba(255,255,255,0.35)";
-          }}
-        >
-          ×
-        </button>
+        {/* Action Buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 10 }}>
+          {/* Minimize */}
+          <button
+            onClick={handleMinimize}
+            title="Minimize"
+            style={{
+              background: "none",
+              border: "none",
+              color: "rgba(255,255,255,0.35)",
+              cursor: "pointer",
+              fontSize: 18,
+              lineHeight: 1,
+              padding: "4px",
+              transition: "color 0.15s",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color = "#fff";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color =
+                "rgba(255,255,255,0.35)";
+            }}
+          >
+            −
+          </button>
+
+          {/* Close */}
+          <button
+            onClick={handleClose}
+            title="Close"
+            style={{
+              background: "none",
+              border: "none",
+              color: "rgba(255,255,255,0.35)",
+              cursor: "pointer",
+              fontSize: 20,
+              lineHeight: 1,
+              padding: "4px",
+              transition: "color 0.15s",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color = "#ef4444";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color =
+                "rgba(255,255,255,0.35)";
+            }}
+          >
+            ×
+          </button>
+        </div>
       </div>
 
       {/* ── Messages ── */}

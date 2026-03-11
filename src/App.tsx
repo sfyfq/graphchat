@@ -9,6 +9,7 @@ import { SearchPanel } from './components/Search/SearchPanel'
 import { Toolbar }     from './components/Toolbar/Toolbar'
 import { LibrarySidebar } from './components/Library/LibrarySidebar'
 import { ApiKeyModal } from './components/Modals/ApiKeyModal'
+import { MinimizedSidebar } from './components/Canvas/MinimizedSidebar'
 import { SquashTooltip } from './components/Canvas/SquashNode'
 import { useConversationStore } from './store/conversationStore'
 import { computeLayout }        from './lib/layout'
@@ -28,6 +29,7 @@ export default function App() {
 
   // Dialogs: map from commitId → { position, initialInput }
   const [dialogs,     setDialogs]     = useState<Record<string, { x: number; y: number; initialInput?: string }>>({})
+  const [minimizedDialogs, setMinimizedDialogs] = useState<Record<string, DialogState & { color: string; summary: string }>>({})
   const [hoveredId,   setHoveredId]   = useState<string | null>(null)
   const [hoverPos,    setHoverPos]    = useState({ x: 0, y: 0 })
   const [isHoveringCanvas, setIsHoveringCanvas] = useState(false)
@@ -42,6 +44,7 @@ export default function App() {
   // When the session changes, clear transient UI states
   useEffect(() => {
     setDialogs({})
+    setMinimizedDialogs({})
     setHoveredId(null)
     setHoveredSquashGroup(null)
     setExpandedSquashGroup(null)
@@ -65,7 +68,7 @@ export default function App() {
   }, [currentSessionId, commits]) // run on session switch or graph reset
 
   // Pinned ids: HEAD + any open dialogs — these nodes are never part of a squash pill
-  const openDialogIds = useMemo(() => new Set(Object.keys(dialogs)), [dialogs])
+  const openDialogIds = useMemo(() => new Set([...Object.keys(dialogs), ...Object.keys(minimizedDialogs)]), [dialogs, minimizedDialogs])
   const pinned = useMemo<Set<string>>(() => {
     const s = new Set(openDialogIds)
     s.add(HEAD)
@@ -212,6 +215,41 @@ export default function App() {
     })
   }, [])
 
+  // ── Minimize/Restore ──────────────────────────────────────────────────────
+  const handleMinimize = useCallback((state: DialogState & { color: string; summary: string }) => {
+    if (Object.keys(minimizedDialogs).length >= 5) {
+      alert("Maximum 5 minimized chats allowed.")
+      return
+    }
+
+    setMinimizedDialogs(prev => ({
+      ...prev,
+      [state.commitId]: state
+    }))
+
+    setDialogs(prev => {
+      const next = { ...prev }
+      delete next[state.commitId]
+      return next
+    })
+  }, [minimizedDialogs])
+
+  const handleRestore = useCallback((commitId: string) => {
+    const item = minimizedDialogs[commitId]
+    if (!item) return
+
+    setDialogs(prev => ({
+      ...prev,
+      [commitId]: { x: item.x, y: item.y, initialInput: item.initialInput }
+    }))
+
+    setMinimizedDialogs(prev => {
+      const next = { ...prev }
+      delete next[commitId]
+      return next
+    })
+  }, [minimizedDialogs])
+
   // ── Search → open dialog + pan ────────────────────────────────────────────
   const handleSearchSelect = useCallback((commit: Commit) => {
     handleNodeClick(commit)
@@ -219,7 +257,7 @@ export default function App() {
 
   // ── Hovered commit ────────────────────────────────────────────────────────
   const hoveredCommit = hoveredId ? commits[hoveredId] : null
-  const showTooltip   = hoveredCommit && !dialogs[hoveredId!] && isHoveringCanvas
+  const showTooltip   = hoveredCommit && !dialogs[hoveredId!] && !minimizedDialogs[hoveredId!] && isHoveringCanvas
 
   return (
     <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', background: '#080810' }}>
@@ -247,6 +285,11 @@ export default function App() {
       />
 
       <ApiKeyModal />
+
+      <MinimizedSidebar 
+        items={minimizedDialogs} 
+        onRestore={handleRestore} 
+      />
 
       {/* Hover tooltip */}
       {showTooltip && (
@@ -296,6 +339,7 @@ export default function App() {
             initialPosition={state}
             initialInput={state.initialInput}
             onClose={() => closeDialog(commitId)}
+            onMinimize={handleMinimize}
             onFocus={() => focusDialog(commitId)}
           />
         )
