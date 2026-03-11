@@ -15,7 +15,7 @@ import { useConfigStore } from "../../store/configStore";
 import { llm, reconstructMessages, estimateTokens } from "../../lib/llm";
 import { makeSummary, branchColor, getMathAtCursor } from "../../lib/utils";
 import { MessageList, MarkdownComponents } from "./MessageList";
-import type { Commit } from "../../types";
+import type { Commit, DialogState } from "../../types";
 
 import 'katex/dist/katex.min.css'
 
@@ -24,6 +24,7 @@ interface Props {
   initialPosition: { x: number; y: number };
   initialInput?: string;
   onClose: () => void;
+  onMinimize?: (state: DialogState & { color: string; summary: string }) => void;
   onFocus?: () => void;
 }
 
@@ -34,6 +35,7 @@ export const ChatDialog: React.FC<Props> = ({
   initialPosition,
   initialInput = "",
   onClose,
+  onMinimize,
   onFocus,
 }) => {
   const { sessions, currentSessionId, addTurn } = useConversationStore();
@@ -45,6 +47,7 @@ export const ChatDialog: React.FC<Props> = ({
   const [activeMath, setActiveMath] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
+  const [pendingUserContent, setPendingUserContent] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const [tipId, setTipId] = useState(
@@ -179,6 +182,24 @@ export const ChatDialog: React.FC<Props> = ({
     onClose();
   }, [input, onClose]);
 
+  const handleMinimize = useCallback(() => {
+    if (!onMinimize) return;
+    
+    // Summary logic: use current input if present, otherwise last message content
+    const currentInput = input.trim();
+    const lastMsgContent = messages[messages.length - 1]?.content || "";
+    const summary = currentInput || makeSummary(lastMsgContent) || "Empty chat";
+
+    onMinimize({
+      commitId: tipId,
+      x: pos.x,
+      y: pos.y,
+      initialInput: input,
+      color: bColor,
+      summary: summary
+    });
+  }, [onMinimize, tipId, pos, input, messages, bColor]);
+
   // ── Send (Transactional & Streaming) ──────────────────────────────────────
   const handleSend = useCallback(async () => {
     const text = input.trim();
@@ -190,6 +211,7 @@ export const ChatDialog: React.FC<Props> = ({
     }
 
     setInput("");
+    setPendingUserContent(text);
     setActiveMath(null);
     setError(null);
     setLoading(true);
@@ -232,6 +254,7 @@ export const ChatDialog: React.FC<Props> = ({
       addTurn(userCommit, assistantCommit);
       setTipId(assistantId);
       setStreamingContent("");
+      setPendingUserContent("");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "API error";
       
@@ -251,6 +274,7 @@ export const ChatDialog: React.FC<Props> = ({
       
       // Restore input on failure
       setInput(text);
+      setPendingUserContent("");
     } finally {
       setLoading(false);
     }
@@ -388,30 +412,64 @@ export const ChatDialog: React.FC<Props> = ({
           {messages.length} turns
         </span>
 
-        {/* Close */}
-        <button
-          onClick={handleClose}
-          style={{
-            background: "none",
-            border: "none",
-            color: "rgba(255,255,255,0.35)",
-            cursor: "pointer",
-            fontSize: 20,
-            lineHeight: 1,
-            padding: "0 0 0 10px",
-            transition: "color 0.15s",
-            flexShrink: 0,
-          }}
-          onMouseEnter={(e) => {
-            (e.target as HTMLButtonElement).style.color = "#fff";
-          }}
-          onMouseLeave={(e) => {
-            (e.target as HTMLButtonElement).style.color =
-              "rgba(255,255,255,0.35)";
-          }}
-        >
-          ×
-        </button>
+        {/* Action Buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 10 }}>
+          {/* Minimize */}
+          <button
+            onClick={handleMinimize}
+            title="Minimize"
+            style={{
+              background: "none",
+              border: "none",
+              color: "rgba(255,255,255,0.35)",
+              cursor: "pointer",
+              fontSize: 18,
+              lineHeight: 1,
+              padding: "4px",
+              transition: "color 0.15s",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color = "#fff";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color =
+                "rgba(255,255,255,0.35)";
+            }}
+          >
+            −
+          </button>
+
+          {/* Close */}
+          <button
+            onClick={handleClose}
+            title="Close"
+            style={{
+              background: "none",
+              border: "none",
+              color: "rgba(255,255,255,0.35)",
+              cursor: "pointer",
+              fontSize: 20,
+              lineHeight: 1,
+              padding: "4px",
+              transition: "color 0.15s",
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color = "#ef4444";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color =
+                "rgba(255,255,255,0.35)";
+            }}
+          >
+            ×
+          </button>
+        </div>
       </div>
 
       {/* ── Messages ── */}
@@ -427,6 +485,7 @@ export const ChatDialog: React.FC<Props> = ({
           messages={messages} 
           loading={loading} 
           streamingContent={streamingContent}
+          pendingUserContent={pendingUserContent}
         />
       </div>
 
@@ -523,6 +582,7 @@ export const ChatDialog: React.FC<Props> = ({
             ref={textareaRef}
             value={input}
             onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
             onKeyUp={handleKeyUp}
             onClick={handleClick}
             placeholder="Continue this thread…"

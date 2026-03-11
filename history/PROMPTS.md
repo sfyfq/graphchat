@@ -676,3 +676,94 @@ Update the branch counting logic in `Toolbar.tsx` to count the number of "leaf n
         - Identify all node IDs that act as a `source` in the `currentSession.edges` array.
         - Filter `currentSession.commits` to find nodes whose IDs are **not** in the set of source IDs.
         - The count of these "leaf" nodes is the true branch count.
+# Bugfix: ChatDialog Enter to Send
+
+## Objective
+Restore the "Enter to send" functionality in the `ChatDialog` component by re-attaching the `handleKeyDown` event handler to the `textarea`.
+
+## Implementation Details
+- Update `src/components/ChatDialog/ChatDialog.tsx`:
+    - Locate the `textarea` inside the return statement.
+    - Add the prop `onKeyDown={handleKeyDown}` to the `textarea` component.
+    - Verify that `handleKeyDown` is correctly defined to trigger `handleSend()` on "Enter" and allow "Shift+Enter" for new lines.
+# Feature: Dialog Minimization Sidebar
+
+## Objective
+Implement a system to minimize up to 5 chat dialogs into a vertical sidebar on the right side of the screen, with hover summaries and easy restoration.
+
+## 1. State Management (`src/App.tsx`)
+- Add state: `minimizedDialogs: Record<string, DialogState & { summary: string, color: string }>`.
+- Track the order of minimization to enforce the **5-item limit**.
+- Ensure that switching sessions clears the minimized state.
+
+## 2. ChatDialog Component (`src/components/ChatDialog/ChatDialog.tsx`)
+- Add an `onMinimize` prop.
+- In the header, add a "−" (minimize) button next to the "×" (close) button.
+- When clicked, call `onMinimize` with the current `DialogState` and a summary of either the last message in the branch or the current input text.
+
+## 3. Minimized Sidebar (`src/components/Canvas/MinimizedSidebar.tsx`)
+- Create a new component to render the vertical stack of minimized items.
+- **Visuals:** 
+    - Floating on the right edge, centered vertically.
+    - Each item: A circle/square with a chat-box icon and a dot of the branch color.
+    - Glassmorphism style (blur + transparency).
+- **Hover:** Show a tooltip with the `summary` (truncated).
+- **Click:** Restore the dialog by moving it from `minimizedDialogs` back to the active `dialogs` state.
+
+## 4. UX Refinements
+- When restoring, return the dialog to its **original position** saved during minimization.
+- If the user tries to minimize a 6th dialog, show a brief warning (e.g., "Max 5 minimized chats").
+# Feature: Dialog Minimization Sidebar
+
+## Objective
+Implement a system to minimize chat dialogs into a right-side vertical sidebar with hover summaries and easy restoration.
+
+## 1. State Management (`src/App.tsx`)
+- Add `minimizedDialogs` state to track minimized items (including position, color, and summary).
+- Implement `handleMinimize` with a 5-item limit check.
+- Implement `handleRestore` to move items back to the active `dialogs` state.
+
+## 2. ChatDialog Component (`src/components/ChatDialog/ChatDialog.tsx`)
+- Add `onMinimize` prop.
+- Add minimize button ("−") to the header.
+- On minimize, send current state and a summary of the latest content.
+
+## 3. Minimized Sidebar (`src/components/Canvas/MinimizedSidebar.tsx`)
+- Create a floating vertical stack on the right edge.
+- Display branch-colored icons for each minimized item.
+- Implement glassmorphism tooltips for hover summaries.
+
+## 4. UI Refinements
+- Add `sidebar-in` and update `tooltip-in` animations in `src/index.css`.
+# Improvement: Pending User Message UI
+
+## Objective
+Enhance the ChatDialog UI to display the user's latest message immediately after submission, creating a more responsive experience while waiting for the assistant's reply.
+
+## 1. ChatDialog Refactor (`src/components/ChatDialog/ChatDialog.tsx`)
+- Add state: `pendingUserContent: string`.
+- In `handleSend`:
+    - Set `pendingUserContent` to the current `input` text right before clearing it.
+    - Pass `pendingUserContent` to the `MessageList` component.
+    - Clear `pendingUserContent` once the assistant message is committed.
+
+## 2. MessageList Refactor (`src/components/ChatDialog/MessageList.tsx`)
+- Add prop: `pendingUserContent?: string`.
+- Update the render logic:
+    - If `pendingUserContent` is present, render it as a user message (right-aligned, blue gradient) after the list of committed messages but **before** the streaming assistant message.
+# Bugfix: Correct Tracking for Minimized Dialogs
+
+## Objective
+Ensure that minimized dialogs preserve the latest state of the conversation by using the `tipId` (current branch head) instead of the original spawn `commitId`.
+
+## 1. ChatDialog Refactor (`src/components/ChatDialog/ChatDialog.tsx`)
+- Update `handleMinimize`:
+    - Change `commitId: commit.id` to `commitId: tipId`.
+    - This ensures the state object sent to `onMinimize` reflects the current conversation progress.
+
+## 2. App State Refactor (`src/App.tsx`)
+- Update `handleMinimize`:
+    - When moving a dialog to `minimizedDialogs`, use the `state.commitId` (which is now `tipId`) as the key in the state.
+    - Ensure the original active dialog (keyed by `commit.id`) is removed from the `dialogs` map.
+- Update `handleRestore`:
+    - Correctly restore the dialog using the saved `commitId` from the minimized state.

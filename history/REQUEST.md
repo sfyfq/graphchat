@@ -174,3 +174,48 @@ The "Session Stats" panel currently shows an incorrect number of branches (e.g.,
 - Redefine "Branches" to reflect the actual number of active conversation paths in the graph.
 - A branch should be defined as a **leaf node** (a node that has no outgoing edges/children).
 - Ensure the logic works correctly for branched graphs where some paths are longer than others.
+# Request: Fix ChatDialog Enter to Send
+
+Pressing "Enter" in the `ChatDialog` textarea currently performs a carriage return instead of sending the message. This was likely introduced during the LaTeX preview implementation.
+
+## Requirements:
+- Pressing "Enter" (without Shift) should trigger the `handleSend` function.
+- Pressing "Shift+Enter" should still perform a carriage return (new line).
+- Ensure the behavior is consistent with standard chat application UX.
+# Request: Dialog Minimization
+
+Add the ability to minimize open chat dialogs to the right side of the viewport.
+
+## Requirements:
+- **Minimize Button:** Add a minimize button (next to close) in the `ChatDialog` header.
+- **Capacity:** Limit the total number of minimized dialogs to **5**. If a 6th is added, prevent it or rotate the oldest out (user choice: prevent).
+- **Minimized UI:** Display minimized dialogs as vertical pills or icons on the right edge of the screen.
+- **Hover Summary:** Show the first few words or a summary of the last assistant message when hovering over a minimized item.
+- **Restore:** Clicking a minimized item restores it to its previous position (or centers it).
+# Request: Dialog Minimization Sidebar
+
+Add the ability to minimize up to 5 chat dialogs into a vertical sidebar on the right side of the screen.
+
+## Requirements:
+- **Minimize Button:** Add a minimize button ("−") in the `ChatDialog` header.
+- **Capacity:** Limit the total number of minimized dialogs to **5**.
+- **Minimized UI:** Display minimized dialogs as vertical pills/icons on the right edge of the screen.
+- **Hover Summary:** Show a summary of the most recent message (assistant or user) when hovering over a minimized icon.
+- **Restore:** Clicking a minimized icon restores it to its previous position.
+# Request: UI Improvement - Pending User Message
+
+Improve the message-sending UX by showing the user's message immediately after sending, even while the assistant's reply is still streaming and before both messages are officially committed to the graph.
+
+## Requirements:
+- **Immediate Feedback:** When the user clicks "Send", their message should appear in the `MessageList` instantly.
+- **Pending State:** This message should be treated as "pending" or "uncommitted" until the assistant finishes streaming.
+- **Visual Consistency:** The pending user message should look identical to committed user messages.
+- **Transactional Commit:** Both the user message and the assistant message should still be committed together once the streaming is complete.
+# Request: Fix Minimized Dialog Tracking
+
+Minimized dialogs currently track the original commit ID they were opened with, causing them to "revert" to an older conversation state when restored.
+
+## Requirements:
+- **Track Latest State:** When minimizing, use the `tipId` (the current head of the conversation in the dialog) instead of the original `commit.id`.
+- **Restore Latest State:** Ensure that when a dialog is restored, it opens at the `tipId` that was active at the moment of minimization.
+- **Content Persistence:** Preserve any uncommitted text in the input field.

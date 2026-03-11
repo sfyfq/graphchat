@@ -618,3 +618,58 @@
     - [ ] Modify `src/components/Toolbar/Toolbar.tsx`.
     - [ ] Implement leaf-node detection logic in `useMemo`.
     - [ ] Verify the branch count accurately reflects the graph paths.
+# TODO: Fix ChatDialog Enter to Send
+
+- [ ] **Bugfix: Restore onKeyDown Prop**
+    - [ ] Modify `src/components/ChatDialog/ChatDialog.tsx`.
+    - [ ] Add `onKeyDown={handleKeyDown}` to the `textarea`.
+    - [ ] Verify `handleKeyDown` logic for Enter vs Shift+Enter.
+# TODO: Dialog Minimization Sidebar
+
+- [x] **Phase 1: Component Refactor (ChatDialog)**
+    - [x] Update `ChatDialog.tsx` to include a minimize button.
+    - [x] Implement `handleMinimize` logic to capture current state and most recent content.
+
+- [x] **Phase 2: UI (Minimized Sidebar)**
+    - [x] Create `src/components/Canvas/MinimizedSidebar.tsx`.
+    - [x] Design the floating items with branch color indicators.
+    - [x] Implement the hover tooltip for message summaries.
+
+- [x] **Phase 3: State & Integration (App.tsx)**
+    - [x] Add `minimizedDialogs` state to `App.tsx`.
+    - [x] Implement `handleMinimize` and `handleRestore` actions.
+    - [x] Add the 5-item limit validation.
+    - [x] Integrate the sidebar into the main layout.
+# TODO: Dialog Minimization Sidebar
+
+- [x] **Phase 1: Component Refactor (ChatDialog)**
+    - [x] Update `ChatDialog.tsx` to include a minimize button.
+    - [x] Implement `handleMinimize` logic to capture current state and latest content.
+
+- [x] **Phase 2: UI (Minimized Sidebar)**
+    - [x] Create `src/components/Canvas/MinimizedSidebar.tsx`.
+    - [x] Implement hover summaries and branch color indicators.
+
+- [x] **Phase 3: State & Integration (App.tsx)**
+    - [x] Add `minimizedDialogs` state to `App.tsx`.
+    - [x] Implement `handleMinimize` and `handleRestore` actions.
+    - [x] Integrate the sidebar and add CSS animations.
+# TODO: UI Improvement - Pending User Message
+
+- [x] **Phase 1: ChatDialog State Update**
+    - [x] Add `pendingUserContent` state to `ChatDialog.tsx`.
+    - [x] Update `handleSend` to set and clear this state correctly.
+
+- [x] **Phase 2: MessageList Component Update**
+    - [x] Add `pendingUserContent` prop to `MessageList.tsx`.
+    - [x] Implement rendering logic for the uncommitted user message.
+    - [x] Ensure smooth scrolling includes the pending message.
+# TODO: Fix Minimized Dialog Tracking
+
+- [x] **Phase 1: ChatDialog Logic Update**
+    - [x] Modify `handleMinimize` in `ChatDialog.tsx` to use `tipId`.
+
+- [x] **Phase 2: App.tsx State Update**
+    - [x] Update `handleMinimize` in `App.tsx` to correctly key the minimized state by `tipId`.
+    - [x] Ensure the old `commit.id` key is removed from active `dialogs`.
+    - [x] Verify `handleRestore` uses the correct key.
