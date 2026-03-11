@@ -736,3 +736,11 @@
     - [x] Replace the simplified regex parser with a robust JSON object extractor.
     - [x] Ensure `JSON.parse` is used to unescape text content.
     - [x] Verify that newlines and Markdown syntax are preserved in the frontend.
+# TODO: Fix Cloudflare Pages Build Conflict
+
+- [x] **Phase 1: Rename Configuration**
+    - [x] Rename `worker/wrangler.json` to `worker/wrangler.proxy.json`.
+
+- [x] **Phase 2: Update Documentation**
+    - [x] Update `worker/README.md` with new `npx wrangler` commands using the `-c` flag.
+    - [x] Verify that instructions are clear for manual deployment.
