@@ -231,3 +231,11 @@ Implement a hybrid access system where guests use a Mock LLM and whitelisted Goo
     - Create a `ProxyLLMProvider` that sends prompts + Google ID Token to a Cloudflare Worker.
     - The Worker verifies the token, checks an email whitelist, and uses a server-side Gemini API Key to fetch responses.
 - **UX:** If a logged-in user is NOT on the whitelist, show a "Guest Only" notification and revert them to the Mock Provider.
+# Request: Cloudflare Worker Configuration & Deployment
+
+Configure and deploy the Cloudflare Worker for the GraphChat secure proxy.
+
+## Requirements:
+- **Configuration:** Create a `worker/wrangler.json` file.
+- **Environment Secrets:** Provide instructions for setting `GEMINI_API_KEY`, `ALLOWED_EMAILS`, and `GOOGLE_CLIENT_ID` securely in Cloudflare.
+- **Deployment Guide:** Step-by-step instructions for deploying the TypeScript worker using Wrangler.
