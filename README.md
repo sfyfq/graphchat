@@ -10,13 +10,12 @@ Inspired by git architecture, I came up with GraphChat. By treating every conver
 ## Key Features
 
 - **Non-Destructive Branching**: I can click any historical node to branch off. This lets me explore alternate prompts and AI responses without ever losing my original context.
-- **Multimodal Attachment Library**: I built a shared library system using IndexedDB. I can upload images, audio, and video once and reuse them across different sessions to minimize storage usage.
+- **Smart History Squashing**: To keep the graph readable, I automatically squash long linear runs into compact pills. I can still dive into the full history using a dedicated sidebar explorer.
+- **Atomic Transactional Turns**: User and Assistant messages are committed to the graph atomically only after a successful response, ensuring my conversation tree stays pristine.
 - **Dynamic Session Analytics**: The dashboard gives me live stats on turns, multimodal token counts (including resolution-based image estimation), path depth, and leaf-node branch counts.
 - **Dialog Minimization Sidebar**: I can minimize up to 5 active dialogs to a sidebar. Hovering over a minimized icon gives me a summary of the latest update, making context switching seamless.
 - **LaTeX Overlay Preview**: As I type math formulas, a real-time LaTeX overlay appears to show me exactly how the rendering will look before I send the message.
-- **Smart History Squashing**: To keep the graph readable, I automatically squash long linear runs into compact pills. I can still dive into the full history using a dedicated sidebar explorer.
-- **In-Memory API Security**: I implemented a dynamic provisioning method for the Gemini API key. It's stored strictly in memory for the duration of the browser session and is never persisted to storage.
-- **Atomic Transactional Turns**: User and Assistant messages are committed to the graph atomically only after a successful response, ensuring my conversation tree stays pristine.
+- **Privacy By Design**: Conversations with the LLM are stored locally on the user's computer. The application doesn't store or log user interactions. 
 
 ---
 
