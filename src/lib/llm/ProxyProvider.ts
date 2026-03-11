@@ -6,7 +6,7 @@ const WORKER_URL = import.meta.env.VITE_WORKER_URL || ''
 
 export class ProxyProvider implements LLMProvider {
   async sendMessage(conv: ReconstructedConversation, newText: string): Promise<string> {
-    const { idToken, setWhitelisted } = useAuthStore.getState()
+    const { idToken, setWhitelisted, logout } = useAuthStore.getState()
     
     const response = await fetch(`${WORKER_URL}/chat`, {
       method: 'POST',
@@ -16,6 +16,11 @@ export class ProxyProvider implements LLMProvider {
       },
       body: JSON.stringify({ conv, newText })
     })
+
+    if (response.status === 401) {
+      logout()
+      throw new Error("AUTH_EXPIRED")
+    }
 
     if (response.status === 403) {
       setWhitelisted(false)
@@ -32,7 +37,7 @@ export class ProxyProvider implements LLMProvider {
   }
 
   async* streamMessage(conv: ReconstructedConversation, newText: string): AsyncGenerator<string, void, unknown> {
-    const { idToken, setWhitelisted } = useAuthStore.getState()
+    const { idToken, setWhitelisted, logout } = useAuthStore.getState()
 
     const response = await fetch(`${WORKER_URL}/stream`, {
       method: 'POST',
@@ -42,6 +47,11 @@ export class ProxyProvider implements LLMProvider {
       },
       body: JSON.stringify({ conv, newText })
     })
+
+    if (response.status === 401) {
+      logout()
+      throw new Error("AUTH_EXPIRED")
+    }
 
     if (response.status === 403) {
       setWhitelisted(false)
