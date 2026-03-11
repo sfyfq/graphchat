@@ -1,19 +1,28 @@
 # GraphChat
+<center><img src="doc/images/graphchat.png" width="500" alt="Image with preserved aspect ratio"></center>
 
-GraphChat is a git-architected LLM chatbot featuring an infinite canvas UI. By treating every conversation turn as an immutable commit, it allows you to visualize, navigate, and branch your AI interactions as a zoomable tree.
+I have been frustrated with the linear nature of browser-based LLM chatbots. They don't work well when I want to explore multiple sub-topics because the context window eventually gets contaminated. Standard chatbots often lose focus and miss prior instructions as the conversation grows.
+
+Inspired by git architecture, I came up with GraphChat. By treating every conversation turn as an immutable commit, I can visualize, navigate, and branch AI interactions as a zoomable tree. This keeps my context clean and my explorations organized.
 
 ---
 
 ## Key Features
 
-- **Infinite Zoomable Canvas**: Navigate your conversation history as a structured DAG (Directed Acyclic Graph) with intuitive pan and zoom controls.
-- **Non-Destructive Branching**: Click any historical node to branch off. Explore alternate prompts and alternate AI responses without ever losing your original context.
-- **Smart History Squashing**: Long linear conversation runs are automatically squashed into compact pills, keeping your graph clean and readable even as threads grow.
-- **Persistent Sidebar Explorer**: Dive into squashed history using a dedicated sidebar. Review turns, highlight nodes on the canvas, or jump back into a specific moment in time.
-- **Atomic Transactional Turns**: Conversation turns (User + Assistant) are committed atomically only after a successful response. If a request fails, your message stays in the input field and the graph remains pristine.
-- **Real-time Streaming**: Enjoy modern chat UX with word-by-word response streaming.
-- **Global Search**: Instantly find any message or summary across all branches using the global search panel (`⌘K` / `Ctrl+K`).
-- **Visual Context**: High-visibility "HEAD" markers and unique shaping for root messages ensure you always know where you are in the conversation tree.
+- **Non-Destructive Branching**: I can click any historical node to branch off. This lets me explore alternate prompts and AI responses without ever losing my original context.
+- **Multimodal Attachment Library**: I built a shared library system using IndexedDB. I can upload images, audio, and video once and reuse them across different sessions to minimize storage usage.
+- **Dynamic Session Analytics**: The dashboard gives me live stats on turns, multimodal token counts (including resolution-based image estimation), path depth, and leaf-node branch counts.
+- **Dialog Minimization Sidebar**: I can minimize up to 5 active dialogs to a sidebar. Hovering over a minimized icon gives me a summary of the latest update, making context switching seamless.
+- **LaTeX Overlay Preview**: As I type math formulas, a real-time LaTeX overlay appears to show me exactly how the rendering will look before I send the message.
+- **Smart History Squashing**: To keep the graph readable, I automatically squash long linear runs into compact pills. I can still dive into the full history using a dedicated sidebar explorer.
+- **In-Memory API Security**: I implemented a dynamic provisioning method for the Gemini API key. It's stored strictly in memory for the duration of the browser session and is never persisted to storage.
+- **Atomic Transactional Turns**: User and Assistant messages are committed to the graph atomically only after a successful response, ensuring my conversation tree stays pristine.
+
+---
+
+## Development
+
+I have been prompt-coding this project for the most part with Gemini CLI. I use a curated `GEMINI.md` centered around a 4-D Methodology (Deconstruct, Diagnose, Develop, Deliver). For every request I make, the CLI generates a `REQUEST.md` to digest my intent, a `PROMPTS.md` to refine the LLM instructions, and a `TODO.md` to order the work. You can see the evolution of the project in the aggregated [history/](history) directory. While I have to remind the CLI to stick to the rules occasionally, this workflow has been exceptionally effective for building GraphChat from the ground up.
 
 ---
 
@@ -22,7 +31,7 @@ GraphChat is a git-architected LLM chatbot featuring an infinite canvas UI. By t
 ### Prerequisites
 
 - Node.js (v18+)
-- An LLM API Key (e.g., Gemini, Anthropic, OpenAI)
+- A Gemini API Key (I plan to add support for other providers later)
 
 ### Setup
 
@@ -31,8 +40,8 @@ GraphChat is a git-architected LLM chatbot featuring an infinite canvas UI. By t
    npm install
    ```
 
-2. **Configure Environment**
-   Create a `.env.local` file in the root directory:
+2. **Configure Environment (Optional)**
+   You can create a `.env.local` file, or simply provide the key through the UI when prompted:
    ```bash
    VITE_LLM_API_KEY=your_api_key_here
    ```
@@ -55,7 +64,7 @@ To generate a production-ready bundle:
 npm run build
 ```
 
-The output will be located in the `dist/` directory, which can be hosted on any static site provider (Vercel, Netlify, GitHub Pages, etc.).
+The output will be in the `dist/` directory.
 
 ### Environment Variables
 
@@ -64,7 +73,7 @@ The output will be located in the `dist/` directory, which can be hosted on any 
 | `VITE_LLM_API_KEY` | Your LLM API key |
 
 > [!WARNING]
-> **Security Note**: This prototype executes API calls directly from the browser. In a production environment, you should proxy these requests through a backend to keep your API keys secure.
+> **Security Note**: This prototype executes API calls directly from the browser. In a production environment, these requests should be proxied through a backend to keep API keys secure.
 
 ---
 
