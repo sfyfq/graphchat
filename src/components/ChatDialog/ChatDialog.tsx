@@ -15,7 +15,7 @@ import { useConfigStore } from "../../store/configStore";
 import { llm, reconstructMessages, estimateTokens } from "../../lib/llm";
 import { makeSummary, branchColor, getMathAtCursor } from "../../lib/utils";
 import { MessageList, MarkdownComponents } from "./MessageList";
-import type { Commit } from "../../types";
+import type { Commit, DialogState } from "../../types";
 
 import 'katex/dist/katex.min.css'
 
