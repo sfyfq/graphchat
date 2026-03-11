@@ -106,27 +106,57 @@ export default {
       (async () => {
         const decoder = new TextDecoder();
         const encoder = new TextEncoder();
+        let buffer = '';
+
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
           
-          const chunk = decoder.decode(value);
-          try {
-            const lines = chunk.split('\n');
-            for (const line of lines) {
-              if (line.trim().startsWith('"text":')) {
-                const match = line.match(/"text":\s*"(.*)"/);
-                if (match) await writer.write(encoder.encode(match[1]));
+          buffer += decoder.decode(value, { stream: true });
+          
+          // Gemini returns a JSON array of objects. We need to find the start and end of objects.
+          // In their stream format, it looks like: [ { ... }, { ... } ]
+          // We look for objects between braces.
+          let startIdx = buffer.indexOf('{');
+          while (startIdx !== -1) {
+            let braceCount = 0;
+            let endIdx = -1;
+            
+            for (let i = startIdx; i < buffer.length; i++) {
+              if (buffer[i] === '{') braceCount++;
+              else if (buffer[i] === '}') {
+                braceCount--;
+                if (braceCount === 0) {
+                  endIdx = i;
+                  break;
+                }
               }
             }
-          } catch (e) {}
+
+            if (endIdx !== -1) {
+              const objStr = buffer.slice(startIdx, endIdx + 1);
+              try {
+                const obj = JSON.parse(objStr);
+                const textChunk = obj.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (textChunk) {
+                  await writer.write(encoder.encode(textChunk));
+                }
+              } catch (e) {
+                console.error("Failed to parse JSON chunk", e);
+              }
+              buffer = buffer.slice(endIdx + 1);
+              startIdx = buffer.indexOf('{');
+            } else {
+              break; // Wait for more data
+            }
+          }
         }
         writer.close();
       })();
 
       return new Response(readable, {
         headers: { 
-          'Content-Type': 'text/event-stream', 
+          'Content-Type': 'text/plain', 
           'Access-Control-Allow-Origin': origin 
         }
       });
