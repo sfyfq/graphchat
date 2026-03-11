@@ -20,20 +20,20 @@ You must set your private Gemini API key and the guest whitelist as encrypted se
 
 **Gemini API Key:**
 ```bash
-npx wrangler secret put GEMINI_API_KEY
+npx wrangler secret put GEMINI_API_KEY -c wrangler.proxy.json
 # When prompted, paste your key from Google AI Studio
 ```
 
 **Allowed Emails (Whitelist):**
 ```bash
-npx wrangler secret put ALLOWED_EMAILS
+npx wrangler secret put ALLOWED_EMAILS -c wrangler.proxy.json
 # When prompted, enter a comma-separated list: "email1@gmail.com,email2@gmail.com"
 ```
 
 ### 4. Deploy
 From the `worker/` directory, run:
 ```bash
-npx wrangler deploy
+npx wrangler deploy -c wrangler.proxy.json
 ```
 
 Once deployed, copy the **Worker URL** provided in the output (e.g., `https://graphchat-proxy.your-subdomain.workers.dev`) and add it to your frontend `.env.local` as `VITE_WORKER_URL`.
