@@ -722,3 +722,17 @@
 - [x] **Phase 2: Self-Healing Whitelist (ProxyProvider)**
     - [x] Update `ProxyProvider.ts` to call `setWhitelisted(true)` on successful 200 responses.
     - [x] Verify both `sendMessage` and `streamMessage` handle this.
+# TODO: Fix Cloudflare Worker CORS
+
+- [x] **Bugfix: Dynamic CORS Handling**
+    - [x] Update `worker/index.ts` with a dynamic origin whitelist.
+    - [x] Handle `OPTIONS` preflight requests correctly.
+    - [x] Add CORS headers to all response types (json, text, event-stream).
+    - [x] Verify that `localhost` is allowed.
+# TODO: Fix Assistant Message Formatting
+
+- [x] **Bugfix: Robust Stream Parsing in Worker**
+    - [x] Modify `worker/index.ts`.
+    - [x] Replace the simplified regex parser with a robust JSON object extractor.
+    - [x] Ensure `JSON.parse` is used to unescape text content.
+    - [x] Verify that newlines and Markdown syntax are preserved in the frontend.
