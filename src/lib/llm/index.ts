@@ -10,25 +10,37 @@ import { LLMProvider }    from './types';
  * 1. Local API Key (useConfigStore) -> geminiProvider
  * 2. Authenticated Session (useAuthStore) -> proxyProvider
  * 3. Guest -> mockProvider
- * 
- * Note: Authorization (whitelisting) is handled dynamically by the proxyProvider.
  */
 export const llm: LLMProvider = {
   sendMessage: (conv, newText) => {
     const localKey = useConfigStore.getState().apiKey;
-    if (localKey) return geminiProvider.sendMessage(conv, newText);
+    const { idToken, user } = useAuthStore.getState();
 
-    const { idToken } = useAuthStore.getState();
-    const provider = idToken ? proxyProvider : mockProvider;
-    return provider.sendMessage(conv, newText);
+    console.log('[LLM Selector] sendMessage', { 
+      hasLocalKey: !!localKey, 
+      hasIdToken: !!idToken, 
+      hasUser: !!user 
+    });
+
+    if (localKey) return geminiProvider.sendMessage(conv, newText);
+    if (idToken) return proxyProvider.sendMessage(conv, newText);
+    
+    return mockProvider.sendMessage(conv, newText);
   },
   streamMessage: (conv, newText) => {
     const localKey = useConfigStore.getState().apiKey;
-    if (localKey) return geminiProvider.streamMessage(conv, newText);
+    const { idToken, user } = useAuthStore.getState();
 
-    const { idToken } = useAuthStore.getState();
-    const provider = idToken ? proxyProvider : mockProvider;
-    return provider.streamMessage(conv, newText);
+    console.log('[LLM Selector] streamMessage', { 
+      hasLocalKey: !!localKey, 
+      hasIdToken: !!idToken, 
+      hasUser: !!user 
+    });
+
+    if (localKey) return geminiProvider.streamMessage(conv, newText);
+    if (idToken) return proxyProvider.streamMessage(conv, newText);
+
+    return mockProvider.streamMessage(conv, newText);
   }
 };
 
