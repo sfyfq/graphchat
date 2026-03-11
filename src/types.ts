@@ -1,5 +1,12 @@
 export type Role = 'user' | 'assistant'
 
+export interface GoogleProfile {
+  sub: string
+  email: string
+  name: string
+  picture: string
+}
+
 export interface Attachment {
   id:   string // hash or unique identifier
   name: string
