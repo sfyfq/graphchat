@@ -1,12 +1,18 @@
 import * as React from 'react'
 import { useState, useEffect, useRef, useMemo } from 'react'
+import { GoogleLogin, googleLogout } from '@react-oauth/google'
+import { jwtDecode } from 'jwt-decode'
 import { useConversationStore } from '../../store/conversationStore'
+import { useAuthStore } from '../../store/authStore'
 import { estimateTokens, estimateAttachmentTokens, timeAgo } from '../../lib/utils'
+import { GoogleProfile } from '../../types'
 
 interface Props {
   onSearchOpen: () => void
   onLibraryToggle: () => void
 }
+
+const WORKER_URL = import.meta.env.VITE_WORKER_URL || ''
 
 const BTN: React.CSSProperties = {
   background:     'rgba(10,10,16,0.9)',
@@ -54,9 +60,13 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
     sessions, currentSessionId, library,
     createSession, switchSession, deleteSession 
   } = useConversationStore()
+
+  const { user, idToken, isWhitelisted, login, logout, setWhitelisted } = useAuthStore()
   
   const [showSessions, setShowSessions] = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const profileRef = useRef<HTMLDivElement>(null)
 
   const currentSession = sessions[currentSessionId]
   const sessionList = Object.values(sessions).sort((a, b) => b.lastModified - a.lastModified)
@@ -66,7 +76,6 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
     const commits = Object.values(currentSession.commits)
     const turns = commits.filter(c => c.role === 'assistant').length
     
-    // Calculate total tokens: text tokens + attachment tokens
     const totalTokens = commits.reduce((acc, c) => {
       let tokens = estimateTokens(c.content)
       if (c.attachmentIds) {
@@ -80,7 +89,6 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
       return acc + tokens
     }, 0)
     
-    // Calculate current path depth (root to HEAD)
     let depth = 0
     let currId: string | null = currentSession.HEAD
     while (currId && currentSession.commits[currId]) {
@@ -88,7 +96,6 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
       currId = currentSession.commits[currId].parentId
     }
 
-    // A branch is defined as a leaf node (a node with no children)
     const sourceIds = new Set(currentSession.edges.map(e => e.source))
     const branches = commits.filter(c => !sourceIds.has(c.id)).length
 
@@ -106,13 +113,43 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setShowSessions(false)
       }
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setShowProfile(false)
+      }
     }
     document.addEventListener('mousedown', clickOutside)
     return () => document.removeEventListener('mousedown', clickOutside)
   }, [])
 
+  // Whitelist Handshake
+  const validateToken = async (token: string) => {
+    try {
+      const res = await fetch(`${WORKER_URL}/validate`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      setWhitelisted(res.ok)
+    } catch (e) {
+      console.error("Auth validation failed", e)
+      setWhitelisted(false)
+    }
+  }
+
+  // Re-validate on mount if we have a token
+  useEffect(() => {
+    if (idToken && !isWhitelisted) {
+      validateToken(idToken)
+    }
+  }, [])
+
   const zoom = (action: string) => {
     window.dispatchEvent(new CustomEvent('graphchat:zoom', { detail: action }))
+  }
+
+  const handleLogout = () => {
+    googleLogout()
+    logout()
+    setShowProfile(false)
   }
 
   return (
@@ -255,17 +292,102 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
           top:      20,
           right:    20,
           display:  'flex',
+          alignItems: 'center',
           gap:      8,
           zIndex:   500,
         }}
       >
+        {/* Auth Entry */}
+        <div ref={profileRef} style={{ display: 'flex', alignItems: 'center' }}>
+          {user ? (
+            <div style={{ position: 'relative' }}>
+              <button 
+                onClick={() => setShowProfile(!showProfile)}
+                style={{
+                  ...BTN,
+                  width: 38,
+                  height: 38,
+                  padding: 0,
+                  overflow: 'hidden',
+                  border: isWhitelisted ? '2px solid #6366f1' : '1px solid rgba(255,255,255,0.1)'
+                }}
+              >
+                <img src={user.picture} style={{ width: '100%', height: '100%' }} alt={user.name} />
+              </button>
+              
+              {showProfile && (
+                <div style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 8px)',
+                  right: 0,
+                  width: 200,
+                  background: 'rgba(11,11,17,0.98)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: 12,
+                  padding: '12px',
+                  backdropFilter: 'blur(20px)',
+                  boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
+                }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', marginBottom: 2 }}>{user.name}</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 12 }}>{user.email}</div>
+                  
+                  <div style={{ 
+                    fontSize: 10, 
+                    color: isWhitelisted ? '#4ade80' : '#f87171',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    marginBottom: 12,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6
+                  }}>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: isWhitelisted ? '#4ade80' : '#f87171' }} />
+                    {isWhitelisted ? 'Friend Mode Active' : 'Guest Mode (Mock AI)'}
+                  </div>
+
+                  <button 
+                    onClick={handleLogout}
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      background: 'rgba(255,255,255,0.05)',
+                      border: 'none',
+                      borderRadius: 6,
+                      color: 'rgba(255,255,255,0.6)',
+                      fontSize: 12,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={{ transform: 'scale(0.85)', transformOrigin: 'right' }}>
+              <GoogleLogin
+                onSuccess={credentialResponse => {
+                  const decoded = jwtDecode<GoogleProfile>(credentialResponse.credential!)
+                  login(decoded, credentialResponse.credential!)
+                  validateToken(credentialResponse.credential!)
+                }}
+                onError={() => console.log('Login Failed')}
+                theme="filled_black"
+                shape="pill"
+              />
+            </div>
+          )}
+        </div>
+
+        <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.08)', margin: '0 4px' }} />
+
         {/* Search */}
         <button
           onClick={onSearchOpen}
           className="no-pan"
           style={{
             ...BTN,
-            padding: '0 14px',
+            padding: '9px 14px',
             gap:     8,
             height:  38,
           }}
