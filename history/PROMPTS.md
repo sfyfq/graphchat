@@ -910,3 +910,33 @@ Configure Vitest for unit, component, and worker testing, including coverage rep
 
 --- Wed Mar 11 20:27:47 PDT 2026 ---
 
+
+--- Wed Mar 11 21:02:40 PDT 2026 ---
+
+# Refined Prompt: Auth Status Modal Implementation
+
+Implement a modal dialog system in the GraphChat app that explicitly informs users about their authentication and access level (Friend Mode, Guest Mode, or Local Mode).
+
+## Goal:
+Ensure users understand which LLM provider is currently active and why. The modal should appear immediately after the authentication/validation sequence.
+
+## Technical Details:
+- **Modal Component:** Create `src/components/Modals/AuthStatusModal.tsx`.
+- **State Management:**
+    - Add a transient state in `useAuthStore` to track whether the status modal should be shown (`showStatusModal: boolean`).
+    - Add logic to check if a token is expired.
+- **Trigger Logic:** 
+    - In `Toolbar.tsx`, set `showStatusModal: true` after a successful `validateToken` call.
+    - If a user is already logged in but the token is expired, trigger the login process or show a re-login prompt.
+- **Content:**
+    - **Friend Mode:** A positive message for whitelisted users.
+    - **Guest Mode:** A clear message explaining that the user is not on the whitelist and that Mock AI is active.
+    - **Local Mode:** A "canary" message acknowledging the presence of a local API key.
+- **Dismissal:** A "Dismiss" button to close the modal.
+
+## Tasks:
+1.  Enhance `authStore.ts` to manage the modal state and provide helper for token expiration.
+2.  Implement the `AuthStatusModal.tsx` component.
+3.  Modify `Toolbar.tsx` to trigger the modal after validation and check for token expiration.
+4.  Render the modal in `App.tsx`.
+5.  Verify the different states (Mock, Proxy, Local) through manual testing.

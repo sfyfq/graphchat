@@ -304,3 +304,19 @@ As the app gets complicated, we need to have tests to prevent regression. Propos
 
 --- Wed Mar 11 20:27:47 PDT 2026 ---
 
+
+--- Wed Mar 11 21:02:40 PDT 2026 ---
+
+# Request: Auth Status Modal Implementation
+
+We need to provide more explicit feedback after authentication and whitelist validation through a modal dialog.
+
+## Requirements:
+- **Visibility:** A modal dialog that appears **only after the first login** in a session or after a manual login/validation event.
+- **States & Messaging:**
+    - **Friend Mode (Whitelisted):** "Welcome! Your account is whitelisted. You are now using the real Gemini LLM via our secure proxy."
+    - **Guest Mode (Not Whitelisted):** "Logged in as [Email], but you are not currently on the whitelist. You will be using the Mock AI for now. (Mock AI provides simulated responses for testing purposes.)"
+    - **Local Mode (Canary):** "Local API Key detected. Using your personal Gemini key."
+- **Expiration:** If the user is logged in but the token has expired, prompt them to log in again.
+- **Interaction:** A simple "Dismiss" button.
+- **Consistency:** Use the app's existing aesthetic (dark theme, Syne/DM Sans fonts, rounded corners).
