@@ -363,15 +363,16 @@ export const ChatDialog: React.FC<Props> = ({
       const isKeyError = msg.includes("MISSING_API_KEY") || 
                          msg.includes("API_KEY_INVALID") || 
                          msg.includes("403") || 
-                         msg.includes("401");
+                         msg.includes("401") ||
+                         msg.includes("UNAUTHORIZED_EMAIL") ||
+                         msg.includes("AUTH_EXPIRED");
 
       if (isKeyError) {
-        // If it's a 403 from the Proxy, the ProxyProvider already handles clearing whitelist.
-        // We only show the modal if the user might want to provide their own key as fallback.
-        // For now, let's just show the error.
-        setError("Access denied or API key invalid.");
+        setError("Access denied or session expired. Please sign in again.");
+      } else if (msg === "PAYLOAD_TOO_LARGE") {
+        setError("Message too large. Please reduce the size of your text or attachments.");
       } else {
-        setError(err instanceof Error ? err.message : "An error occurred");
+        setError(msg);
       }
       
       // Restore input on failure

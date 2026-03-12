@@ -1027,3 +1027,27 @@ Allow users to upload, attach, send, and view files (images, audio, video, docs)
 3.  **Rendering**: Implement attachment display in `MessageList`.
 4.  **Backend Logic**: Refactor LLM providers to support multimodal parts.
 5.  **Verification**: Test with various file types (JPG, MP3, PDF) and ensure they are sent correctly.
+
+--- Wed Mar 11 23:36:41 PDT 2026 ---
+
+
+--- Wed Mar 11 23:40:28 PDT 2026 ---
+
+# Refined Prompt: Worker Payload Size Enforcement
+
+Update the GraphChat Cloudflare Worker to enforce a strict request size limit using the `Content-Length` header.
+
+## Goal:
+Protect the Worker isolate from memory crashes and prevent excessive bandwidth usage by rejecting large requests early.
+
+## Technical Details:
+- **Limit:** 15MB (15 * 1024 * 1024 bytes).
+- **Logic:** 
+    - Retrieve `Content-Length` header.
+    - If present and greater than 15MB, return `413 Payload Too Large`.
+    - Apply this to all non-OPTIONS requests.
+- **Location:** At the start of the `fetch` handler in `worker/index.ts`.
+
+## Tasks:
+1.  Update `worker/index.ts` with the size check.
+2.  Update `worker/index.test.ts` to verify the size limit rejection.

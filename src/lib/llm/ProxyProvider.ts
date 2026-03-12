@@ -121,6 +121,9 @@ export class ProxyProvider implements LLMProvider {
       setWhitelisted(false);
       throw new Error("UNAUTHORIZED_EMAIL");
     }
+    if (status.includes('413')) {
+      throw new Error("PAYLOAD_TOO_LARGE");
+    }
   }
 }
 

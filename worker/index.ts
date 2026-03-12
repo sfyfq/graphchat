@@ -11,6 +11,8 @@ export interface Env {
   WHITELIST_KV: KVNamespace;
 }
 
+const MAX_PAYLOAD_SIZE = 15 * 1024 * 1024; // 15MB
+
 interface GoogleTokenPayload {
   email: string;
   [key: string]: any;
@@ -62,6 +64,15 @@ async function isAllowed(email: string, env: Env): Promise<boolean> {
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const origin = request.headers.get('Origin') || '*';
+
+    // 0. Payload Size Enforcement
+    const contentLength = request.headers.get('Content-Length');
+    if (contentLength && parseInt(contentLength, 10) > MAX_PAYLOAD_SIZE) {
+      return new Response('Payload Too Large', { 
+        status: 413,
+        headers: { 'Access-Control-Allow-Origin': origin }
+      });
+    }
     
     /**
      * Helper to create response with flexible CORS headers.

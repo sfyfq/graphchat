@@ -374,3 +374,18 @@ Finish the implementation of the attachment system so users can actually use fil
     - Fetch raw blobs from IndexedDB and convert them to Base64.
     - Update the LLM payload construction to include these attachments as `inlineData` parts.
 - **Consistency:** Maintain the dark, translucent aesthetic and high-performance feel.
+
+--- Wed Mar 11 23:36:41 PDT 2026 ---
+
+
+--- Wed Mar 11 23:40:28 PDT 2026 ---
+
+# Request: Worker Payload Size Enforcement
+
+Implement server-side enforcement of request size limits in the Cloudflare Worker to protect against memory exhaustion and large unauthorized transfers.
+
+## Requirements:
+- **Immediate Check:** Check the `Content-Length` header as the first step in the `fetch` handler.
+- **Limit:** Set a maximum limit of **15MB** (to accommodate 10MB raw files + Base64 overhead).
+- **Response:** Return a `413 Payload Too Large` response if the limit is exceeded.
+- **Security:** Ensure the check happens before any authentication or data processing to minimize resource usage.

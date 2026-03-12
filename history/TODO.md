@@ -924,3 +924,25 @@
 - [x] **Archive methodology files.**
 
 - [ ] **Archive methodology files.**
+
+--- Wed Mar 11 23:36:41 PDT 2026 ---
+
+
+--- Wed Mar 11 23:40:28 PDT 2026 ---
+
+# TODO: Implementation Plan for Worker Size Enforcement
+
+## Phase 1: Worker Logic
+- [ ] **Modify `worker/index.ts`**:
+    - Add a constant `MAX_PAYLOAD_SIZE = 15 * 1024 * 1024`.
+    - Implement the `Content-Length` check at the beginning of the `fetch` handler.
+    - Return `new Response('Payload Too Large', { status: 413 })` if exceeded.
+
+## Phase 2: Testing
+- [ ] **Modify `worker/index.test.ts`**:
+    - Add a test case that sends a request with a `Content-Length` header exceeding 15MB.
+    - Verify the worker returns status `413`.
+
+## Phase 3: Verification
+- [ ] Run `npm run test:worker` to confirm the new security rail works.
+- [ ] Archive methodology files.
