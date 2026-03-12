@@ -31,6 +31,7 @@ interface Props {
 }
 
 const SAFE_TOP = 80;
+const VISIBLE_MARGIN = 60;
 
 // ── Helper Component for Pending Thumbnails ──
 const PendingThumbnail: React.FC<{ 
@@ -152,7 +153,8 @@ export const ChatDialog: React.FC<Props> = ({
           const delta = newHeight - oldHeight;
           setPos((prev) => {
             const newY = prev.y - delta / 2;
-            const safeY = Math.max(SAFE_TOP, Math.min(window.innerHeight - newHeight - 10, newY));
+            // Relaxed clamping: ensure header is somewhat visible
+            const safeY = Math.max(10, Math.min(window.innerHeight - VISIBLE_MARGIN, newY));
             return { ...prev, y: safeY };
           });
         } else if (oldHeight === 0) {
@@ -234,9 +236,10 @@ export const ChatDialog: React.FC<Props> = ({
       const width = 860;
       const height = containerRef.current?.offsetHeight ?? 400;
 
+      // Allow dragging off-screen but keep VISIBLE_MARGIN on screen
       setPos({
-        x: Math.max(0, Math.min(window.innerWidth - (width + 10), newX)),
-        y: Math.max(0, Math.min(window.innerHeight - (height + 10), newY)),
+        x: Math.max(VISIBLE_MARGIN - width, Math.min(window.innerWidth - VISIBLE_MARGIN, newX)),
+        y: Math.max(0, Math.min(window.innerHeight - VISIBLE_MARGIN, newY)),
       });
     };
     const onUp = () => {
