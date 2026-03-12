@@ -6,6 +6,9 @@ export default defineWorkersConfig({
     poolOptions: {
       workers: {
         wrangler: { configPath: 'wrangler.proxy.json' },
+        miniflare: {
+          kvNamespaces: ['WHITELIST_KV'],
+        }
       },
     },
   },

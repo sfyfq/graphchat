@@ -804,3 +804,40 @@
 - [ ] **Final Review:**
     - Check for linting/type errors.
 - [ ] **Archive methodology files.**
+
+--- Wed Mar 11 21:34:28 PDT 2026 ---
+
+# TODO: Implementation Plan for Hashed KV Whitelist
+
+## Phase 1: Worker Configuration & Logic
+- [ ] **Modify `worker/wrangler.proxy.json`**:
+    - Add `kv_namespaces` section with a placeholder for `WHITELIST_KV`.
+- [ ] **Enhance `worker/index.ts`**:
+    - Update `Env` interface to include `WHITELIST_KV`.
+    - Implement an `isAllowed` helper function that:
+        - Normalizes the email.
+        - Computes the SHA-256 hash.
+        - Performs the KV lookup.
+        - Performs the fallback environment variable check.
+    - Update the main `fetch` handler to use this helper.
+
+## Phase 2: Testing & Validation
+- [ ] **Update `worker/vitest.config.ts`**:
+    - Ensure it picks up the KV binding for tests.
+- [ ] **Refactor `worker/index.test.ts`**:
+    - Mock the `WHITELIST_KV` binding.
+    - Add tests for KV-based authorization (using hashed keys).
+    - Maintain tests for legacy environment variable authorization.
+
+## Phase 3: Administration Tools & Docs
+- [ ] **Create `scripts/hash-email.js`**:
+    - A simple Node.js script to hash an email and print the `wrangler` command.
+- [ ] **Update `package.json`**:
+    - Add `whitelist:hash` script.
+- [ ] **Update `worker/README.md`**:
+    - Add section on KV setup.
+    - Document how to add/remove users using the hash helper.
+
+## Phase 4: Verification
+- [ ] Run `npm run test:worker` to ensure all paths are verified.
+- [ ] Perform a final manual code review.

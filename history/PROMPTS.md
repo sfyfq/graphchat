@@ -940,3 +940,29 @@ Ensure users understand which LLM provider is currently active and why. The moda
 3.  Modify `Toolbar.tsx` to trigger the modal after validation and check for token expiration.
 4.  Render the modal in `App.tsx`.
 5.  Verify the different states (Mock, Proxy, Local) through manual testing.
+
+--- Wed Mar 11 21:34:28 PDT 2026 ---
+
+# Refined Prompt: Hashed KV Whitelist Implementation
+
+Transition the GraphChat Cloudflare Worker to use a privacy-preserving whitelist based on SHA-256 hashes stored in Cloudflare KV.
+
+## Goal:
+Improve whitelist management and protect user privacy (PII) by using a dynamic KV store instead of static environment variables.
+
+## Technical Details:
+- **KV Binding:** Add `kv_namespaces = [{ binding = "WHITELIST_KV", id = "..." }]` to the worker configuration.
+- **Crypto:** Use the Web Crypto API (`crypto.subtle.digest`) for hashing within the Worker.
+- **Normalization:** Emails must be trimmed and lowercased before hashing.
+- **Fallback Strategy:**
+    1. verifiedEmail -> Normalize -> Hash.
+    2. `await env.WHITELIST_KV.get(hash)`
+    3. If null, check `env.ALLOWED_EMAILS.split(',').includes(verifiedEmail)`.
+- **Management Helper:** Implement a small Node.js script to hash emails and output the `wrangler` command for easy administration.
+
+## Tasks:
+1.  Update `worker/index.ts` to include the `WHITELIST_KV` binding and hashing logic.
+2.  Update `worker/wrangler.proxy.json` to define the KV namespace placeholder.
+3.  Modify `worker/index.test.ts` to mock the `WHITELIST_KV` binding and verify both KV and fallback lookup paths.
+4.  Add a helper script `scripts/whitelist.js` and a corresponding `package.json` script.
+5.  Update `worker/README.md` with the new KV setup instructions.

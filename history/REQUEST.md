@@ -320,3 +320,22 @@ We need to provide more explicit feedback after authentication and whitelist val
 - **Expiration:** If the user is logged in but the token has expired, prompt them to log in again.
 - **Interaction:** A simple "Dismiss" button.
 - **Consistency:** Use the app's existing aesthetic (dark theme, Syne/DM Sans fonts, rounded corners).
+
+--- Wed Mar 11 21:34:28 PDT 2026 ---
+
+# Request: Hashed KV Whitelist for Cloudflare Worker
+
+Implement a privacy-preserving, dynamic whitelist using Cloudflare KV to store individual SHA-256 hashes of email addresses.
+
+## Requirements:
+- **Privacy:** Store SHA-256 hashes of normalized emails in the `WHITELIST_KV` namespace.
+- **Individual Keys:** Each hash should be its own key in the KV store for efficient lookup.
+- **Lookup Logic:**
+    1. Receive verified email from Google Auth.
+    2. Normalize (lowercase, trim).
+    3. Compute SHA-256 hash using `crypto.subtle`.
+    4. Perform a direct lookup in `WHITELIST_KV` using the hash as the key.
+    5. **Fallback:** If not found in KV, check the legacy `ALLOWED_EMAILS` environment variable (raw text).
+- **Configuration:** Update `wrangler.proxy.json` with the KV binding.
+- **Helper Script:** Add a script to `package.json` to hash emails and generate management commands.
+- **Testing:** Update worker tests to mock the KV lookup.
