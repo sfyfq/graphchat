@@ -389,3 +389,19 @@ Implement server-side enforcement of request size limits in the Cloudflare Worke
 - **Limit:** Set a maximum limit of **15MB** (to accommodate 10MB raw files + Base64 overhead).
 - **Response:** Return a `413 Payload Too Large` response if the limit is exceeded.
 - **Security:** Ensure the check happens before any authentication or data processing to minimize resource usage.
+# Feature Request: Context Actions for Selected Text (Revised)
+
+## User Intent
+The user wants to add context actions to text selected from assistant messages. These actions help with quick lookups and focused follow-up questions.
+
+## Goals
+- Detect text selection within assistant messages.
+- Display a floating menu with two primary actions:
+    1.  **Explain (Quick lookup):** Create a new branch from the current message, send a prompt to explain the selected text succinctly, and show the response. "Ask and discard" pattern.
+    2.  **Ask (Follow-up):** Focus the chat input and prepopulate it with the selected text to allow for a follow-up question in the current thread.
+
+## Technical Considerations
+- Capture selection in `MessageList.tsx`.
+- Calculate floating menu position based on selection coordinates.
+- "Explain" action requires programmatically triggering a message send on a new branch.
+- "Ask" action requires communicating back to `ChatDialog.tsx` to update the input field.

@@ -1051,3 +1051,24 @@ Protect the Worker isolate from memory crashes and prevent excessive bandwidth u
 ## Tasks:
 1.  Update `worker/index.ts` with the size check.
 2.  Update `worker/index.test.ts` to verify the size limit rejection.
+# PROMPTS for Context Actions Feature (Revised)
+
+## Prompt 1: UI Implementation - Selection & Floating Menu
+How can we efficiently capture the `onMouseUp` event on assistant messages in `MessageList.tsx`, and calculate the correct `{ x, y }` coordinates to position a `TextSelectionMenu` component? The component should be a floating bar above the selected text.
+
+## Prompt 2: "Explain" Logic
+How to implement the "Explain" action:
+- It should use the selected text as part of a prompt: `Briefly explain this: "[selected text]"`.
+- It should start a new branch from the message where the selection occurred.
+- In `ChatDialog.tsx`, we need a way to trigger a "send" action programmatically with a specific `tipId` (the parent message's ID).
+
+## Prompt 3: "Ask Gemini" Logic
+How to implement the "Ask Gemini" action:
+- It should focus the input field in `ChatDialog.tsx`.
+- It should prepopulate the input with something like `Regarding "[selected text]": `.
+- It should NOT send the message immediately.
+
+## Prompt 4: Coordination between `MessageList` and `ChatDialog`
+Since `MessageList` is a child of `ChatDialog`, we need callback props to handle these actions.
+- `onSelectionAction(type: 'explain' | 'ask', text: string, messageId: string)`
+- This callback should be passed from `ChatDialog` to `MessageList`.

@@ -8,6 +8,7 @@ import { getStorageScope } from '../../store/authStore'
 import { getBlobUrl } from '../../lib/storage'
 import type { Commit, Attachment } from '../../types'
 import { timeAgo } from '../../lib/utils'
+import { TextSelectionMenu } from './TextSelectionMenu'
 
 import 'katex/dist/katex.min.css'
 
@@ -16,6 +17,7 @@ interface Props {
   loading:            boolean
   streamingContent?:  string
   pendingUserContent?: string
+  onSelectionAction?: (type: 'explain' | 'ask', text: string, messageId: string) => void
 }
 
 // ── Helper Component for Message Attachments ──
@@ -96,13 +98,58 @@ export const MarkdownComponents: any = {
 }
 
 export const MessageList: React.FC<Props> = ({ 
-  messages, loading, streamingContent, pendingUserContent 
+  messages, loading, streamingContent, pendingUserContent, onSelectionAction 
 }) => {
   const endRef = useRef<HTMLDivElement>(null)
+  const [selection, setSelection] = useState<{ 
+    text: string, 
+    x: number, 
+    y: number, 
+    messageId: string 
+  } | null>(null)
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages.length, loading, streamingContent, pendingUserContent])
+
+  const handleMouseUp = (messageId: string) => {
+    const sel = window.getSelection()
+    if (!sel || sel.isCollapsed) {
+      setSelection(null)
+      return
+    }
+
+    const text = sel.toString().trim()
+    if (!text) {
+      setSelection(null)
+      return
+    }
+
+    const range = sel.getRangeAt(0)
+    const rect = range.getBoundingClientRect()
+
+    setSelection({
+      text,
+      x: rect.left + rect.width / 2,
+      y: rect.top,
+      messageId
+    })
+  }
+
+  // Clear selection on document click if it's not the menu
+  useEffect(() => {
+    const handleDocClick = () => {
+      // Small timeout to allow menu actions to fire before clearing
+      setTimeout(() => {
+        const sel = window.getSelection()
+        if (!sel || sel.isCollapsed) {
+          setSelection(null)
+        }
+      }, 100)
+    }
+    document.addEventListener('mousedown', handleDocClick)
+    return () => document.removeEventListener('mousedown', handleDocClick)
+  }, [])
 
   if (messages.length === 0 && !loading && !streamingContent && !pendingUserContent) {
     return (
@@ -121,6 +168,18 @@ export const MessageList: React.FC<Props> = ({
 
   return (
     <>
+      {selection && (
+        <TextSelectionMenu 
+          x={selection.x} 
+          y={selection.y} 
+          onAction={(type) => {
+            onSelectionAction?.(type, selection.text, selection.messageId)
+            setSelection(null)
+            window.getSelection()?.removeAllRanges()
+          }}
+          onClose={() => setSelection(null)}
+        />
+      )}
       {messages.map((m) => (
         <div
           key={m.id}
@@ -131,23 +190,26 @@ export const MessageList: React.FC<Props> = ({
             animation:      'msg-in 0.15s ease',
           }}
         >
-          <div style={{
-            maxWidth:     '82%',
-            padding:      '10px 14px',
-            borderRadius: m.role === 'user'
-              ? '14px 14px 4px 14px'
-              : '14px 14px 14px 4px',
-            background: m.role === 'user'
-              ? 'linear-gradient(135deg, #2563eb, #4f46e5)'
-              : 'rgba(255,255,255,0.06)',
-            border:     m.role === 'assistant'
-              ? '1px solid rgba(255,255,255,0.09)'
-              : 'none',
-            color:      '#ececec',
-            fontFamily: "'DM Sans', sans-serif",
-            fontSize:   13.5,
-            lineHeight: 1.65,
-          }}>
+          <div 
+            onMouseUp={() => m.role === 'assistant' && handleMouseUp(m.id)}
+            style={{
+              maxWidth:     '82%',
+              padding:      '10px 14px',
+              borderRadius: m.role === 'user'
+                ? '14px 14px 4px 14px'
+                : '14px 14px 14px 4px',
+              background: m.role === 'user'
+                ? 'linear-gradient(135deg, #2563eb, #4f46e5)'
+                : 'rgba(255,255,255,0.06)',
+              border:     m.role === 'assistant'
+                ? '1px solid rgba(255,255,255,0.09)'
+                : 'none',
+              color:      '#ececec',
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize:   13.5,
+              lineHeight: 1.65,
+            }}
+          >
             {/* Attachments */}
             {m.attachmentIds && m.attachmentIds.length > 0 && (
               <div style={{ marginBottom: 12 }}>

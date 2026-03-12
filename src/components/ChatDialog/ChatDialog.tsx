@@ -302,13 +302,19 @@ export const ChatDialog: React.FC<Props> = ({
   };
 
   // ── Send (Transactional & Streaming) ──────────────────────────────────────
-  const handleSend = useCallback(async () => {
-    const text = input.trim();
+  const handleSend = useCallback(async (overrideContent?: string, overrideTipId?: string, branchLabel?: string) => {
+    const text = overrideContent !== undefined ? overrideContent : input.trim();
+    const targetTipId = overrideTipId || tipId;
+
     if ((!text && pendingAttachmentIds.length === 0) || loading) return;
 
-    setInput("");
-    const currentAttachments = [...pendingAttachmentIds];
-    setPendingAttachmentIds([]);
+    if (overrideContent === undefined) {
+      setInput("");
+    }
+    const currentAttachments = overrideContent !== undefined ? [] : [...pendingAttachmentIds];
+    if (overrideContent === undefined) {
+      setPendingAttachmentIds([]);
+    }
     
     setPendingUserContent(text);
     setActiveMath(null);
@@ -317,7 +323,7 @@ export const ChatDialog: React.FC<Props> = ({
     setStreamingContent("");
 
     try {
-      const conv = await reconstructMessages(commits, tipId);
+      const conv = await reconstructMessages(commits, targetTipId);
       let fullAssistantContent = "";
       
       // Use the new llm provider interface
@@ -332,13 +338,14 @@ export const ChatDialog: React.FC<Props> = ({
 
       const userCommit: Commit = {
         id: userId,
-        parentId: tipId,
+        parentId: targetTipId,
         role: "user",
         content: text,
         summary: makeSummary(text),
         timestamp: Date.now(),
         model: "",
         attachmentIds: currentAttachments,
+        branchLabel: branchLabel,
       };
 
       const assistantCommit: Commit = {
@@ -376,13 +383,33 @@ export const ChatDialog: React.FC<Props> = ({
       }
       
       // Restore input on failure
-      setInput(text);
-      setPendingAttachmentIds(currentAttachments);
+      if (overrideContent === undefined) {
+        setInput(text);
+        setPendingAttachmentIds(currentAttachments);
+      }
       setPendingUserContent("");
     } finally {
       setLoading(false);
     }
   }, [input, loading, commits, addTurn, tipId, pendingAttachmentIds]);
+
+  const handleSelectionAction = useCallback((type: 'explain' | 'ask', text: string, messageId: string) => {
+    if (type === 'explain') {
+      const prompt = `Briefly explain this: "${text}"`;
+      const label = `lookup: ${text.slice(0, 15)}${text.length > 15 ? '...' : ''}`;
+      handleSend(prompt, messageId, label);
+    } else if (type === 'ask') {
+      setInput(`Regarding "${text}": `);
+      setTimeout(() => {
+        textareaRef.current?.focus();
+        if (textareaRef.current) {
+          textareaRef.current.style.height = "auto";
+          textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+          textareaRef.current.selectionStart = textareaRef.current.selectionEnd = textareaRef.current.value.length;
+        }
+      }, 0);
+    }
+  }, [handleSend]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -590,6 +617,7 @@ export const ChatDialog: React.FC<Props> = ({
           loading={loading} 
           streamingContent={streamingContent}
           pendingUserContent={pendingUserContent}
+          onSelectionAction={handleSelectionAction}
         />
       </div>
 
@@ -769,7 +797,7 @@ export const ChatDialog: React.FC<Props> = ({
           />
 
           <button
-            onClick={handleSend}
+            onClick={() => handleSend()}
             disabled={!canSend}
             style={{
               width: 36,

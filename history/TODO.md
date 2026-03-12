@@ -946,3 +946,32 @@
 ## Phase 3: Verification
 - [ ] Run `npm run test:worker` to confirm the new security rail works.
 - [ ] Archive methodology files.
+# TODO: Implement Context Actions for Selected Text (Revised)
+
+## Phase 1: Research & Component Design
+- [ ] Define the `TextSelectionMenu` UI (floating bar with two buttons).
+- [ ] Research how to calculate the correct position for the menu relative to the selected text.
+
+## Phase 2: Implementation - Selection Support
+- [ ] Create `src/components/ChatDialog/TextSelectionMenu.tsx`.
+- [ ] In `MessageList.tsx`:
+    - [ ] Add `onMouseUp` event handler to assistant message bubbles.
+    - [ ] Capture selected text using `window.getSelection()`.
+    - [ ] If text is selected, determine the bounding box and show `TextSelectionMenu`.
+    - [ ] Handle menu disappearance when clicking elsewhere or clearing selection.
+
+## Phase 3: Implementation - Actions
+- [ ] Add `onSelectionAction` prop to `MessageList`.
+- [ ] Implement `onSelectionAction` in `ChatDialog.tsx`:
+    - [ ] **'explain' action:**
+        - Call `setTipId(messageId)` to ensure the new turn starts from the correct message.
+        - Trigger the `handleSend` logic with the prompt `Briefly explain this: "[selected text]"`.
+        - Ensure it doesn't clear the current input field (if any).
+    - [ ] **'ask' action:**
+        - Set `input` to `Regarding "[selected text]": `.
+        - Focus the `textarea`.
+
+## Phase 4: Testing & Polish
+- [ ] Test the "Explain" action for branching behavior.
+- [ ] Test the "Ask" action for input population and focus.
+- [ ] Fine-tune the floating menu's positioning (especially near edges of the dialog).
