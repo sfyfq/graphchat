@@ -1072,3 +1072,25 @@ How to implement the "Ask Gemini" action:
 Since `MessageList` is a child of `ChatDialog`, we need callback props to handle these actions.
 - `onSelectionAction(type: 'explain' | 'ask', text: string, messageId: string)`
 - This callback should be passed from `ChatDialog` to `MessageList`.
+# PROMPTS for Context Actions Usability Improvements
+
+## Prompt 1: Dynamic Positioning Logic
+Refine the logic in `src/components/ChatDialog/MessageList.tsx` to calculate the best `{ x, y }` for the `TextSelectionMenu`.
+- Use `getBoundingClientRect()` of the selection.
+- If `rect.top > 100` (enough space above), position it above the selection.
+- Otherwise, position it below `rect.bottom`.
+- Center it horizontally at `rect.left + rect.width / 2`.
+
+## Prompt 2: Explain Overlay Implementation
+Implement a transient overlay in `ChatDialog.tsx` for the "Explain" action.
+- Add state: `explainResult: { prompt: string, response: string, loading: boolean } | null`.
+- When 'explain' is triggered, instead of calling `handleSend` (which commits a branch), call a new `handleExplain` function.
+- `handleExplain` will stream the LLM response into `explainResult.response`.
+- Render a blurred, floating overlay at the top of the message area with the prompt, the streamed response, and a "Close" button.
+
+## Prompt 3: Styling the Overlay
+The overlay should match the app's dark aesthetic:
+- Blurred background (`backdropFilter: blur(12px)`).
+- Border and rounded corners.
+- Succinct and on-point text display.
+- Subtle animation for appearance.

@@ -3,18 +3,21 @@ import React from 'react'
 interface Props {
   x: number
   y: number
+  isBelow: boolean
   onAction: (type: 'explain' | 'ask') => void
   onClose: () => void
 }
 
-export const TextSelectionMenu: React.FC<Props> = ({ x, y, onAction, onClose }) => {
+export const TextSelectionMenu: React.FC<Props> = ({ x, y, isBelow, onAction, onClose }) => {
   return (
     <div
       style={{
         position:       'fixed',
         left:           x,
         top:            y,
-        transform:      'translate(-50%, -100%) translateY(-10px)',
+        transform:      isBelow 
+          ? 'translate(-50%, 10px)' 
+          : 'translate(-50%, -100%) translateY(-10px)',
         background:     'rgba(15,15,25,0.95)',
         border:         '1px solid rgba(255,255,255,0.15)',
         borderRadius:   10,
@@ -24,7 +27,7 @@ export const TextSelectionMenu: React.FC<Props> = ({ x, y, onAction, onClose }) 
         zIndex:         2000,
         backdropFilter: 'blur(12px)',
         boxShadow:      '0 8px 32px rgba(0,0,0,0.6)',
-        animation:      'tooltip-in 0.15s ease-out',
+        animation:      isBelow ? 'tooltip-in-below 0.15s ease-out' : 'tooltip-in 0.15s ease-out',
       }}
     >
       <button

@@ -405,3 +405,17 @@ The user wants to add context actions to text selected from assistant messages. 
 - Calculate floating menu position based on selection coordinates.
 - "Explain" action requires programmatically triggering a message send on a new branch.
 - "Ask" action requires communicating back to `ChatDialog.tsx` to update the input field.
+# Feature Request: Context Actions Usability Improvements
+
+## User Feedback
+1.  **Explain Overlay:** The "Explain" action should display its response in a top overlay rather than switching the main chat view to a new branch. This overlay should be dismissible.
+2.  **Menu Positioning:** The floating context menu positioning is currently suboptimal. It should appear above or below the selection depending on viewport space to prevent clipping and stay close to the cursor.
+
+## Goals
+- Implement a floating, dismissible overlay for "Explain" responses.
+- Improve the positioning logic for the `TextSelectionMenu`.
+
+## Technical Considerations
+- `ChatDialog` needs state for the explain overlay (active text, streaming response, visible).
+- `MessageList` needs to calculate positioning more dynamically based on `rect.top` and `rect.bottom`.
+- The overlay should probably be part of `ChatDialog` to stay within the chat window's context but on top of the message list.

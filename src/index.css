@@ -39,8 +39,13 @@ body {
 }
 
 @keyframes tooltip-in {
-  from { opacity: 0; transform: translateY(-50%) scale(0.9) translateX(10px); }
-  to   { opacity: 1; transform: translateY(-50%) scale(1) translateX(0); }
+  from { opacity: 0; transform: translate(-50%, -100%) translateY(-2px) scale(0.95); }
+  to   { opacity: 1; transform: translate(-50%, -100%) translateY(-10px) scale(1); }
+}
+
+@keyframes tooltip-in-below {
+  from { opacity: 0; transform: translate(-50%, 2px) scale(0.95); }
+  to   { opacity: 1; transform: translate(-50%, 10px) scale(1); }
 }
 
 @keyframes sidebar-in {

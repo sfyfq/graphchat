@@ -975,3 +975,21 @@
 - [ ] Test the "Explain" action for branching behavior.
 - [ ] Test the "Ask" action for input population and focus.
 - [ ] Fine-tune the floating menu's positioning (especially near edges of the dialog).
+# TODO: Context Actions Usability Improvements
+
+## Phase 1: Menu Positioning
+- [ ] Update `handleMouseUp` in `MessageList.tsx` to calculate `y` based on available space above `rect.top`.
+- [ ] Add `isBelow` property to the selection state to tell `TextSelectionMenu` which direction to point/translate.
+- [ ] Update `TextSelectionMenu.tsx` to handle the `isBelow` prop for correct transformation (e.g., arrow pointing up or down).
+
+## Phase 2: Explain Overlay
+- [ ] Add `explainResult` state to `ChatDialog.tsx`.
+- [ ] Implement `handleExplain` function in `ChatDialog.tsx` (modeled after `handleSend` but transient).
+- [ ] Create `ExplainOverlay` sub-component in `ChatDialog.tsx` or a separate file.
+- [ ] Integrate `ExplainOverlay` into the `ChatDialog` render function, positioned over the message list.
+- [ ] Update `handleSelectionAction` to use `handleExplain` for the 'explain' type.
+
+## Phase 3: Testing & Polish
+- [ ] Verify menu doesn't clip when selection is near the top of the dialog.
+- [ ] Test the "Ask and Discard" flow for the Explain overlay.
+- [ ] Ensure the overlay is correctly dismissed.

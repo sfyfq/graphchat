@@ -118,6 +118,11 @@ export const ChatDialog: React.FC<Props> = ({
   const [pendingUserContent, setPendingUserContent] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pendingAttachmentIds, setPendingAttachmentIds] = useState<string[]>([]);
+  const [explainResult, setExplainResult] = useState<{ 
+    prompt: string, 
+    response: string, 
+    loading: boolean 
+  } | null>(null);
 
   const [tipId, setTipId] = useState(
     commit.role === "user" && commit.parentId ? commit.parentId : commit.id
@@ -393,11 +398,28 @@ export const ChatDialog: React.FC<Props> = ({
     }
   }, [input, loading, commits, addTurn, tipId, pendingAttachmentIds]);
 
+  const handleExplain = useCallback(async (text: string, overrideTipId: string) => {
+    const prompt = `Briefly explain this: "${text}"`;
+    setExplainResult({ prompt, response: "", loading: true });
+    
+    try {
+      const conv = await reconstructMessages(commits, overrideTipId);
+      let fullAssistantContent = "";
+      
+      for await (const chunk of llm.streamMessage(conv, prompt, [])) {
+        fullAssistantContent += chunk;
+        setExplainResult(prev => prev ? { ...prev, response: fullAssistantContent } : null);
+      }
+      setExplainResult(prev => prev ? { ...prev, loading: false } : null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "API error during explanation");
+      setExplainResult(null);
+    }
+  }, [commits]);
+
   const handleSelectionAction = useCallback((type: 'explain' | 'ask', text: string, messageId: string) => {
     if (type === 'explain') {
-      const prompt = `Briefly explain this: "${text}"`;
-      const label = `lookup: ${text.slice(0, 15)}${text.length > 15 ? '...' : ''}`;
-      handleSend(prompt, messageId, label);
+      handleExplain(text, messageId);
     } else if (type === 'ask') {
       setInput(`Regarding "${text}": `);
       setTimeout(() => {
@@ -409,7 +431,7 @@ export const ChatDialog: React.FC<Props> = ({
         }
       }, 0);
     }
-  }, [handleSend]);
+  }, [handleExplain]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -610,8 +632,79 @@ export const ChatDialog: React.FC<Props> = ({
           overflowY: "auto",
           padding: "16px 16px 8px",
           minHeight: 0,
+          position: 'relative',
         }}
       >
+        {explainResult && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 10,
+            padding: '12px 16px',
+            background: 'rgba(15,15,25,0.9)',
+            backdropFilter: 'blur(16px)',
+            borderBottom: '1px solid rgba(255,255,255,0.1)',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+            animation: 'msg-in 0.2s ease-out',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+              <div style={{ 
+                fontFamily: "'Syne', sans-serif", 
+                fontSize: 10, 
+                fontWeight: 700, 
+                color: 'rgba(99,102,241,0.9)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
+              }}>
+                Explanation
+              </div>
+              <button 
+                onClick={() => setExplainResult(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'rgba(255,255,255,0.3)',
+                  cursor: 'pointer',
+                  fontSize: 16,
+                  padding: 0,
+                  lineHeight: 1
+                }}
+                onMouseEnter={e => e.currentTarget.style.color = '#fff'}
+                onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.3)'}
+              >
+                ×
+              </button>
+            </div>
+            <div style={{ 
+              fontSize: 13, 
+              color: '#fff', 
+              lineHeight: 1.6,
+              maxHeight: 200,
+              overflowY: 'auto'
+            }}>
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm, remarkMath]} 
+                rehypePlugins={[rehypeKatex]}
+                components={MarkdownComponents}
+              >
+                {explainResult.response || (explainResult.loading ? "Thinking..." : "")}
+              </ReactMarkdown>
+              {explainResult.loading && (
+                <span style={{
+                  display:    'inline-block',
+                  width:      6,
+                  height:     12,
+                  background: '#6366f1',
+                  marginLeft: 4,
+                  animation:  'dot-pulse 0.8s infinite',
+                  verticalAlign: 'middle',
+                }} />
+              )}
+            </div>
+          </div>
+        )}
         <MessageList 
           messages={messages} 
           loading={loading} 

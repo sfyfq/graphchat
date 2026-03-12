@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
@@ -105,6 +106,7 @@ export const MessageList: React.FC<Props> = ({
     text: string, 
     x: number, 
     y: number, 
+    isBelow: boolean,
     messageId: string 
   } | null>(null)
 
@@ -128,10 +130,15 @@ export const MessageList: React.FC<Props> = ({
     const range = sel.getRangeAt(0)
     const rect = range.getBoundingClientRect()
 
+    // Determine if we should show the menu below the selection (if not enough space above)
+    const spaceAbove = rect.top
+    const isBelow = spaceAbove < 60 // 60px is roughly menu height + margin
+
     setSelection({
       text,
       x: rect.left + rect.width / 2,
-      y: rect.top,
+      y: isBelow ? rect.bottom : rect.top,
+      isBelow,
       messageId
     })
   }
@@ -168,17 +175,19 @@ export const MessageList: React.FC<Props> = ({
 
   return (
     <>
-      {selection && (
+      {selection && createPortal(
         <TextSelectionMenu 
           x={selection.x} 
           y={selection.y} 
+          isBelow={selection.isBelow}
           onAction={(type) => {
             onSelectionAction?.(type, selection.text, selection.messageId)
             setSelection(null)
             window.getSelection()?.removeAllRanges()
           }}
           onClose={() => setSelection(null)}
-        />
+        />,
+        document.body
       )}
       {messages.map((m) => (
         <div
