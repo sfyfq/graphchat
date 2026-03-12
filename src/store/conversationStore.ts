@@ -4,6 +4,7 @@ import { get, set, del } from 'idb-keyval'
 import type { Commit, Edge, ChatSession, Attachment } from '../types'
 import { SEED_COMMITS } from '../lib/seeds'
 import { saveBlob } from '../lib/storage'
+import { getStorageScope } from './authStore'
 
 // Custom storage engine using idb-keyval for IndexedDB
 const storage: StateStorage = {
@@ -40,6 +41,9 @@ interface ConversationActions {
   // Attachment Management
   uploadAttachment: (file: File) => Promise<string>
   addToSession: (sessionId: string, attachmentId: string) => void
+
+  // Multi-user reset
+  reset: () => void
 }
 
 const createNewSession = (id: string): ChatSession => ({
@@ -53,12 +57,36 @@ const createNewSession = (id: string): ChatSession => ({
 
 const INITIAL_ID = crypto.randomUUID()
 
+const initialState = {
+  sessions: { [INITIAL_ID]: createNewSession(INITIAL_ID) },
+  currentSessionId: INITIAL_ID,
+  library: {},
+}
+
+/**
+ * A custom storage proxy that dynamically computes the key based on current auth scope.
+ */
+const dynamicStorage = {
+  getItem: (name: string) => {
+    const scope = getStorageScope()
+    return storage.getItem(`${scope}:${name}`)
+  },
+  setItem: (name: string, value: string) => {
+    const scope = getStorageScope()
+    return storage.setItem(`${scope}:${name}`, value)
+  },
+  removeItem: (name: string) => {
+    const scope = getStorageScope()
+    return storage.removeItem(`${scope}:${name}`)
+  }
+}
+
 export const useConversationStore = create<ConversationState & ConversationActions>()(
   persist(
     (set, get) => ({
-      sessions: { [INITIAL_ID]: createNewSession(INITIAL_ID) },
-      currentSessionId: INITIAL_ID,
-      library: {},
+      ...initialState,
+
+      reset: () => set(initialState),
 
       createSession: () => {
         const id = crypto.randomUUID()
@@ -209,6 +237,7 @@ export const useConversationStore = create<ConversationState & ConversationActio
         }),
 
       uploadAttachment: async (file) => {
+        const scope = getStorageScope()
         const id = crypto.randomUUID()
         const attachment: Attachment = {
           id,
@@ -238,8 +267,8 @@ export const useConversationStore = create<ConversationState & ConversationActio
           attachment.duration = duration
         }
 
-        // Save blob to separate IndexedDB storage
-        await saveBlob(id, file)
+        // Save blob to separate IndexedDB storage (SCOPED)
+        await saveBlob(scope, id, file)
 
         // Add to library in global state
         set((state) => ({
@@ -250,14 +279,12 @@ export const useConversationStore = create<ConversationState & ConversationActio
       },
 
       addToSession: (sessionId, attachmentId) => {
-        // This is a placeholder for linking an existing library item to a session's "current context"
-        // if we decide to have session-level library visibility. 
-        // For now, it's enough that a Commit references an ID from the global library.
+        // Placeholder
       },
     }),
     {
       name: 'graphchat-storage',
-      storage: createJSONStorage(() => storage),
+      storage: createJSONStorage(() => dynamicStorage),
     }
   )
 )

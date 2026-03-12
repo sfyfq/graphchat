@@ -1,12 +1,44 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, Part } from "@google/generative-ai";
 import { LLMProvider } from './types'
-import { ReconstructedConversation } from './utils'
-import { useAuthStore } from '../../store/authStore'
+import { ReconstructedConversation, blobToBase64 } from './utils'
+import { useAuthStore, getStorageScope } from '../../store/authStore'
+import { useConversationStore } from '../../store/conversationStore'
+import { getBlob } from '../storage'
 
 const WORKER_URL = import.meta.env.VITE_WORKER_URL || ''
 const MODEL_NAME = "gemini-3.1-flash-lite-preview";
 
+/**
+ * Helper to fetch attachments and convert them to Google AI Parts.
+ */
+async function getAttachmentParts(attachmentIds?: string[]): Promise<Part[]> {
+  if (!attachmentIds || attachmentIds.length === 0) return [];
+  
+  const scope = getStorageScope();
+  const { library } = useConversationStore.getState();
+  const parts: Part[] = [];
+
+  for (const id of attachmentIds) {
+      const att = library[id];
+      const blob = await getBlob(scope, id);
+      if (att && blob) {
+          const base64 = await blobToBase64(blob);
+          parts.push({
+              inlineData: {
+                  data: base64,
+                  mimeType: att.type
+              }
+          });
+      }
+  }
+  return parts;
+}
+
 export class ProxyProvider implements LLMProvider {
+  capabilities = {
+    multimodal: true,
+  };
+
   /**
    * Initialize the official Gemini SDK configured to route through the Proxy Worker.
    */
@@ -26,16 +58,21 @@ export class ProxyProvider implements LLMProvider {
     });
   }
 
-  async sendMessage(conv: ReconstructedConversation, newText: string): Promise<string> {
+  async sendMessage(conv: ReconstructedConversation, newText: string, attachmentIds?: string[]): Promise<string> {
     const { setWhitelisted, logout } = useAuthStore.getState()
     const model = this.getClient();
+
+    const attachmentParts = await getAttachmentParts(attachmentIds);
+    const promptParts: Part[] = attachmentParts.length > 0 
+        ? [...attachmentParts, { text: newText }] 
+        : [{ text: newText }];
 
     try {
       const chat = model.startChat({ 
         history: conv.history,
         systemInstruction: conv.systemInstruction ? { role: 'system', parts: [{ text: conv.systemInstruction }] } : undefined
       });
-      const result = await chat.sendMessage(newText);
+      const result = await chat.sendMessage(promptParts);
       const response = await result.response;
       
       setWhitelisted(true)
@@ -46,16 +83,21 @@ export class ProxyProvider implements LLMProvider {
     }
   }
 
-  async* streamMessage(conv: ReconstructedConversation, newText: string): AsyncGenerator<string, void, unknown> {
+  async* streamMessage(conv: ReconstructedConversation, newText: string, attachmentIds?: string[]): AsyncGenerator<string, void, unknown> {
     const { setWhitelisted, logout } = useAuthStore.getState()
     const model = this.getClient();
+
+    const attachmentParts = await getAttachmentParts(attachmentIds);
+    const promptParts: Part[] = attachmentParts.length > 0 
+        ? [...attachmentParts, { text: newText }] 
+        : [{ text: newText }];
 
     try {
       const chat = model.startChat({ 
         history: conv.history,
         systemInstruction: conv.systemInstruction ? { role: 'system', parts: [{ text: conv.systemInstruction }] } : undefined
       });
-      const result = await chat.sendMessageStream(newText);
+      const result = await chat.sendMessageStream(promptParts);
 
       // Successfully started streaming
       setWhitelisted(true)
@@ -78,6 +120,9 @@ export class ProxyProvider implements LLMProvider {
     if (status.includes('403')) {
       setWhitelisted(false);
       throw new Error("UNAUTHORIZED_EMAIL");
+    }
+    if (status.includes('413')) {
+      throw new Error("PAYLOAD_TOO_LARGE");
     }
   }
 }

@@ -8,11 +8,20 @@ export interface LLMMessage {
 
 export interface LLMProvider {
   /**
+   * Model capabilities.
+   */
+  capabilities: {
+    multimodal: boolean;
+    supportedMimeTypes?: string[];
+  };
+
+  /**
    * Standard one-shot message completion.
    */
   sendMessage: (
     conv: ReconstructedConversation,
     newText: string,
+    attachmentIds?: string[]
   ) => Promise<string>;
 
   /**
@@ -21,5 +30,6 @@ export interface LLMProvider {
   streamMessage: (
     conv: ReconstructedConversation,
     newText: string,
+    attachmentIds?: string[]
   ) => AsyncGenerator<string, void, unknown>;
 }

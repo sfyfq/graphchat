@@ -966,3 +966,131 @@ Improve whitelist management and protect user privacy (PII) by using a dynamic K
 3.  Modify `worker/index.test.ts` to mock the `WHITELIST_KV` binding and verify both KV and fallback lookup paths.
 4.  Add a helper script `scripts/whitelist.js` and a corresponding `package.json` script.
 5.  Update `worker/README.md` with the new KV setup instructions.
+
+--- Wed Mar 11 22:31:15 PDT 2026 ---
+
+# Refined Prompt: Multi-User Data Isolation Implementation
+
+Implement strict data isolation between Google accounts in GraphChat by namespacing all local storage (IndexedDB) keys.
+
+## Goal:
+Ensure that if multiple users use the same browser, they only see their own chat history and attachments. Unauthenticated users (Guests) should also have their own isolated space.
+
+## Technical Details:
+- **Storage Scope**: Define a `getStorageScope()` helper that returns `user:<subSlot>` or `guest`.
+- **Dynamic Persist Key**:
+    - Modify `conversationStore.ts` to use a dynamic storage key.
+    - Since Zustand `persist` doesn't easily support dynamic key switching, we will implement a "Storage Manager" that manually triggers re-hydration or uses a `key` prop on a provider to force re-initialization.
+- **Blob Keys**: Update `src/lib/storage.ts` to include the current user ID in all blob keys (e.g., `user:123:blob:abc`).
+- **Store Reset**: Ensure that when switching scopes, the in-memory state is completely reset before loading the new scope's data to prevent state leakage.
+
+## Tasks:
+1.  **Auth Store Enhancement**: Ensure `authStore` reliably provides the user's `sub` ID and a `isHydrated` flag.
+2.  **Storage Logic Update**: Refactor `src/lib/storage.ts` to be scope-aware.
+3.  **Conversation Store Refactor**: 
+    - Implement a mechanism to re-initialize or re-hydrate the store based on the current scope.
+    - Export a `useInitializeStore` hook or similar.
+4.  **App Integration**: Update `App.tsx` or `main.tsx` to ensure the correct scope is determined before the conversation store is fully active.
+5.  **Validation**: Test logging in with Account A, creating data, logging out, checking Guest view, and logging in with Account B.
+
+--- Wed Mar 11 23:08:22 PDT 2026 ---
+
+# Refined Prompt: Complete Library/Attachment Functionality
+
+Implement the end-to-end flow for using attachments in GraphChat, from the user interface to the LLM backend, with strict validation and capability-aware UI.
+
+## Goal:
+Allow users to upload, attach, send, and view files (images, audio, video, docs) within their chat conversations using the Gemini multimodal capabilities.
+
+## Technical Details:
+- **Capability-Aware UI:**
+    - Enhance `LLMProvider` interface with a `capabilities` object (e.g., `{ multimodal: boolean }`).
+    - Disable/Hide the attachment UI if the active provider (e.g., Mock AI) does not support multimodal input.
+- **Chat Input**:
+    - Add `pendingAttachmentIds` state to `ChatDialog.tsx`.
+    - Implement a file upload handler that uses `uploadAttachment` from the store.
+    - **Validation:** Check `file.size` before calling `uploadAttachment`. Limit to 10MB.
+    - Create a `PendingAttachments` component to show thumbnails with a "remove" (×) button above the text input.
+- **Message List**:
+    - Modify `src/components/ChatDialog/MessageList.tsx` to iterate over `commit.attachmentIds`.
+    - Create an `AttachmentPreview` component to render media based on MIME type.
+- **LLM Data Mapping**:
+    - In `src/lib/llm/utils.ts` or similar, implement `prepareMultimodalPayload`.
+    - Use `getBlob` from `storage.ts` to retrieve the binary data for each attachment ID.
+    - Convert `Blob` to Base64 string for the `inlineData` field.
+- **Store Updates**: 
+    - Ensure `addTurn` correctly receives and persists `attachmentIds`.
+
+## Tasks:
+1.  **Interface Update**: Add capabilities to `LLMProvider` and update all providers.
+2.  **Input UI**: Add the paperclip icon, validation logic, and pending attachments bar to `ChatDialog`.
+3.  **Rendering**: Implement attachment display in `MessageList`.
+4.  **Backend Logic**: Refactor LLM providers to support multimodal parts.
+5.  **Verification**: Test with various file types (JPG, MP3, PDF) and ensure they are sent correctly.
+
+--- Wed Mar 11 23:36:41 PDT 2026 ---
+
+
+--- Wed Mar 11 23:40:28 PDT 2026 ---
+
+# Refined Prompt: Worker Payload Size Enforcement
+
+Update the GraphChat Cloudflare Worker to enforce a strict request size limit using the `Content-Length` header.
+
+## Goal:
+Protect the Worker isolate from memory crashes and prevent excessive bandwidth usage by rejecting large requests early.
+
+## Technical Details:
+- **Limit:** 15MB (15 * 1024 * 1024 bytes).
+- **Logic:** 
+    - Retrieve `Content-Length` header.
+    - If present and greater than 15MB, return `413 Payload Too Large`.
+    - Apply this to all non-OPTIONS requests.
+- **Location:** At the start of the `fetch` handler in `worker/index.ts`.
+
+## Tasks:
+1.  Update `worker/index.ts` with the size check.
+2.  Update `worker/index.test.ts` to verify the size limit rejection.
+# PROMPTS for Context Actions Feature (Revised)
+
+## Prompt 1: UI Implementation - Selection & Floating Menu
+How can we efficiently capture the `onMouseUp` event on assistant messages in `MessageList.tsx`, and calculate the correct `{ x, y }` coordinates to position a `TextSelectionMenu` component? The component should be a floating bar above the selected text.
+
+## Prompt 2: "Explain" Logic
+How to implement the "Explain" action:
+- It should use the selected text as part of a prompt: `Briefly explain this: "[selected text]"`.
+- It should start a new branch from the message where the selection occurred.
+- In `ChatDialog.tsx`, we need a way to trigger a "send" action programmatically with a specific `tipId` (the parent message's ID).
+
+## Prompt 3: "Ask Gemini" Logic
+How to implement the "Ask Gemini" action:
+- It should focus the input field in `ChatDialog.tsx`.
+- It should prepopulate the input with something like `Regarding "[selected text]": `.
+- It should NOT send the message immediately.
+
+## Prompt 4: Coordination between `MessageList` and `ChatDialog`
+Since `MessageList` is a child of `ChatDialog`, we need callback props to handle these actions.
+- `onSelectionAction(type: 'explain' | 'ask', text: string, messageId: string)`
+- This callback should be passed from `ChatDialog` to `MessageList`.
+# PROMPTS for Context Actions Usability Improvements
+
+## Prompt 1: Dynamic Positioning Logic
+Refine the logic in `src/components/ChatDialog/MessageList.tsx` to calculate the best `{ x, y }` for the `TextSelectionMenu`.
+- Use `getBoundingClientRect()` of the selection.
+- If `rect.top > 100` (enough space above), position it above the selection.
+- Otherwise, position it below `rect.bottom`.
+- Center it horizontally at `rect.left + rect.width / 2`.
+
+## Prompt 2: Explain Overlay Implementation
+Implement a transient overlay in `ChatDialog.tsx` for the "Explain" action.
+- Add state: `explainResult: { prompt: string, response: string, loading: boolean } | null`.
+- When 'explain' is triggered, instead of calling `handleSend` (which commits a branch), call a new `handleExplain` function.
+- `handleExplain` will stream the LLM response into `explainResult.response`.
+- Render a blurred, floating overlay at the top of the message area with the prompt, the streamed response, and a "Close" button.
+
+## Prompt 3: Styling the Overlay
+The overlay should match the app's dark aesthetic:
+- Blurred background (`backdropFilter: blur(12px)`).
+- Border and rounded corners.
+- Succinct and on-point text display.
+- Subtle animation for appearance.

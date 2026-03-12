@@ -339,3 +339,83 @@ Implement a privacy-preserving, dynamic whitelist using Cloudflare KV to store i
 - **Configuration:** Update `wrangler.proxy.json` with the KV binding.
 - **Helper Script:** Add a script to `package.json` to hash emails and generate management commands.
 - **Testing:** Update worker tests to mock the KV lookup.
+
+--- Wed Mar 11 22:31:15 PDT 2026 ---
+
+# Request: Multi-User Data Isolation
+
+Implement strict data isolation between different Google accounts stored in the same browser.
+
+## Requirements:
+- **Namespacing:** Prefix all IndexedDB keys with a unique identifier based on the authenticated user.
+    - Logged in: `user:<google_sub>:...`
+    - Guest: `guest:...`
+- **Dynamic Switching:** When a user logs in or out, the application must immediately switch to the corresponding data store (re-hydrate sessions, commits, and library).
+- **Blob Isolation:** Ensure that uploaded files (blobs) are also isolated by the same namespace to prevent cross-user access to the shared library.
+- **Performance:** Switching users should be smooth and trigger a clean re-render of the UI.
+
+--- Wed Mar 11 23:08:22 PDT 2026 ---
+
+# Request: Complete Library/Attachment Functionality
+
+Finish the implementation of the attachment system so users can actually use files in their conversations.
+
+## Requirements:
+- **Chat Input UI:**
+    - Add a "Paperclip" icon to the `ChatDialog` input area.
+    - Support uploading new files directly from the input.
+    - Show a horizontal list of thumbnails for files currently attached to the pending message.
+- **Validation:**
+    - **File Size Check:** Prevent uploading or sending files larger than **10MB** to the LLM. Show a clear error message if a file is too large.
+- **Message Rendering:**
+    - Update `MessageList.tsx` to render attached images, audio, and video within the chat bubbles.
+    - Show file metadata (name, size) for non-media files.
+- **LLM Integration:**
+    - Fetch raw blobs from IndexedDB and convert them to Base64.
+    - Update the LLM payload construction to include these attachments as `inlineData` parts.
+- **Consistency:** Maintain the dark, translucent aesthetic and high-performance feel.
+
+--- Wed Mar 11 23:36:41 PDT 2026 ---
+
+
+--- Wed Mar 11 23:40:28 PDT 2026 ---
+
+# Request: Worker Payload Size Enforcement
+
+Implement server-side enforcement of request size limits in the Cloudflare Worker to protect against memory exhaustion and large unauthorized transfers.
+
+## Requirements:
+- **Immediate Check:** Check the `Content-Length` header as the first step in the `fetch` handler.
+- **Limit:** Set a maximum limit of **15MB** (to accommodate 10MB raw files + Base64 overhead).
+- **Response:** Return a `413 Payload Too Large` response if the limit is exceeded.
+- **Security:** Ensure the check happens before any authentication or data processing to minimize resource usage.
+# Feature Request: Context Actions for Selected Text (Revised)
+
+## User Intent
+The user wants to add context actions to text selected from assistant messages. These actions help with quick lookups and focused follow-up questions.
+
+## Goals
+- Detect text selection within assistant messages.
+- Display a floating menu with two primary actions:
+    1.  **Explain (Quick lookup):** Create a new branch from the current message, send a prompt to explain the selected text succinctly, and show the response. "Ask and discard" pattern.
+    2.  **Ask (Follow-up):** Focus the chat input and prepopulate it with the selected text to allow for a follow-up question in the current thread.
+
+## Technical Considerations
+- Capture selection in `MessageList.tsx`.
+- Calculate floating menu position based on selection coordinates.
+- "Explain" action requires programmatically triggering a message send on a new branch.
+- "Ask" action requires communicating back to `ChatDialog.tsx` to update the input field.
+# Feature Request: Context Actions Usability Improvements
+
+## User Feedback
+1.  **Explain Overlay:** The "Explain" action should display its response in a top overlay rather than switching the main chat view to a new branch. This overlay should be dismissible.
+2.  **Menu Positioning:** The floating context menu positioning is currently suboptimal. It should appear above or below the selection depending on viewport space to prevent clipping and stay close to the cursor.
+
+## Goals
+- Implement a floating, dismissible overlay for "Explain" responses.
+- Improve the positioning logic for the `TextSelectionMenu`.
+
+## Technical Considerations
+- `ChatDialog` needs state for the explain overlay (active text, streaming response, visible).
+- `MessageList` needs to calculate positioning more dynamically based on `rect.top` and `rect.bottom`.
+- The overlay should probably be part of `ChatDialog` to stay within the chat window's context but on top of the message list.

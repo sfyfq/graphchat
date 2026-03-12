@@ -841,3 +841,155 @@
 ## Phase 4: Verification
 - [ ] Run `npm run test:worker` to ensure all paths are verified.
 - [ ] Perform a final manual code review.
+
+--- Wed Mar 11 22:31:15 PDT 2026 ---
+
+# TODO: Implementation Plan for Multi-User Data Isolation
+
+## Phase 1: Storage Layer Refactoring
+- [x] **Modify `src/lib/storage.ts`**:
+    - Update all blob functions (`saveBlob`, `getBlob`, `deleteBlob`) to accept a `scope` parameter (e.g., `guest` or `user:sub`).
+    - Update `getBlobUrl` to correctly resolve scoped blobs.
+- [x] **Modify `src/store/authStore.ts`**:
+    - Add an `onRehydrateStorage` callback to track when auth state is ready.
+    - Export a helper `getStorageScope(state)` that returns the unique namespace string.
+
+## Phase 2: Dynamic Conversation Store
+- [x] **Refactor `src/store/conversationStore.ts`**:
+    - Move the store creation into a factory or use a custom storage proxy that dynamically computes the IndexedDB key based on the current auth state.
+    - Implement a `clearState` action to reset the store when switching users.
+    - Ensure `uploadAttachment` uses the current scope when saving blobs.
+
+## Phase 3: Application Integration
+- [x] **Update `App.tsx`**:
+    - Add a "Loading" or "Initializing" view that waits for the `authStore` to hydrate.
+    - Use a `useEffect` to trigger store re-hydration when the user ID changes.
+- [x] **Update Components**:
+    - Ensure `LibrarySidebar` and `ChatDialog` (attachment logic) pass the correct scope to storage helpers.
+
+## Phase 4: Verification & Migration
+- [ ] **Data Migration (Optional/Canary)**: Decide if existing `graphchat-storage` data should be migrated to the `guest` namespace.
+- [ ] **Manual Testing**:
+    - Create a chat as Guest.
+    - Log in with Account A -> Verify Guest chat is gone, create new chat.
+    - Log out -> Verify Guest chat returns.
+    - Log in with Account B -> Verify Account A's chat is hidden.
+- [x] **Final Review**: Archive methodology files.
+
+--- Wed Mar 11 23:08:22 PDT 2026 ---
+
+# TODO: Implementation Plan for Complete Attachments
+
+## Phase 0: Capability-Aware Providers
+- [x] **Modify `src/lib/llm/types.ts`**: Add `capabilities` to `LLMProvider`.
+- [x] **Update Providers**:
+    - `geminiProvider`: multimodal: true.
+    - `proxyProvider`: multimodal: true.
+    - `mockProvider`: multimodal: false.
+- [x] **Update `src/lib/llm/index.ts`**: Expose active capabilities via the `llm` selector.
+
+## Phase 1: Chat Input UI
+- [x] **Modify `src/components/ChatDialog/ChatDialog.tsx`**:
+    - Add `pendingAttachmentIds` state.
+    - Implement `handleFileSelect` using a hidden input.
+    - **Add Validation:** Implement `fileSizeCheck` helper (10MB limit) and show error in UI.
+    - **Add Capability Check:** Only show upload UI if `llm.capabilities.multimodal` is true.
+    - Create a `PendingAttachmentsBar` component to display selected files.
+    - Add a "Paperclip" button next to the textarea.
+    - Update `handleSend` to include `pendingAttachmentIds` in the turn data.
+
+## Phase 2: Message Rendering
+- [x] **Modify `src/components/ChatDialog/MessageList.tsx`**:
+    - Create an `AttachmentList` component to render inside each message bubble.
+    - Implement `AttachmentItem` which:
+        - Detects media type (image, audio, video).
+        - Fetches the scoped blob URL.
+        - Renders an appropriate preview (img tag, audio tag, etc.) or a download-style file link.
+
+## Phase 3: backend Integration (LLM)
+- [x] **Modify `src/lib/llm/types.ts`**:
+    - Ensure `Message` type supports multimodal parts (e.g., `parts: Part[]` instead of just `content`).
+- [x] **Modify `src/lib/llm/utils.ts`**:
+    - Implement `blobToBase64(blob: Blob): Promise<string>`.
+    - Implement `reconstructMultimodalMessages` to fetch and include blob data for the API.
+- [x] **Update Providers**:
+    - **`ProxyProvider.ts`**: Update to send the multimodal parts to the worker.
+    - **`MockProvider.ts`**: Mock acknowledgement of attachments in the simulated response.
+
+## Phase 4: Final Verification
+- [x] **Manual Testing**:
+    - Upload an image -> Verify it appears in input.
+    - Send message -> Verify it renders in bubble.
+    - Check token estimation (ensure attachments are counted).
+- [x] **Archive methodology files.**
+
+- [ ] **Archive methodology files.**
+
+--- Wed Mar 11 23:36:41 PDT 2026 ---
+
+
+--- Wed Mar 11 23:40:28 PDT 2026 ---
+
+# TODO: Implementation Plan for Worker Size Enforcement
+
+## Phase 1: Worker Logic
+- [ ] **Modify `worker/index.ts`**:
+    - Add a constant `MAX_PAYLOAD_SIZE = 15 * 1024 * 1024`.
+    - Implement the `Content-Length` check at the beginning of the `fetch` handler.
+    - Return `new Response('Payload Too Large', { status: 413 })` if exceeded.
+
+## Phase 2: Testing
+- [ ] **Modify `worker/index.test.ts`**:
+    - Add a test case that sends a request with a `Content-Length` header exceeding 15MB.
+    - Verify the worker returns status `413`.
+
+## Phase 3: Verification
+- [ ] Run `npm run test:worker` to confirm the new security rail works.
+- [ ] Archive methodology files.
+# TODO: Implement Context Actions for Selected Text (Revised)
+
+## Phase 1: Research & Component Design
+- [ ] Define the `TextSelectionMenu` UI (floating bar with two buttons).
+- [ ] Research how to calculate the correct position for the menu relative to the selected text.
+
+## Phase 2: Implementation - Selection Support
+- [ ] Create `src/components/ChatDialog/TextSelectionMenu.tsx`.
+- [ ] In `MessageList.tsx`:
+    - [ ] Add `onMouseUp` event handler to assistant message bubbles.
+    - [ ] Capture selected text using `window.getSelection()`.
+    - [ ] If text is selected, determine the bounding box and show `TextSelectionMenu`.
+    - [ ] Handle menu disappearance when clicking elsewhere or clearing selection.
+
+## Phase 3: Implementation - Actions
+- [ ] Add `onSelectionAction` prop to `MessageList`.
+- [ ] Implement `onSelectionAction` in `ChatDialog.tsx`:
+    - [ ] **'explain' action:**
+        - Call `setTipId(messageId)` to ensure the new turn starts from the correct message.
+        - Trigger the `handleSend` logic with the prompt `Briefly explain this: "[selected text]"`.
+        - Ensure it doesn't clear the current input field (if any).
+    - [ ] **'ask' action:**
+        - Set `input` to `Regarding "[selected text]": `.
+        - Focus the `textarea`.
+
+## Phase 4: Testing & Polish
+- [ ] Test the "Explain" action for branching behavior.
+- [ ] Test the "Ask" action for input population and focus.
+- [ ] Fine-tune the floating menu's positioning (especially near edges of the dialog).
+# TODO: Context Actions Usability Improvements
+
+## Phase 1: Menu Positioning
+- [ ] Update `handleMouseUp` in `MessageList.tsx` to calculate `y` based on available space above `rect.top`.
+- [ ] Add `isBelow` property to the selection state to tell `TextSelectionMenu` which direction to point/translate.
+- [ ] Update `TextSelectionMenu.tsx` to handle the `isBelow` prop for correct transformation (e.g., arrow pointing up or down).
+
+## Phase 2: Explain Overlay
+- [ ] Add `explainResult` state to `ChatDialog.tsx`.
+- [ ] Implement `handleExplain` function in `ChatDialog.tsx` (modeled after `handleSend` but transient).
+- [ ] Create `ExplainOverlay` sub-component in `ChatDialog.tsx` or a separate file.
+- [ ] Integrate `ExplainOverlay` into the `ChatDialog` render function, positioned over the message list.
+- [ ] Update `handleSelectionAction` to use `handleExplain` for the 'explain' type.
+
+## Phase 3: Testing & Polish
+- [ ] Verify menu doesn't clip when selection is near the top of the dialog.
+- [ ] Test the "Ask and Discard" flow for the Explain overlay.
+- [ ] Ensure the overlay is correctly dismissed.

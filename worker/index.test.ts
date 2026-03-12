@@ -127,4 +127,15 @@ describe('Worker Secure Proxy', () => {
 
         globalThis.fetch = originalFetch;
     });
+
+    it('responds with 413 if Content-Length exceeds 15MB', async () => {
+        const bigSize = 16 * 1024 * 1024; // 16MB
+        const request = new Request('http://example.com/v1/models', { 
+            method: 'POST',
+            headers: { 'Content-Length': bigSize.toString() }
+        });
+        const response = await worker.fetch(request, env as any);
+        expect(response.status).toBe(413);
+        expect(await response.text()).toBe('Payload Too Large');
+    });
 });

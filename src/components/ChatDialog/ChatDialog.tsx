@@ -12,10 +12,12 @@ import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import { useConversationStore } from "../../store/conversationStore";
 import { useConfigStore } from "../../store/configStore";
+import { useAuthStore, getStorageScope } from "../../store/authStore";
 import { llm, reconstructMessages, estimateTokens } from "../../lib/llm";
 import { makeSummary, branchColor, getMathAtCursor } from "../../lib/utils";
+import { getBlobUrl } from "../../lib/storage";
 import { MessageList, MarkdownComponents } from "./MessageList";
-import type { Commit, DialogState } from "../../types";
+import type { Commit, DialogState, Attachment } from "../../types";
 
 import 'katex/dist/katex.min.css'
 
@@ -30,6 +32,72 @@ interface Props {
 
 const SAFE_TOP = 80;
 
+// ── Helper Component for Pending Thumbnails ──
+const PendingThumbnail: React.FC<{ 
+  attachment: Attachment; 
+  onRemove: (id: string) => void 
+}> = ({ attachment, onRemove }) => {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const scope = getStorageScope();
+    getBlobUrl(scope, attachment.id).then(u => {
+      if (active) setUrl(u);
+    });
+    return () => {
+      active = false;
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [attachment.id]);
+
+  const isImage = attachment.type.startsWith('image/');
+  const icon = attachment.type.startsWith('audio/') ? '🎵' : attachment.type.startsWith('video/') ? '🎬' : '📄';
+
+  return (
+    <div style={{
+      position: 'relative',
+      width: 50,
+      height: 50,
+      borderRadius: 8,
+      background: 'rgba(255,255,255,0.05)',
+      border: '1px solid rgba(255,255,255,0.1)',
+      overflow: 'hidden',
+      flexShrink: 0
+    }}>
+      {isImage && url ? (
+        <img src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+      ) : (
+        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
+          {icon}
+        </div>
+      )}
+      <button 
+        onClick={() => onRemove(attachment.id)}
+        style={{
+          position: 'absolute',
+          top: 2,
+          right: 2,
+          width: 16,
+          height: 16,
+          borderRadius: '50%',
+          background: 'rgba(0,0,0,0.6)',
+          border: 'none',
+          color: '#fff',
+          fontSize: 12,
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 0
+        }}
+      >
+        ×
+      </button>
+    </div>
+  );
+};
+
 export const ChatDialog: React.FC<Props> = ({
   commit,
   initialPosition,
@@ -38,7 +106,7 @@ export const ChatDialog: React.FC<Props> = ({
   onMinimize,
   onFocus,
 }) => {
-  const { sessions, currentSessionId, addTurn } = useConversationStore();
+  const { sessions, currentSessionId, addTurn, library, uploadAttachment } = useConversationStore();
   const { apiKey, setApiKey, setShowKeyModal } = useConfigStore();
   const commits = sessions[currentSessionId]?.commits || {};
 
@@ -49,14 +117,23 @@ export const ChatDialog: React.FC<Props> = ({
   const [streamingContent, setStreamingContent] = useState("");
   const [pendingUserContent, setPendingUserContent] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [pendingAttachmentIds, setPendingAttachmentIds] = useState<string[]>([]);
+  const [explainResult, setExplainResult] = useState<{ 
+    prompt: string, 
+    response: string, 
+    loading: boolean 
+  } | null>(null);
 
   const [tipId, setTipId] = useState(
     commit.role === "user" && commit.parentId ? commit.parentId : commit.id
   );
   const dragging = useRef<{ startX: number; startY: number } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const prevHeightRef = useRef<number>(0);
+
+  const FILE_SIZE_LIMIT = 10 * 1024 * 1024; // 10MB
 
   // ── Vertical Growth Centering & Initial Safety Clamp ─────────────────────
   useLayoutEffect(() => {
@@ -123,9 +200,10 @@ export const ChatDialog: React.FC<Props> = ({
   }, [commits, tipId]);
 
   const tokenCount = useMemo(() => {
-    const conv = reconstructMessages(commits, tipId);
-    return estimateTokens(conv);
-  }, [commits, tipId]);
+    // Note: for the UI count, we'll use a rough sync estimate.
+    const chars = messages.reduce((acc, m) => acc + m.content.length, 0);
+    return Math.ceil((chars + input.length) / 4);
+  }, [messages, input]);
 
   const bColor = branchColor(commit.branchLabel);
 
@@ -174,13 +252,13 @@ export const ChatDialog: React.FC<Props> = ({
 
   // ── Close with data loss check ───────────────────────────────────────────
   const handleClose = useCallback(() => {
-    if (input.trim().length > 0) {
+    if (input.trim().length > 0 || pendingAttachmentIds.length > 0) {
       if (!window.confirm("You have unsent changes. Close anyway?")) {
         return;
       }
     }
     onClose();
-  }, [input, onClose]);
+  }, [input, pendingAttachmentIds, onClose]);
 
   const handleMinimize = useCallback(() => {
     if (!onMinimize) return;
@@ -200,12 +278,49 @@ export const ChatDialog: React.FC<Props> = ({
     });
   }, [onMinimize, commit.id, tipId, pos, input, messages, bColor]);
 
-  // ── Send (Transactional & Streaming) ──────────────────────────────────────
-  const handleSend = useCallback(async () => {
-    const text = input.trim();
-    if (!text || loading) return;
+  // ── File Selection ──
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    setInput("");
+    if (file.size > FILE_SIZE_LIMIT) {
+      setError(`File is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Limit is 10MB.`);
+      e.target.value = '';
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const id = await uploadAttachment(file);
+      setPendingAttachmentIds(prev => [...prev, id]);
+    } catch (err) {
+      setError("Failed to upload attachment.");
+    } finally {
+      setLoading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoveAttachment = (id: string) => {
+    setPendingAttachmentIds(prev => prev.filter(aId => aId !== id));
+  };
+
+  // ── Send (Transactional & Streaming) ──────────────────────────────────────
+  const handleSend = useCallback(async (overrideContent?: string, overrideTipId?: string, branchLabel?: string) => {
+    const text = overrideContent !== undefined ? overrideContent : input.trim();
+    const targetTipId = overrideTipId || tipId;
+
+    if ((!text && pendingAttachmentIds.length === 0) || loading) return;
+
+    if (overrideContent === undefined) {
+      setInput("");
+    }
+    const currentAttachments = overrideContent !== undefined ? [] : [...pendingAttachmentIds];
+    if (overrideContent === undefined) {
+      setPendingAttachmentIds([]);
+    }
+    
     setPendingUserContent(text);
     setActiveMath(null);
     setError(null);
@@ -213,11 +328,11 @@ export const ChatDialog: React.FC<Props> = ({
     setStreamingContent("");
 
     try {
-      const conv = reconstructMessages(commits, tipId);
+      const conv = await reconstructMessages(commits, targetTipId);
       let fullAssistantContent = "";
       
       // Use the new llm provider interface
-      for await (const chunk of llm.streamMessage(conv, text)) {
+      for await (const chunk of llm.streamMessage(conv, text, currentAttachments)) {
         fullAssistantContent += chunk;
         setStreamingContent(fullAssistantContent);
       }
@@ -228,12 +343,14 @@ export const ChatDialog: React.FC<Props> = ({
 
       const userCommit: Commit = {
         id: userId,
-        parentId: tipId,
+        parentId: targetTipId,
         role: "user",
         content: text,
         summary: makeSummary(text),
         timestamp: Date.now(),
         model: "",
+        attachmentIds: currentAttachments,
+        branchLabel: branchLabel,
       };
 
       const assistantCommit: Commit = {
@@ -258,24 +375,63 @@ export const ChatDialog: React.FC<Props> = ({
       const isKeyError = msg.includes("MISSING_API_KEY") || 
                          msg.includes("API_KEY_INVALID") || 
                          msg.includes("403") || 
-                         msg.includes("401");
+                         msg.includes("401") ||
+                         msg.includes("UNAUTHORIZED_EMAIL") ||
+                         msg.includes("AUTH_EXPIRED");
 
       if (isKeyError) {
-        // If it's a 403 from the Proxy, the ProxyProvider already handles clearing whitelist.
-        // We only show the modal if the user might want to provide their own key as fallback.
-        // For now, let's just show the error.
-        setError("Access denied or API key invalid.");
+        setError("Access denied or session expired. Please sign in again.");
+      } else if (msg === "PAYLOAD_TOO_LARGE") {
+        setError("Message too large. Please reduce the size of your text or attachments.");
       } else {
         setError(msg);
       }
       
       // Restore input on failure
-      setInput(text);
+      if (overrideContent === undefined) {
+        setInput(text);
+        setPendingAttachmentIds(currentAttachments);
+      }
       setPendingUserContent("");
     } finally {
       setLoading(false);
     }
-  }, [input, loading, commits, addTurn, tipId]);
+  }, [input, loading, commits, addTurn, tipId, pendingAttachmentIds]);
+
+  const handleExplain = useCallback(async (text: string, overrideTipId: string) => {
+    const prompt = `Briefly explain this: "${text}"`;
+    setExplainResult({ prompt, response: "", loading: true });
+    
+    try {
+      const conv = await reconstructMessages(commits, overrideTipId);
+      let fullAssistantContent = "";
+      
+      for await (const chunk of llm.streamMessage(conv, prompt, [])) {
+        fullAssistantContent += chunk;
+        setExplainResult(prev => prev ? { ...prev, response: fullAssistantContent } : null);
+      }
+      setExplainResult(prev => prev ? { ...prev, loading: false } : null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "API error during explanation");
+      setExplainResult(null);
+    }
+  }, [commits]);
+
+  const handleSelectionAction = useCallback((type: 'explain' | 'ask', text: string, messageId: string) => {
+    if (type === 'explain') {
+      handleExplain(text, messageId);
+    } else if (type === 'ask') {
+      setInput(`Regarding "${text}": `);
+      setTimeout(() => {
+        textareaRef.current?.focus();
+        if (textareaRef.current) {
+          textareaRef.current.style.height = "auto";
+          textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+          textareaRef.current.selectionStart = textareaRef.current.selectionEnd = textareaRef.current.value.length;
+        }
+      }, 0);
+    }
+  }, [handleExplain]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -294,7 +450,7 @@ export const ChatDialog: React.FC<Props> = ({
     setInput(val);
     checkMath(val, e.target.selectionStart);
     e.target.style.height = "auto";
-    e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+    e.target.style.height = `${Math.min(textareaRef.current?.scrollHeight || 0, 120)}px`;
   };
 
   const handleKeyUp = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -305,7 +461,7 @@ export const ChatDialog: React.FC<Props> = ({
     checkMath(input, e.currentTarget.selectionStart);
   };
 
-  const canSend = (input.trim().length > 0 || streamingContent) && !loading;
+  const canSend = (input.trim().length > 0 || pendingAttachmentIds.length > 0 || streamingContent) && !loading;
 
   return (
     <div
@@ -476,13 +632,85 @@ export const ChatDialog: React.FC<Props> = ({
           overflowY: "auto",
           padding: "16px 16px 8px",
           minHeight: 0,
+          position: 'relative',
         }}
       >
+        {explainResult && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 10,
+            padding: '12px 16px',
+            background: 'rgba(15,15,25,0.9)',
+            backdropFilter: 'blur(16px)',
+            borderBottom: '1px solid rgba(255,255,255,0.1)',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+            animation: 'msg-in 0.2s ease-out',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+              <div style={{ 
+                fontFamily: "'Syne', sans-serif", 
+                fontSize: 10, 
+                fontWeight: 700, 
+                color: 'rgba(99,102,241,0.9)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
+              }}>
+                Explanation
+              </div>
+              <button 
+                onClick={() => setExplainResult(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'rgba(255,255,255,0.3)',
+                  cursor: 'pointer',
+                  fontSize: 16,
+                  padding: 0,
+                  lineHeight: 1
+                }}
+                onMouseEnter={e => e.currentTarget.style.color = '#fff'}
+                onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.3)'}
+              >
+                ×
+              </button>
+            </div>
+            <div style={{ 
+              fontSize: 13, 
+              color: '#fff', 
+              lineHeight: 1.6,
+              maxHeight: 200,
+              overflowY: 'auto'
+            }}>
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm, remarkMath]} 
+                rehypePlugins={[rehypeKatex]}
+                components={MarkdownComponents}
+              >
+                {explainResult.response || (explainResult.loading ? "Thinking..." : "")}
+              </ReactMarkdown>
+              {explainResult.loading && (
+                <span style={{
+                  display:    'inline-block',
+                  width:      6,
+                  height:     12,
+                  background: '#6366f1',
+                  marginLeft: 4,
+                  animation:  'dot-pulse 0.8s infinite',
+                  verticalAlign: 'middle',
+                }} />
+              )}
+            </div>
+          </div>
+        )}
         <MessageList 
           messages={messages} 
           loading={loading} 
           streamingContent={streamingContent}
           pendingUserContent={pendingUserContent}
+          onSelectionAction={handleSelectionAction}
         />
       </div>
 
@@ -514,6 +742,23 @@ export const ChatDialog: React.FC<Props> = ({
           position: 'relative'
         }}
       >
+        {/* Pending Attachments Bar */}
+        {pendingAttachmentIds.length > 0 && (
+          <div style={{
+            display: 'flex',
+            gap: 10,
+            padding: '4px 0 12px',
+            overflowX: 'auto',
+            scrollbarWidth: 'none'
+          }}>
+            {pendingAttachmentIds.map(id => {
+              const att = library[id];
+              if (!att) return null;
+              return <PendingThumbnail key={id} attachment={att} onRemove={handleRemoveAttachment} />;
+            })}
+          </div>
+        )}
+
         {/* Math Overlay Preview */}
         {activeMath && (
           <div style={{
@@ -575,6 +820,41 @@ export const ChatDialog: React.FC<Props> = ({
         )}
 
         <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+          {/* Paperclip Button */}
+          {llm.capabilities.multimodal && (
+            <>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleFileSelect} 
+                style={{ display: 'none' }} 
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={loading}
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  border: "none",
+                  background: "rgba(255,255,255,0.05)",
+                  color: "rgba(255,255,255,0.4)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 18,
+                  flexShrink: 0,
+                  transition: "all 0.15s",
+                }}
+                onMouseEnter={e => e.currentTarget.style.color = '#fff'}
+                onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.4)'}
+              >
+                📎
+              </button>
+            </>
+          )}
+
           <textarea
             ref={textareaRef}
             value={input}
@@ -610,7 +890,7 @@ export const ChatDialog: React.FC<Props> = ({
           />
 
           <button
-            onClick={handleSend}
+            onClick={() => handleSend()}
             disabled={!canSend}
             style={{
               width: 36,

@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { useState, useEffect, useMemo } from 'react'
 import { useConversationStore, useCurrentSession } from '../../store/conversationStore'
+import { getStorageScope } from '../../store/authStore'
 import { getBlobUrl } from '../../lib/storage'
 import { Attachment } from '../../types'
 
@@ -40,7 +41,8 @@ const Thumbnail: React.FC<{ attachment: Attachment }> = ({ attachment }) => {
 
   useEffect(() => {
     let active = true
-    getBlobUrl(attachment.id).then(u => {
+    const scope = getStorageScope()
+    getBlobUrl(scope, attachment.id).then(u => {
       if (active) setUrl(u)
     })
     return () => {
