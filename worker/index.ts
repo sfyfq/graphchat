@@ -10,14 +10,19 @@ export interface Env {
   ALLOWED_EMAILS: string;
 }
 
+interface GoogleTokenPayload {
+  email: string;
+  [key: string]: any;
+}
+
 /**
  * Verify the Google ID Token using Google's tokeninfo endpoint.
  */
-async function verifyToken(idToken: string) {
+async function verifyToken(idToken: string): Promise<GoogleTokenPayload | null> {
   try {
     const res = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
     if (!res.ok) return null;
-    return await res.json();
+    return await res.json() as GoogleTokenPayload;
   } catch (e) {
     return null;
   }
