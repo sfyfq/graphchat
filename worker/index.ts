@@ -72,9 +72,16 @@ export default {
       return corsResponse(`Forbidden: Email ${payload.email} not whitelisted`, 403);
     }
 
-    // 5. Transparent Proxy Relay to Gemini
-    // Forward the exact path and query parameters to Google.
     const url = new URL(request.url);
+
+    // Local diagnostic endpoint
+    if (url.pathname === '/validate') {
+      return corsResponse(JSON.stringify({ status: 'ok', email: payload.email }), 200, {
+        'Content-Type': 'application/json'
+      });
+    }
+
+    // 5. Transparent Proxy Relay to Gemini
     const geminiUrl = new URL(`https://generativelanguage.googleapis.com${url.pathname}${url.search}`);
     
     // Inject secret API key (overwrites any client-provided key)
