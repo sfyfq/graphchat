@@ -33,7 +33,7 @@ export class ProxyProvider implements LLMProvider {
     try {
       const chat = model.startChat({ 
         history: conv.history,
-        systemInstruction: conv.systemInstruction ? { parts: [{ text: conv.systemInstruction }] } : undefined
+        systemInstruction: conv.systemInstruction ? { role: 'system', parts: [{ text: conv.systemInstruction }] } : undefined
       });
       const result = await chat.sendMessage(newText);
       const response = await result.response;
@@ -53,7 +53,7 @@ export class ProxyProvider implements LLMProvider {
     try {
       const chat = model.startChat({ 
         history: conv.history,
-        systemInstruction: conv.systemInstruction ? { parts: [{ text: conv.systemInstruction }] } : undefined
+        systemInstruction: conv.systemInstruction ? { role: 'system', parts: [{ text: conv.systemInstruction }] } : undefined
       });
       const result = await chat.sendMessageStream(newText);
 

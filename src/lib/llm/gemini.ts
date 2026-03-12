@@ -19,7 +19,7 @@ export class GeminiProvider implements LLMProvider {
         const genAI = getGenAI();
         const model = genAI.getGenerativeModel({
             model: MODEL_NAME,
-            systemInstruction: conv.systemInstruction ? { parts: [{ text: conv.systemInstruction }] } : undefined
+            systemInstruction: conv.systemInstruction ? { role: 'system', parts: [{ text: conv.systemInstruction }] } : undefined
         });
 
         const chat = model.startChat({ history: conv.history });
@@ -32,7 +32,7 @@ export class GeminiProvider implements LLMProvider {
         const genAI = getGenAI();
         const model = genAI.getGenerativeModel({
             model: MODEL_NAME,
-            systemInstruction: conv.systemInstruction ? { parts: [{ text: conv.systemInstruction }] } : undefined
+            systemInstruction: conv.systemInstruction ? { role: 'system', parts: [{ text: conv.systemInstruction }] } : undefined
         });
 
         const chat = model.startChat({ history: conv.history });
