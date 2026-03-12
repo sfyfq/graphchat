@@ -47,11 +47,11 @@ export default function App() {
   const [expandedSquashGroup, setExpandedSquashGroup] = useState<SquashGroup | null>(null)
 
   // ── Multi-user Switch Logic ────────────────────────────────────────────────
-  // When the storage scope (user) changes, reset the store and re-hydrate
+  // When the storage scope (user) changes, re-hydrate the conversation store
   useEffect(() => {
     if (!isHydrated) return
     
-    console.log('[App] Scope changed, re-hydrating:', scope)
+    console.log('[App] Scope changed or initialized, re-hydrating conversation store. Scope:', scope)
     
     // Reset transient UI state
     setDialogs({})
@@ -62,10 +62,10 @@ export default function App() {
     setShowSearch(false)
     setShowLibrary(false)
 
-    // Trigger Zustand persist re-hydration manually by resetting first
-    reset()
+    // Trigger Zustand persist re-hydration manually.
+    // The custom 'merge' in conversationStore handles clearing previous user data.
     useConversationStore.persist.rehydrate()
-  }, [scope, isHydrated, reset])
+  }, [scope, isHydrated])
 
   // ── Session Switch Logic ──────────────────────────────────────────────────
   // When the session changes, clear transient UI states

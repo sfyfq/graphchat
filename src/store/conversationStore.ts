@@ -55,38 +55,42 @@ const createNewSession = (id: string): ChatSession => ({
   lastModified: Date.now(),
 })
 
-const INITIAL_ID = crypto.randomUUID()
-
-const initialState = {
-  sessions: { [INITIAL_ID]: createNewSession(INITIAL_ID) },
-  currentSessionId: INITIAL_ID,
-  library: {},
+const createInitialState = () => {
+  const id = crypto.randomUUID()
+  return {
+    sessions: { [id]: createNewSession(id) },
+    currentSessionId: id,
+    library: {},
+  }
 }
 
 /**
  * A custom storage proxy that dynamically computes the key based on current auth scope.
  */
 const dynamicStorage = {
-  getItem: (name: string) => {
+  getItem: async (name: string) => {
     const scope = getStorageScope()
-    return storage.getItem(`${scope}:${name}`)
+    const key = `${scope}:${name}`
+    return storage.getItem(key)
   },
-  setItem: (name: string, value: string) => {
+  setItem: async (name: string, value: string) => {
     const scope = getStorageScope()
-    return storage.setItem(`${scope}:${name}`, value)
+    const key = `${scope}:${name}`
+    await storage.setItem(key, value)
   },
-  removeItem: (name: string) => {
+  removeItem: async (name: string) => {
     const scope = getStorageScope()
-    return storage.removeItem(`${scope}:${name}`)
+    const key = `${scope}:${name}`
+    await storage.removeItem(key)
   }
 }
 
 export const useConversationStore = create<ConversationState & ConversationActions>()(
   persist(
     (set, get) => ({
-      ...initialState,
+      ...createInitialState(),
 
-      reset: () => set(initialState),
+      reset: () => set(createInitialState()),
 
       createSession: () => {
         const id = crypto.randomUUID()
@@ -285,6 +289,12 @@ export const useConversationStore = create<ConversationState & ConversationActio
     {
       name: 'graphchat-storage',
       storage: createJSONStorage(() => dynamicStorage),
+      skipHydration: true,
+      merge: (persistedState, currentState) => {
+        if (!persistedState) return currentState
+        // Ensure actions from currentState are preserved while taking data from persistedState
+        return { ...currentState, ...(persistedState as any) }
+      },
     }
   )
 )
