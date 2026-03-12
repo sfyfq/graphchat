@@ -8,6 +8,7 @@
 export interface Env {
   GEMINI_API_KEY: string;
   ALLOWED_EMAILS: string;
+  WHITELIST_KV: KVNamespace;
 }
 
 interface GoogleTokenPayload {
@@ -26,6 +27,36 @@ async function verifyToken(idToken: string): Promise<GoogleTokenPayload | null> 
   } catch (e) {
     return null;
   }
+}
+
+/**
+ * Computes SHA-256 hash of a string.
+ */
+async function sha256(message: string): Promise<string> {
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Checks if the email is allowed via KV (hashed) or legacy Env (raw).
+ */
+async function isAllowed(email: string, env: Env): Promise<boolean> {
+  const normalized = email.trim().toLowerCase();
+  
+  // 1. Check KV (Hashed)
+  try {
+    const hash = await sha256(normalized);
+    const kvMatch = await env.WHITELIST_KV.get(hash);
+    if (kvMatch) return true;
+  } catch (e) {
+    console.error("KV Lookup error", e);
+  }
+
+  // 2. Check Legacy Env (Raw)
+  const allowed = (env.ALLOWED_EMAILS || '').split(',').map(e => e.trim().toLowerCase());
+  return allowed.includes(normalized);
 }
 
 export default {
@@ -71,9 +102,8 @@ export default {
       return corsResponse('Unauthorized: Invalid Token', 401);
     }
 
-    // 4. Check Whitelist
-    const allowed = (env.ALLOWED_EMAILS || '').split(',').map(e => e.trim().toLowerCase());
-    if (!allowed.includes(payload.email.toLowerCase())) {
+    // 4. Check Whitelist (Hashed KV or Legacy Env)
+    if (!await isAllowed(payload.email, env)) {
       return corsResponse(`Forbidden: Email ${payload.email} not whitelisted`, 403);
     }
 

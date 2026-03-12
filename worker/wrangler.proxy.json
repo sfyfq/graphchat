@@ -3,6 +3,12 @@
   "name": "graphchat-proxy",
   "main": "index.ts",
   "compatibility_date": "2026-03-10",
+  "kv_namespaces": [
+    {
+      "binding": "WHITELIST_KV",
+      "id": "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+    }
+  ],
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1

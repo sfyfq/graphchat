@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:worker": "vitest run -c worker/vitest.config.ts",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "whitelist:hash": "node scripts/hash-email.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
