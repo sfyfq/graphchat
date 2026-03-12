@@ -58,9 +58,7 @@ export default {
     const authHeader = request.headers.get('Authorization');
     const idToken = authHeader?.split(' ')[1];
 
-    if (!idToken) {
-      return corsResponse('Unauthorized: Missing Token', 401);
-    }
+    if (!idToken) return corsResponse('Unauthorized: Missing Token', 401);
 
     // 3. Verify Token
     const payload = await verifyToken(idToken);
