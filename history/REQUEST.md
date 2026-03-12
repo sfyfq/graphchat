@@ -419,3 +419,16 @@ The user wants to add context actions to text selected from assistant messages. 
 - `ChatDialog` needs state for the explain overlay (active text, streaming response, visible).
 - `MessageList` needs to calculate positioning more dynamically based on `rect.top` and `rect.bottom`.
 - The overlay should probably be part of `ChatDialog` to stay within the chat window's context but on top of the message list.
+\n--- Thu Mar 12 11:58:09 PDT 2026 ---\n
+# Request: Fix Explain Overlay Positioning
+
+## User Intent
+The user wants the "Explain" overlay to float above the text selection within the `ChatDialog` instead of being pinned to the top of the dialog.
+
+## Bug Description
+Currently, the overlay created by the "Explain" function is affixed to the top of the `ChatDialog` window, regardless of where the selected text is located or how much the message list has been scrolled.
+
+## Goals
+- Reposition the "Explain" overlay so it appears immediately above (or near) the selected text.
+- Ensure the overlay moves with the message content if possible, or at least stays vertically aligned with the selection point at the time it was triggered.
+- Maintain the existing dismissible functionality and aesthetic.
