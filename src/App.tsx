@@ -216,7 +216,7 @@ export default function App() {
   }, [])
 
   // ── Minimize/Restore ──────────────────────────────────────────────────────
-  const handleMinimize = useCallback((state: DialogState & { color: string; summary: string }) => {
+  const handleMinimize = useCallback((originalId: string, state: DialogState & { color: string; summary: string }) => {
     if (Object.keys(minimizedDialogs).length >= 5) {
       alert("Maximum 5 minimized chats allowed.")
       return
@@ -229,19 +229,7 @@ export default function App() {
 
     setDialogs(prev => {
       const next = { ...prev }
-      // The dialog might be keyed by an older commitId, so we find it by looking for the one
-      // that matches this dialog's instance (if we had a stable instance ID)
-      // For now, we assume the one being minimized is either keyed by its commitId or tipId.
-      // We'll remove any key that has the same commitId in its state.
-      Object.keys(next).forEach(key => {
-        if (key === state.commitId) delete next[key]
-      })
-      
-      // Also need to handle the case where the key in App.tsx was the OLD commitId
-      // but the ChatDialog has since moved to a new tipId.
-      // Since we don't pass the "spawnId" back, we'll rely on the fact that handleMinimize
-      // is only called for the ACTIVE dialog being interacted with.
-      // A more robust way would be to pass the prop 'commit.id' back to handleMinimize.
+      delete next[originalId]
       return next
     })
   }, [minimizedDialogs])
@@ -351,7 +339,7 @@ export default function App() {
             initialPosition={state}
             initialInput={state.initialInput}
             onClose={() => closeDialog(commitId)}
-            onMinimize={handleMinimize}
+            onMinimize={(originalId, minState) => handleMinimize(originalId, minState)}
             onFocus={() => focusDialog(commitId)}
           />
         )
