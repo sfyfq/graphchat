@@ -992,3 +992,38 @@ Ensure that if multiple users use the same browser, they only see their own chat
     - Export a `useInitializeStore` hook or similar.
 4.  **App Integration**: Update `App.tsx` or `main.tsx` to ensure the correct scope is determined before the conversation store is fully active.
 5.  **Validation**: Test logging in with Account A, creating data, logging out, checking Guest view, and logging in with Account B.
+
+--- Wed Mar 11 23:08:22 PDT 2026 ---
+
+# Refined Prompt: Complete Library/Attachment Functionality
+
+Implement the end-to-end flow for using attachments in GraphChat, from the user interface to the LLM backend, with strict validation and capability-aware UI.
+
+## Goal:
+Allow users to upload, attach, send, and view files (images, audio, video, docs) within their chat conversations using the Gemini multimodal capabilities.
+
+## Technical Details:
+- **Capability-Aware UI:**
+    - Enhance `LLMProvider` interface with a `capabilities` object (e.g., `{ multimodal: boolean }`).
+    - Disable/Hide the attachment UI if the active provider (e.g., Mock AI) does not support multimodal input.
+- **Chat Input**:
+    - Add `pendingAttachmentIds` state to `ChatDialog.tsx`.
+    - Implement a file upload handler that uses `uploadAttachment` from the store.
+    - **Validation:** Check `file.size` before calling `uploadAttachment`. Limit to 10MB.
+    - Create a `PendingAttachments` component to show thumbnails with a "remove" (×) button above the text input.
+- **Message List**:
+    - Modify `src/components/ChatDialog/MessageList.tsx` to iterate over `commit.attachmentIds`.
+    - Create an `AttachmentPreview` component to render media based on MIME type.
+- **LLM Data Mapping**:
+    - In `src/lib/llm/utils.ts` or similar, implement `prepareMultimodalPayload`.
+    - Use `getBlob` from `storage.ts` to retrieve the binary data for each attachment ID.
+    - Convert `Blob` to Base64 string for the `inlineData` field.
+- **Store Updates**: 
+    - Ensure `addTurn` correctly receives and persists `attachmentIds`.
+
+## Tasks:
+1.  **Interface Update**: Add capabilities to `LLMProvider` and update all providers.
+2.  **Input UI**: Add the paperclip icon, validation logic, and pending attachments bar to `ChatDialog`.
+3.  **Rendering**: Implement attachment display in `MessageList`.
+4.  **Backend Logic**: Refactor LLM providers to support multimodal parts.
+5.  **Verification**: Test with various file types (JPG, MP3, PDF) and ensure they are sent correctly.

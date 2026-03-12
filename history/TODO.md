@@ -875,3 +875,52 @@
     - Log out -> Verify Guest chat returns.
     - Log in with Account B -> Verify Account A's chat is hidden.
 - [x] **Final Review**: Archive methodology files.
+
+--- Wed Mar 11 23:08:22 PDT 2026 ---
+
+# TODO: Implementation Plan for Complete Attachments
+
+## Phase 0: Capability-Aware Providers
+- [x] **Modify `src/lib/llm/types.ts`**: Add `capabilities` to `LLMProvider`.
+- [x] **Update Providers**:
+    - `geminiProvider`: multimodal: true.
+    - `proxyProvider`: multimodal: true.
+    - `mockProvider`: multimodal: false.
+- [x] **Update `src/lib/llm/index.ts`**: Expose active capabilities via the `llm` selector.
+
+## Phase 1: Chat Input UI
+- [x] **Modify `src/components/ChatDialog/ChatDialog.tsx`**:
+    - Add `pendingAttachmentIds` state.
+    - Implement `handleFileSelect` using a hidden input.
+    - **Add Validation:** Implement `fileSizeCheck` helper (10MB limit) and show error in UI.
+    - **Add Capability Check:** Only show upload UI if `llm.capabilities.multimodal` is true.
+    - Create a `PendingAttachmentsBar` component to display selected files.
+    - Add a "Paperclip" button next to the textarea.
+    - Update `handleSend` to include `pendingAttachmentIds` in the turn data.
+
+## Phase 2: Message Rendering
+- [x] **Modify `src/components/ChatDialog/MessageList.tsx`**:
+    - Create an `AttachmentList` component to render inside each message bubble.
+    - Implement `AttachmentItem` which:
+        - Detects media type (image, audio, video).
+        - Fetches the scoped blob URL.
+        - Renders an appropriate preview (img tag, audio tag, etc.) or a download-style file link.
+
+## Phase 3: backend Integration (LLM)
+- [x] **Modify `src/lib/llm/types.ts`**:
+    - Ensure `Message` type supports multimodal parts (e.g., `parts: Part[]` instead of just `content`).
+- [x] **Modify `src/lib/llm/utils.ts`**:
+    - Implement `blobToBase64(blob: Blob): Promise<string>`.
+    - Implement `reconstructMultimodalMessages` to fetch and include blob data for the API.
+- [x] **Update Providers**:
+    - **`ProxyProvider.ts`**: Update to send the multimodal parts to the worker.
+    - **`MockProvider.ts`**: Mock acknowledgement of attachments in the simulated response.
+
+## Phase 4: Final Verification
+- [x] **Manual Testing**:
+    - Upload an image -> Verify it appears in input.
+    - Send message -> Verify it renders in bubble.
+    - Check token estimation (ensure attachments are counted).
+- [x] **Archive methodology files.**
+
+- [ ] **Archive methodology files.**

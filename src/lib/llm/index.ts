@@ -12,7 +12,14 @@ import { LLMProvider }    from './types';
  * 3. Guest -> mockProvider
  */
 export const llm: LLMProvider = {
-  sendMessage: (conv, newText) => {
+  get capabilities() {
+    const localKey = useConfigStore.getState().apiKey;
+    const { idToken } = useAuthStore.getState();
+    if (localKey) return geminiProvider.capabilities;
+    if (idToken) return proxyProvider.capabilities;
+    return mockProvider.capabilities;
+  },
+  sendMessage: (conv, newText, attachmentIds) => {
     const localKey = useConfigStore.getState().apiKey;
     const { idToken, user } = useAuthStore.getState();
 
@@ -22,12 +29,12 @@ export const llm: LLMProvider = {
       hasUser: !!user 
     });
 
-    if (localKey) return geminiProvider.sendMessage(conv, newText);
-    if (idToken) return proxyProvider.sendMessage(conv, newText);
+    if (localKey) return geminiProvider.sendMessage(conv, newText, attachmentIds);
+    if (idToken) return proxyProvider.sendMessage(conv, newText, attachmentIds);
     
-    return mockProvider.sendMessage(conv, newText);
+    return mockProvider.sendMessage(conv, newText, attachmentIds);
   },
-  streamMessage: (conv, newText) => {
+  streamMessage: (conv, newText, attachmentIds) => {
     const localKey = useConfigStore.getState().apiKey;
     const { idToken, user } = useAuthStore.getState();
 
@@ -37,10 +44,10 @@ export const llm: LLMProvider = {
       hasUser: !!user 
     });
 
-    if (localKey) return geminiProvider.streamMessage(conv, newText);
-    if (idToken) return proxyProvider.streamMessage(conv, newText);
+    if (localKey) return geminiProvider.streamMessage(conv, newText, attachmentIds);
+    if (idToken) return proxyProvider.streamMessage(conv, newText, attachmentIds);
 
-    return mockProvider.streamMessage(conv, newText);
+    return mockProvider.streamMessage(conv, newText, attachmentIds);
   }
 };
 

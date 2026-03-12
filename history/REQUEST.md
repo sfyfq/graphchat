@@ -353,3 +353,24 @@ Implement strict data isolation between different Google accounts stored in the 
 - **Dynamic Switching:** When a user logs in or out, the application must immediately switch to the corresponding data store (re-hydrate sessions, commits, and library).
 - **Blob Isolation:** Ensure that uploaded files (blobs) are also isolated by the same namespace to prevent cross-user access to the shared library.
 - **Performance:** Switching users should be smooth and trigger a clean re-render of the UI.
+
+--- Wed Mar 11 23:08:22 PDT 2026 ---
+
+# Request: Complete Library/Attachment Functionality
+
+Finish the implementation of the attachment system so users can actually use files in their conversations.
+
+## Requirements:
+- **Chat Input UI:**
+    - Add a "Paperclip" icon to the `ChatDialog` input area.
+    - Support uploading new files directly from the input.
+    - Show a horizontal list of thumbnails for files currently attached to the pending message.
+- **Validation:**
+    - **File Size Check:** Prevent uploading or sending files larger than **10MB** to the LLM. Show a clear error message if a file is too large.
+- **Message Rendering:**
+    - Update `MessageList.tsx` to render attached images, audio, and video within the chat bubbles.
+    - Show file metadata (name, size) for non-media files.
+- **LLM Integration:**
+    - Fetch raw blobs from IndexedDB and convert them to Base64.
+    - Update the LLM payload construction to include these attachments as `inlineData` parts.
+- **Consistency:** Maintain the dark, translucent aesthetic and high-performance feel.
