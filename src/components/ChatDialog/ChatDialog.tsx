@@ -24,7 +24,7 @@ interface Props {
   initialPosition: { x: number; y: number };
   initialInput?: string;
   onClose: () => void;
-  onMinimize?: (state: DialogState & { color: string; summary: string }) => void;
+  onMinimize?: (originalId: string, state: DialogState & { color: string; summary: string }) => void;
   onFocus?: () => void;
 }
 
@@ -190,7 +190,7 @@ export const ChatDialog: React.FC<Props> = ({
     const lastMsgContent = messages[messages.length - 1]?.content || "";
     const summary = currentInput || makeSummary(lastMsgContent) || "Empty chat";
 
-    onMinimize({
+    onMinimize(commit.id, {
       commitId: tipId,
       x: pos.x,
       y: pos.y,
@@ -198,7 +198,7 @@ export const ChatDialog: React.FC<Props> = ({
       color: bColor,
       summary: summary
     });
-  }, [onMinimize, tipId, pos, input, messages, bColor]);
+  }, [onMinimize, commit.id, tipId, pos, input, messages, bColor]);
 
   // ── Send (Transactional & Streaming) ──────────────────────────────────────
   const handleSend = useCallback(async () => {
