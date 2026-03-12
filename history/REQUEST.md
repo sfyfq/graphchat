@@ -286,3 +286,21 @@ The Cloudflare Pages build is failing because it incorrectly identifies the repo
 - **De-conflict Build:** Rename `worker/wrangler.json` to something non-standard (e.g., `wrangler.proxy.json`) so the Pages builder ignores it.
 - **Update Documentation:** Update `worker/README.md` to reflect the new config filename for manual deployment.
 - **Verification:** Ensure the Worker can still be deployed manually with the new filename.
+
+
+
+# Request: Add Testing Framework
+
+As the app gets complicated, we need to have tests to prevent regression. Propose and implement a testing framework.
+
+## Requirements:
+- Propose a suitable framework for a Vite + React + TypeScript + Cloudflare Worker project.
+- Configure the framework.
+- Add example tests for:
+    - A React component (e.g., `Tooltip` or `MessageList`).
+    - A utility function (e.g., `src/lib/utils.ts` or `src/lib/squash.ts`).
+    - The Cloudflare Worker (if possible).
+- Integrate with `package.json` scripts.
+
+--- Wed Mar 11 20:27:47 PDT 2026 ---
+

@@ -3,3 +3,4 @@ dist
 .env.local
 *.local
 node_modules/
+coverage/
