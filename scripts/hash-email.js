@@ -4,7 +4,7 @@
  * Usage: node scripts/hash-email.js <email>
  */
 
-const crypto = require('crypto');
+import { createHash } from 'crypto';
 
 const email = process.argv[2];
 
@@ -14,13 +14,13 @@ if (!email) {
 }
 
 const normalized = email.trim().toLowerCase();
-const hash = crypto.createHash('sha256').update(normalized).digest('hex');
+const hash = createHash('sha256').update(normalized).digest('hex');
 
 console.log('\n--- Whitelist Management Helper ---');
 console.log(`Email:  ${email}`);
 console.log(`Hash:   ${hash}`);
 console.log('\n--- Wrangler Command (Add) ---');
-console.log(`npx wrangler kv:key put --binding WHITELIST_KV "${hash}" "true"`);
+console.log(`npx wrangler kv key put --remote --namespace-id <NAMESPACE_ID> "${hash}" "true"`);
 console.log('\n--- Wrangler Command (Remove) ---');
-console.log(`npx wrangler kv:key delete --binding WHITELIST_KV "${hash}"`);
+console.log(`npx wrangler kv key delete --remote --namespace-id <NAMESPACE_ID> "${hash}"`);
 console.log('-----------------------------------\n');
