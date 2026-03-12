@@ -9,6 +9,7 @@ import { SearchPanel } from './components/Search/SearchPanel'
 import { Toolbar }     from './components/Toolbar/Toolbar'
 import { LibrarySidebar } from './components/Library/LibrarySidebar'
 import { ApiKeyModal } from './components/Modals/ApiKeyModal'
+import { AuthStatusModal } from './components/Modals/AuthStatusModal'
 import { MinimizedSidebar } from './components/Canvas/MinimizedSidebar'
 import { SquashTooltip } from './components/Canvas/SquashNode'
 import { useConversationStore } from './store/conversationStore'
@@ -285,6 +286,7 @@ export default function App() {
       />
 
       <ApiKeyModal />
+      <AuthStatusModal />
 
       <MinimizedSidebar 
         items={minimizedDialogs} 

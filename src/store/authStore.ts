@@ -20,12 +20,14 @@ interface AuthState {
   user: GoogleProfile | null
   idToken: string | null
   isWhitelisted: boolean
+  showStatusModal: boolean
 }
 
 interface AuthActions {
   login: (user: GoogleProfile, idToken: string) => void
   logout: () => void
   setWhitelisted: (status: boolean) => void
+  setShowStatusModal: (show: boolean) => void
 }
 
 export const useAuthStore = create<AuthState & AuthActions>()(
@@ -34,14 +36,21 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       user: null,
       idToken: null,
       isWhitelisted: false,
+      showStatusModal: false,
 
       login: (user, idToken) => set({ user, idToken, isWhitelisted: false }),
       logout: () => set({ user: null, idToken: null, isWhitelisted: false }),
       setWhitelisted: (status) => set({ isWhitelisted: status }),
+      setShowStatusModal: (show) => set({ showStatusModal: show }),
     }),
     {
       name: 'graphchat-auth',
       storage: createJSONStorage(() => storage),
+      partialize: (state) => ({
+        user: state.user,
+        idToken: state.idToken,
+        isWhitelisted: state.isWhitelisted,
+      }),
     }
   )
 )

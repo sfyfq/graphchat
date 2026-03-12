@@ -62,7 +62,7 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
     createSession, switchSession, deleteSession 
   } = useConversationStore()
 
-  const { user, idToken, isWhitelisted, login, logout, setWhitelisted } = useAuthStore()
+  const { user, idToken, isWhitelisted, login, logout, setWhitelisted, setShowStatusModal } = useAuthStore()
   const { apiKey } = useConfigStore()
   
   const [showSessions, setShowSessions] = useState(false)
@@ -133,10 +133,13 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       })
-      setWhitelisted(res.ok)
+      const ok = res.ok
+      setWhitelisted(ok)
+      setShowStatusModal(true)
     } catch (e) {
       console.error("Auth validation failed", e)
       setWhitelisted(false)
+      setShowStatusModal(true)
     } finally {
       setIsValidating(false)
     }
@@ -144,8 +147,18 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
 
   // Re-validate on mount if we have a token
   useEffect(() => {
-    if (idToken && !isWhitelisted) {
-      validateToken(idToken)
+    if (idToken) {
+      try {
+        const decoded = jwtDecode<{ exp: number }>(idToken)
+        if (decoded.exp * 1000 < Date.now()) {
+          console.log("Token expired, logging out")
+          handleLogout()
+        } else if (!isWhitelisted) {
+          validateToken(idToken)
+        }
+      } catch (e) {
+        handleLogout()
+      }
     }
   }, [])
 

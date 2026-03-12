@@ -772,3 +772,35 @@
 
 --- Wed Mar 11 20:27:47 PDT 2026 ---
 
+
+--- Wed Mar 11 21:02:40 PDT 2026 ---
+
+# TODO: Implementation Plan for Auth Status Modal
+
+## Phase 1: Store & Logic
+- [ ] **Enhance `src/store/authStore.ts`:**
+    - Add `showStatusModal` to the state.
+    - Add `setShowStatusModal` to the actions.
+    - Ensure `showStatusModal` is not persisted in IndexedDB.
+- [ ] **Refine `Toolbar.tsx` validation logic:**
+    - Call `setShowStatusModal(true)` after `validateToken` completes.
+    - Add a check for token expiration on mount and before making authenticated calls.
+
+## Phase 2: UI Implementation
+- [ ] **Create `src/components/Modals/AuthStatusModal.tsx`:**
+    - Design the modal based on the app's dark theme.
+    - Implement conditional messaging (Friend Mode, Guest Mode, Local Mode).
+    - Add a "Dismiss" button.
+- [ ] **Update `src/App.tsx`:**
+    - Render the `AuthStatusModal` if `showStatusModal` is true.
+
+## Phase 3: Verification & Polish
+- [ ] **Test Scenarios:**
+    - **Scenario A:** Log in as a whitelisted user -> Modal shows "Friend Mode".
+    - **Scenario B:** Log in as a non-whitelisted user -> Modal shows "Guest Mode" + Mock AI explanation.
+    - **Scenario C:** Open app with a local API key present -> Modal shows "Local Mode".
+- [ ] **Refine UX:**
+    - Ensure the modal only appears once and doesn't interfere with the chat experience.
+- [ ] **Final Review:**
+    - Check for linting/type errors.
+- [ ] **Archive methodology files.**
