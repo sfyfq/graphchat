@@ -6,10 +6,10 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import remarkMath from 'remark-math'
-import rehypeKatex from 'rehype-katex'
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 import { useConversationStore } from "../../store/conversationStore";
 import { useConfigStore } from "../../store/configStore";
 import { useAuthStore, getStorageScope } from "../../store/authStore";
@@ -19,14 +19,17 @@ import { getBlobUrl } from "../../lib/storage";
 import { MessageList, MarkdownComponents } from "./MessageList";
 import type { Commit, DialogState, Attachment } from "../../types";
 
-import 'katex/dist/katex.min.css'
+import "katex/dist/katex.min.css";
 
 interface Props {
   commit: Commit;
   initialPosition: { x: number; y: number };
   initialInput?: string;
   onClose: () => void;
-  onMinimize?: (originalId: string, state: DialogState & { color: string; summary: string }) => void;
+  onMinimize?: (
+    originalId: string,
+    state: DialogState & { color: string; summary: string },
+  ) => void;
   onFocus?: () => void;
 }
 
@@ -34,16 +37,16 @@ const SAFE_TOP = 80;
 const VISIBLE_MARGIN = 60;
 
 // ── Helper Component for Pending Thumbnails ──
-const PendingThumbnail: React.FC<{ 
-  attachment: Attachment; 
-  onRemove: (id: string) => void 
+const PendingThumbnail: React.FC<{
+  attachment: Attachment;
+  onRemove: (id: string) => void;
 }> = ({ attachment, onRemove }) => {
   const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
     const scope = getStorageScope();
-    getBlobUrl(scope, attachment.id).then(u => {
+    getBlobUrl(scope, attachment.id).then((u) => {
       if (active) setUrl(u);
     });
     return () => {
@@ -52,45 +55,64 @@ const PendingThumbnail: React.FC<{
     };
   }, [attachment.id]);
 
-  const isImage = attachment.type.startsWith('image/');
-  const icon = attachment.type.startsWith('audio/') ? '🎵' : attachment.type.startsWith('video/') ? '🎬' : '📄';
+  const isImage = attachment.type.startsWith("image/");
+  const icon = attachment.type.startsWith("audio/")
+    ? "🎵"
+    : attachment.type.startsWith("video/")
+      ? "🎬"
+      : "📄";
 
   return (
-    <div style={{
-      position: 'relative',
-      width: 50,
-      height: 50,
-      borderRadius: 8,
-      background: 'rgba(255,255,255,0.05)',
-      border: '1px solid rgba(255,255,255,0.1)',
-      overflow: 'hidden',
-      flexShrink: 0
-    }}>
+    <div
+      style={{
+        position: "relative",
+        width: 50,
+        height: 50,
+        borderRadius: 8,
+        background: "rgba(255,255,255,0.05)",
+        border: "1px solid rgba(255,255,255,0.1)",
+        overflow: "hidden",
+        flexShrink: 0,
+      }}
+    >
       {isImage && url ? (
-        <img src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+        <img
+          src={url}
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          alt=""
+        />
       ) : (
-        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 18,
+          }}
+        >
           {icon}
         </div>
       )}
-      <button 
+      <button
         onClick={() => onRemove(attachment.id)}
         style={{
-          position: 'absolute',
+          position: "absolute",
           top: 2,
           right: 2,
           width: 16,
           height: 16,
-          borderRadius: '50%',
-          background: 'rgba(0,0,0,0.6)',
-          border: 'none',
-          color: '#fff',
+          borderRadius: "50%",
+          background: "rgba(0,0,0,0.6)",
+          border: "none",
+          color: "#fff",
           fontSize: 12,
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 0
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 0,
         }}
       >
         ×
@@ -107,7 +129,8 @@ export const ChatDialog: React.FC<Props> = ({
   onMinimize,
   onFocus,
 }) => {
-  const { sessions, currentSessionId, addTurn, library, uploadAttachment } = useConversationStore();
+  const { sessions, currentSessionId, addTurn, library, uploadAttachment } =
+    useConversationStore();
   const { apiKey, setApiKey, setShowKeyModal } = useConfigStore();
   const commits = sessions[currentSessionId]?.commits || {};
 
@@ -118,16 +141,18 @@ export const ChatDialog: React.FC<Props> = ({
   const [streamingContent, setStreamingContent] = useState("");
   const [pendingUserContent, setPendingUserContent] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [pendingAttachmentIds, setPendingAttachmentIds] = useState<string[]>([]);
-  const [explainResult, setExplainResult] = useState<{ 
-    prompt: string, 
-    response: string, 
-    loading: boolean,
-    y: number
+  const [pendingAttachmentIds, setPendingAttachmentIds] = useState<string[]>(
+    [],
+  );
+  const [explainResult, setExplainResult] = useState<{
+    prompt: string;
+    response: string;
+    loading: boolean;
+    y: number;
   } | null>(null);
 
   const [tipId, setTipId] = useState(
-    commit.role === "user" && commit.parentId ? commit.parentId : commit.id
+    commit.role === "user" && commit.parentId ? commit.parentId : commit.id,
   );
   const dragging = useRef<{ startX: number; startY: number } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -155,7 +180,10 @@ export const ChatDialog: React.FC<Props> = ({
           setPos((prev) => {
             const newY = prev.y - delta / 2;
             // Relaxed clamping: ensure header is somewhat visible
-            const safeY = Math.max(10, Math.min(window.innerHeight - VISIBLE_MARGIN, newY));
+            const safeY = Math.max(
+              10,
+              Math.min(window.innerHeight - VISIBLE_MARGIN, newY),
+            );
             return { ...prev, y: safeY };
           });
         } else if (oldHeight === 0) {
@@ -164,7 +192,10 @@ export const ChatDialog: React.FC<Props> = ({
             const isOffBottom = prev.y + newHeight > window.innerHeight - 10;
             const isOffTop = prev.y < SAFE_TOP;
             if (isOffBottom || isOffTop) {
-              const safeY = Math.max(SAFE_TOP, Math.min(window.innerHeight - newHeight - 10, prev.y));
+              const safeY = Math.max(
+                SAFE_TOP,
+                Math.min(window.innerHeight - newHeight - 10, prev.y),
+              );
               return { ...prev, y: safeY };
             }
             return prev;
@@ -233,13 +264,16 @@ export const ChatDialog: React.FC<Props> = ({
       if (!dragging.current) return;
       const newX = e.clientX - dragging.current.startX;
       const newY = e.clientY - dragging.current.startY;
-      
+
       const width = 860;
       const height = containerRef.current?.offsetHeight ?? 400;
 
       // Allow dragging off-screen but keep VISIBLE_MARGIN on screen
       setPos({
-        x: Math.max(VISIBLE_MARGIN - width, Math.min(window.innerWidth - VISIBLE_MARGIN, newX)),
+        x: Math.max(
+          VISIBLE_MARGIN - width,
+          Math.min(window.innerWidth - VISIBLE_MARGIN, newX),
+        ),
         y: Math.max(0, Math.min(window.innerHeight - VISIBLE_MARGIN, newY)),
       });
     };
@@ -266,7 +300,7 @@ export const ChatDialog: React.FC<Props> = ({
 
   const handleMinimize = useCallback(() => {
     if (!onMinimize) return;
-    
+
     // Summary logic: use current input if present, otherwise last message content
     const currentInput = input.trim();
     const lastMsgContent = messages[messages.length - 1]?.content || "";
@@ -278,7 +312,7 @@ export const ChatDialog: React.FC<Props> = ({
       y: pos.y,
       initialInput: input,
       color: bColor,
-      summary: summary
+      summary: summary,
     });
   }, [onMinimize, commit.id, tipId, pos, input, messages, bColor]);
 
@@ -288,8 +322,10 @@ export const ChatDialog: React.FC<Props> = ({
     if (!file) return;
 
     if (file.size > FILE_SIZE_LIMIT) {
-      setError(`File is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Limit is 10MB.`);
-      e.target.value = '';
+      setError(
+        `File is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Limit is 10MB.`,
+      );
+      e.target.value = "";
       return;
     }
 
@@ -297,145 +333,175 @@ export const ChatDialog: React.FC<Props> = ({
     setError(null);
     try {
       const id = await uploadAttachment(file);
-      setPendingAttachmentIds(prev => [...prev, id]);
+      setPendingAttachmentIds((prev) => [...prev, id]);
     } catch (err) {
       setError("Failed to upload attachment.");
     } finally {
       setLoading(false);
-      e.target.value = '';
+      e.target.value = "";
     }
   };
 
   const handleRemoveAttachment = (id: string) => {
-    setPendingAttachmentIds(prev => prev.filter(aId => aId !== id));
+    setPendingAttachmentIds((prev) => prev.filter((aId) => aId !== id));
   };
 
   // ── Send (Transactional & Streaming) ──────────────────────────────────────
-  const handleSend = useCallback(async (overrideContent?: string, overrideTipId?: string, branchLabel?: string) => {
-    const text = overrideContent !== undefined ? overrideContent : input.trim();
-    const targetTipId = overrideTipId || tipId;
+  const handleSend = useCallback(
+    async (
+      overrideContent?: string,
+      overrideTipId?: string,
+      branchLabel?: string,
+    ) => {
+      const text =
+        overrideContent !== undefined ? overrideContent : input.trim();
+      const targetTipId = overrideTipId || tipId;
 
-    if ((!text && pendingAttachmentIds.length === 0) || loading) return;
+      if ((!text && pendingAttachmentIds.length === 0) || loading) return;
 
-    if (overrideContent === undefined) {
-      setInput("");
-    }
-    const currentAttachments = overrideContent !== undefined ? [] : [...pendingAttachmentIds];
-    if (overrideContent === undefined) {
-      setPendingAttachmentIds([]);
-    }
-    
-    setPendingUserContent(text);
-    setActiveMath(null);
-    setError(null);
-    setLoading(true);
-    setStreamingContent("");
-
-    try {
-      const conv = await reconstructMessages(commits, targetTipId);
-      let fullAssistantContent = "";
-      
-      // Use the new llm provider interface
-      for await (const chunk of llm.streamMessage(conv, text, currentAttachments)) {
-        fullAssistantContent += chunk;
-        setStreamingContent(fullAssistantContent);
-      }
-
-      // Success: commit the whole turn atomically
-      const userId = crypto.randomUUID();
-      const assistantId = crypto.randomUUID();
-
-      const userCommit: Commit = {
-        id: userId,
-        parentId: targetTipId,
-        role: "user",
-        content: text,
-        summary: makeSummary(text),
-        timestamp: Date.now(),
-        model: "",
-        attachmentIds: currentAttachments,
-        branchLabel: branchLabel,
-      };
-
-      const assistantCommit: Commit = {
-        id: assistantId,
-        parentId: userId,
-        role: "assistant",
-        content: fullAssistantContent,
-        summary: makeSummary(fullAssistantContent),
-        timestamp: Date.now(),
-        model: "gemini-3.1-flash-lite", // Branding update
-      };
-
-      addTurn(userCommit, assistantCommit);
-      setTipId(assistantId);
-      setStreamingContent("");
-      setPendingUserContent("");
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "API error";
-      
-      // Detect API Key issues - only if we are using the local GeminiProvider directly
-      // In proxy mode, the Worker handles the key.
-      const isKeyError = msg.includes("MISSING_API_KEY") || 
-                         msg.includes("API_KEY_INVALID") || 
-                         msg.includes("403") || 
-                         msg.includes("401") ||
-                         msg.includes("UNAUTHORIZED_EMAIL") ||
-                         msg.includes("AUTH_EXPIRED");
-
-      if (isKeyError) {
-        setError("Access denied or session expired. Please sign in again.");
-      } else if (msg === "PAYLOAD_TOO_LARGE") {
-        setError("Message too large. Please reduce the size of your text or attachments.");
-      } else {
-        setError(msg);
-      }
-      
-      // Restore input on failure
       if (overrideContent === undefined) {
-        setInput(text);
-        setPendingAttachmentIds(currentAttachments);
+        setInput("");
       }
-      setPendingUserContent("");
-    } finally {
-      setLoading(false);
-    }
-  }, [input, loading, commits, addTurn, tipId, pendingAttachmentIds]);
-
-  const handleExplain = useCallback(async (text: string, overrideTipId: string, y: number) => {
-    const prompt = `Briefly explain this: "${text}"`;
-    setExplainResult({ prompt, response: "", loading: true, y });
-    
-    try {
-      const conv = await reconstructMessages(commits, overrideTipId);
-      let fullAssistantContent = "";
-      
-      for await (const chunk of llm.streamMessage(conv, prompt, [])) {
-        fullAssistantContent += chunk;
-        setExplainResult(prev => prev ? { ...prev, response: fullAssistantContent, y } : null);
+      const currentAttachments =
+        overrideContent !== undefined ? [] : [...pendingAttachmentIds];
+      if (overrideContent === undefined) {
+        setPendingAttachmentIds([]);
       }
-      setExplainResult(prev => prev ? { ...prev, loading: false, y } : null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "API error during explanation");
-      setExplainResult(null);
-    }
-  }, [commits]);
 
-  const handleSelectionAction = useCallback((type: 'explain' | 'ask', text: string, messageId: string, y: number) => {
-    if (type === 'explain') {
-      handleExplain(text, messageId, y);
-    } else if (type === 'ask') {
-      setInput(`Regarding "${text}": `);
-      setTimeout(() => {
-        textareaRef.current?.focus();
-        if (textareaRef.current) {
-          textareaRef.current.style.height = "auto";
-          textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
-          textareaRef.current.selectionStart = textareaRef.current.selectionEnd = textareaRef.current.value.length;
+      setPendingUserContent(text);
+      setActiveMath(null);
+      setError(null);
+      setLoading(true);
+      setStreamingContent("");
+
+      try {
+        const conv = await reconstructMessages(commits, targetTipId);
+        let fullAssistantContent = "";
+
+        // Use the new llm provider interface
+        for await (const chunk of llm.streamMessage(
+          conv,
+          text,
+          currentAttachments,
+        )) {
+          fullAssistantContent += chunk;
+          setStreamingContent(fullAssistantContent);
         }
-      }, 0);
-    }
-  }, [handleExplain]);
+
+        // Success: commit the whole turn atomically
+        const userId = crypto.randomUUID();
+        const assistantId = crypto.randomUUID();
+
+        const userCommit: Commit = {
+          id: userId,
+          parentId: targetTipId,
+          role: "user",
+          content: text,
+          summary: makeSummary(text),
+          timestamp: Date.now(),
+          model: "",
+          attachmentIds: currentAttachments,
+          branchLabel: branchLabel,
+        };
+
+        const assistantCommit: Commit = {
+          id: assistantId,
+          parentId: userId,
+          role: "assistant",
+          content: fullAssistantContent,
+          summary: makeSummary(fullAssistantContent),
+          timestamp: Date.now(),
+          model: "gemini-3.1-flash-lite", // Branding update
+        };
+
+        addTurn(userCommit, assistantCommit);
+        setTipId(assistantId);
+        setStreamingContent("");
+        setPendingUserContent("");
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "API error";
+
+        // Detect API Key issues - only if we are using the local GeminiProvider directly
+        // In proxy mode, the Worker handles the key.
+        const isKeyError =
+          msg.includes("MISSING_API_KEY") ||
+          msg.includes("API_KEY_INVALID") ||
+          msg.includes("403") ||
+          msg.includes("401") ||
+          msg.includes("UNAUTHORIZED_EMAIL") ||
+          msg.includes("AUTH_EXPIRED");
+
+        if (isKeyError) {
+          setError("Access denied or session expired. Please sign in again.");
+        } else if (msg === "PAYLOAD_TOO_LARGE") {
+          setError(
+            "Message too large. Please reduce the size of your text or attachments.",
+          );
+        } else {
+          setError(msg);
+        }
+
+        // Restore input on failure
+        if (overrideContent === undefined) {
+          setInput(text);
+          setPendingAttachmentIds(currentAttachments);
+        }
+        setPendingUserContent("");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [input, loading, commits, addTurn, tipId, pendingAttachmentIds],
+  );
+
+  const handleExplain = useCallback(
+    async (text: string, overrideTipId: string, y: number) => {
+      const prompt = `Briefly explain this: "${text}"`;
+      setExplainResult({ prompt, response: "", loading: true, y });
+
+      try {
+        const conv = await reconstructMessages(commits, overrideTipId);
+        let fullAssistantContent = "";
+
+        for await (const chunk of llm.streamMessage(conv, prompt, [])) {
+          fullAssistantContent += chunk;
+          setExplainResult((prev) =>
+            prev ? { ...prev, response: fullAssistantContent, y } : null,
+          );
+        }
+        setExplainResult((prev) =>
+          prev ? { ...prev, loading: false, y } : null,
+        );
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "API error during explanation",
+        );
+        setExplainResult(null);
+      }
+    },
+    [commits],
+  );
+
+  const handleSelectionAction = useCallback(
+    (type: "explain" | "ask", text: string, messageId: string, y: number) => {
+      if (type === "explain") {
+        handleExplain(text, messageId, y);
+      } else if (type === "ask") {
+        setInput(`Regarding "${text}": `);
+        setTimeout(() => {
+          textareaRef.current?.focus();
+          if (textareaRef.current) {
+            textareaRef.current.style.height = "auto";
+            textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+            textareaRef.current.selectionStart =
+              textareaRef.current.selectionEnd =
+                textareaRef.current.value.length;
+          }
+        }, 0);
+      }
+    },
+    [handleExplain],
+  );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -465,7 +531,11 @@ export const ChatDialog: React.FC<Props> = ({
     checkMath(input, e.currentTarget.selectionStart);
   };
 
-  const canSend = (input.trim().length > 0 || pendingAttachmentIds.length > 0 || streamingContent) && !loading;
+  const canSend =
+    (input.trim().length > 0 ||
+      pendingAttachmentIds.length > 0 ||
+      streamingContent) &&
+    !loading;
 
   return (
     <div
@@ -570,7 +640,14 @@ export const ChatDialog: React.FC<Props> = ({
         </span>
 
         {/* Action Buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 10 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            marginLeft: 10,
+          }}
+        >
           {/* Minimize */}
           <button
             onClick={handleMinimize}
@@ -584,9 +661,9 @@ export const ChatDialog: React.FC<Props> = ({
               lineHeight: 1,
               padding: "4px",
               transition: "color 0.15s",
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLButtonElement).style.color = "#fff";
@@ -612,9 +689,9 @@ export const ChatDialog: React.FC<Props> = ({
               lineHeight: 1,
               padding: "4px",
               transition: "color 0.15s",
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLButtonElement).style.color = "#ef4444";
@@ -636,84 +713,102 @@ export const ChatDialog: React.FC<Props> = ({
           overflowY: "auto",
           padding: "16px 16px 8px",
           minHeight: 0,
-          position: 'relative',
+          position: "relative",
         }}
       >
         {explainResult && (
-          <div style={{
-            position: 'absolute',
-            top: explainResult.y - 10,
-            left: 12,
-            right: 12,
-            transform: 'translateY(-100%)',
-            zIndex: 10,
-            padding: '12px 16px',
-            background: 'rgba(15,15,25,0.92)',
-            backdropFilter: 'blur(24px)',
-            borderRadius: 12,
-            border: '1px solid rgba(255,255,255,0.12)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-            animation: 'msg-in 0.2s ease-out',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-              <div style={{ 
-                fontFamily: "'Syne', sans-serif", 
-                fontSize: 10, 
-                fontWeight: 700, 
-                color: 'rgba(99,102,241,0.9)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
+          <div
+            style={{
+              position: "absolute",
+              top: explainResult.y - 10,
+              left: 12,
+              right: 12,
+              // transform: 'translateY(-100%)',
+              zIndex: 10,
+              padding: "12px 16px",
+              background: "rgba(15,15,25,0.92)",
+              backdropFilter: "blur(24px)",
+              borderRadius: 12,
+              border: "1px solid rgba(255,255,255,0.12)",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+              animation: "msg-in 0.2s ease-out",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                marginBottom: 8,
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: "'Syne', sans-serif",
+                  fontSize: 10,
+                  fontWeight: 700,
+                  color: "rgba(99,102,241,0.9)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                }}
+              >
                 Explanation
               </div>
-              <button 
+              <button
                 onClick={() => setExplainResult(null)}
                 style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'rgba(255,255,255,0.3)',
-                  cursor: 'pointer',
+                  background: "none",
+                  border: "none",
+                  color: "rgba(255,255,255,0.3)",
+                  cursor: "pointer",
                   fontSize: 16,
                   padding: 0,
-                  lineHeight: 1
+                  lineHeight: 1,
                 }}
-                onMouseEnter={e => e.currentTarget.style.color = '#fff'}
-                onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.3)'}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.color = "rgba(255,255,255,0.3)")
+                }
               >
                 ×
               </button>
             </div>
-            <div style={{ 
-              fontSize: 13, 
-              color: '#fff', 
-              lineHeight: 1.6,
-              maxHeight: 200,
-              overflowY: 'auto'
-            }}>
-              <ReactMarkdown 
-                remarkPlugins={[remarkGfm, remarkMath]} 
+            <div
+              style={{
+                fontSize: 13,
+                color: "#fff",
+                lineHeight: 1.6,
+                maxHeight: 200,
+                overflowY: "auto",
+              }}
+            >
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm, remarkMath]}
                 rehypePlugins={[rehypeKatex]}
                 components={MarkdownComponents}
               >
-                {explainResult.response || (explainResult.loading ? "Thinking..." : "")}
+                {explainResult.response ||
+                  (explainResult.loading ? "Thinking..." : "")}
               </ReactMarkdown>
               {explainResult.loading && (
-                <span style={{
-                  display:    'inline-block',
-                  width:      6,
-                  height:     12,
-                  background: '#6366f1',
-                  marginLeft: 4,
-                  animation:  'dot-pulse 0.8s infinite',
-                  verticalAlign: 'middle',
-                }} />
+                <span
+                  style={{
+                    display: "inline-block",
+                    width: 6,
+                    height: 12,
+                    background: "#6366f1",
+                    marginLeft: 4,
+                    animation: "dot-pulse 0.8s infinite",
+                    verticalAlign: "middle",
+                  }}
+                />
               )}
             </div>
           </div>
         )}
-        <MessageList 
-          messages={messages} 
-          loading={loading} 
+        <MessageList
+          messages={messages}
+          loading={loading}
           streamingContent={streamingContent}
           pendingUserContent={pendingUserContent}
           onSelectionAction={handleSelectionAction}
@@ -745,65 +840,79 @@ export const ChatDialog: React.FC<Props> = ({
           padding: "10px 14px 14px",
           borderTop: "1px solid rgba(255,255,255,0.07)",
           flexShrink: 0,
-          position: 'relative'
+          position: "relative",
         }}
       >
         {/* Pending Attachments Bar */}
         {pendingAttachmentIds.length > 0 && (
-          <div style={{
-            display: 'flex',
-            gap: 10,
-            padding: '4px 0 12px',
-            overflowX: 'auto',
-            scrollbarWidth: 'none'
-          }}>
-            {pendingAttachmentIds.map(id => {
+          <div
+            style={{
+              display: "flex",
+              gap: 10,
+              padding: "4px 0 12px",
+              overflowX: "auto",
+              scrollbarWidth: "none",
+            }}
+          >
+            {pendingAttachmentIds.map((id) => {
               const att = library[id];
               if (!att) return null;
-              return <PendingThumbnail key={id} attachment={att} onRemove={handleRemoveAttachment} />;
+              return (
+                <PendingThumbnail
+                  key={id}
+                  attachment={att}
+                  onRemove={handleRemoveAttachment}
+                />
+              );
             })}
           </div>
         )}
 
         {/* Math Overlay Preview */}
         {activeMath && (
-          <div style={{
-            position: 'absolute',
-            bottom: 'calc(100% + 12px)',
-            left: 14,
-            right: 14,
-            padding: '12px 16px',
-            background: 'rgba(15,15,25,0.95)',
-            border: '1px solid rgba(99,102,241,0.3)',
-            borderRadius: 12,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-            zIndex: 1100,
-            backdropFilter: 'blur(12px)',
-            animation: 'dialog-in 0.15s ease-out'
-          }}>
-            <div style={{
-              fontFamily: "'Syne', sans-serif",
-              fontSize: 9,
-              color: 'rgba(99,102,241,0.8)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              marginBottom: 8,
-              display: 'flex',
-              justifyContent: 'space-between'
-            }}>
+          <div
+            style={{
+              position: "absolute",
+              bottom: "calc(100% + 12px)",
+              left: 14,
+              right: 14,
+              padding: "12px 16px",
+              background: "rgba(15,15,25,0.95)",
+              border: "1px solid rgba(99,102,241,0.3)",
+              borderRadius: 12,
+              boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+              zIndex: 1100,
+              backdropFilter: "blur(12px)",
+              animation: "dialog-in 0.15s ease-out",
+            }}
+          >
+            <div
+              style={{
+                fontFamily: "'Syne', sans-serif",
+                fontSize: 9,
+                color: "rgba(99,102,241,0.8)",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                marginBottom: 8,
+                display: "flex",
+                justifyContent: "space-between",
+              }}
+            >
               <span>LaTeX Preview</span>
               <span style={{ opacity: 0.5 }}>Rendering...</span>
             </div>
-            <div style={{
-              color: '#fff',
-              fontSize: 15,
-              lineHeight: 1.5,
-              display: 'flex',
-              justifyContent: 'center',
-              minHeight: 24
-            }}>
-              <ReactMarkdown 
-                remarkPlugins={[remarkGfm, remarkMath]} 
+            <div
+              style={{
+                color: "#fff",
+                fontSize: 15,
+                lineHeight: 1.5,
+                display: "flex",
+                justifyContent: "center",
+                minHeight: 24,
+              }}
+            >
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm, remarkMath]}
                 rehypePlugins={[rehypeKatex]}
                 components={MarkdownComponents}
               >
@@ -811,17 +920,19 @@ export const ChatDialog: React.FC<Props> = ({
               </ReactMarkdown>
             </div>
             {/* Arrow */}
-            <div style={{
-              position: 'absolute',
-              bottom: -6,
-              left: 30,
-              width: 12,
-              height: 12,
-              background: 'rgba(15,15,25,0.95)',
-              borderRight: '1px solid rgba(99,102,241,0.3)',
-              borderBottom: '1px solid rgba(99,102,241,0.3)',
-              transform: 'rotate(45deg)'
-            }} />
+            <div
+              style={{
+                position: "absolute",
+                bottom: -6,
+                left: 30,
+                width: 12,
+                height: 12,
+                background: "rgba(15,15,25,0.95)",
+                borderRight: "1px solid rgba(99,102,241,0.3)",
+                borderBottom: "1px solid rgba(99,102,241,0.3)",
+                transform: "rotate(45deg)",
+              }}
+            />
           </div>
         )}
 
@@ -829,11 +940,11 @@ export const ChatDialog: React.FC<Props> = ({
           {/* Paperclip Button */}
           {llm.capabilities.multimodal && (
             <>
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleFileSelect} 
-                style={{ display: 'none' }} 
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                style={{ display: "none" }}
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
@@ -853,8 +964,10 @@ export const ChatDialog: React.FC<Props> = ({
                   flexShrink: 0,
                   transition: "all 0.15s",
                 }}
-                onMouseEnter={e => e.currentTarget.style.color = '#fff'}
-                onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.4)'}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.color = "rgba(255,255,255,0.4)")
+                }
               >
                 📎
               </button>
