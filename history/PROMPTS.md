@@ -1094,3 +1094,27 @@ The overlay should match the app's dark aesthetic:
 - Border and rounded corners.
 - Succinct and on-point text display.
 - Subtle animation for appearance.
+\n--- Thu Mar 12 11:58:09 PDT 2026 ---\n
+# Prompts: Fix Explain Overlay Positioning
+
+## Role: Senior Frontend Engineer
+
+## Objective:
+Fix the `Explain` overlay positioning in `ChatDialog.tsx` so it appears near the selected text within the scrollable message list.
+
+## Core Tasks:
+1.  **Selection Capture:** Modify `MessageList.tsx` to pass the vertical position (relative to the container) of the selection when triggering the `onSelectionAction`.
+2.  **State Update:** Update `ChatDialog.tsx`'s `explainResult` state to store the vertical position (`y`).
+3.  **Rendering Adjustment:** Change the styling of the `explainResult` overlay in `ChatDialog.tsx` to use `position: absolute` with a `top` value derived from the selection's position.
+4.  **Container Scoping:** Ensure the overlay is rendered within a relative-positioned container that accurately reflects the scrollable area.
+
+## Technical Details:
+- The overlay currently uses `top: 0` inside the scrollable `div`.
+- It should probably have a `transform: translateY(-100%)` to appear *above* the selection point.
+- Coordinate translation from viewport-relative `getBoundingClientRect()` to container-relative `top` is required.
+- Maintain existing styles: `background: rgba(15,15,25,0.9)`, `backdropFilter: blur(16px)`, `animation: msg-in 0.2s ease-out`.
+
+## Constraints:
+- Do not break existing chat functionality.
+- Ensure the overlay is still dismissible via the "X" button.
+- Maintain the visual consistency of the `gitchat` theme.

@@ -122,7 +122,8 @@ export const ChatDialog: React.FC<Props> = ({
   const [explainResult, setExplainResult] = useState<{ 
     prompt: string, 
     response: string, 
-    loading: boolean 
+    loading: boolean,
+    y: number
   } | null>(null);
 
   const [tipId, setTipId] = useState(
@@ -401,9 +402,9 @@ export const ChatDialog: React.FC<Props> = ({
     }
   }, [input, loading, commits, addTurn, tipId, pendingAttachmentIds]);
 
-  const handleExplain = useCallback(async (text: string, overrideTipId: string) => {
+  const handleExplain = useCallback(async (text: string, overrideTipId: string, y: number) => {
     const prompt = `Briefly explain this: "${text}"`;
-    setExplainResult({ prompt, response: "", loading: true });
+    setExplainResult({ prompt, response: "", loading: true, y });
     
     try {
       const conv = await reconstructMessages(commits, overrideTipId);
@@ -411,18 +412,18 @@ export const ChatDialog: React.FC<Props> = ({
       
       for await (const chunk of llm.streamMessage(conv, prompt, [])) {
         fullAssistantContent += chunk;
-        setExplainResult(prev => prev ? { ...prev, response: fullAssistantContent } : null);
+        setExplainResult(prev => prev ? { ...prev, response: fullAssistantContent, y } : null);
       }
-      setExplainResult(prev => prev ? { ...prev, loading: false } : null);
+      setExplainResult(prev => prev ? { ...prev, loading: false, y } : null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "API error during explanation");
       setExplainResult(null);
     }
   }, [commits]);
 
-  const handleSelectionAction = useCallback((type: 'explain' | 'ask', text: string, messageId: string) => {
+  const handleSelectionAction = useCallback((type: 'explain' | 'ask', text: string, messageId: string, y: number) => {
     if (type === 'explain') {
-      handleExplain(text, messageId);
+      handleExplain(text, messageId, y);
     } else if (type === 'ask') {
       setInput(`Regarding "${text}": `);
       setTimeout(() => {
@@ -641,15 +642,17 @@ export const ChatDialog: React.FC<Props> = ({
         {explainResult && (
           <div style={{
             position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
+            top: explainResult.y - 10,
+            left: 12,
+            right: 12,
+            transform: 'translateY(-100%)',
             zIndex: 10,
             padding: '12px 16px',
-            background: 'rgba(15,15,25,0.9)',
-            backdropFilter: 'blur(16px)',
-            borderBottom: '1px solid rgba(255,255,255,0.1)',
-            boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+            background: 'rgba(15,15,25,0.92)',
+            backdropFilter: 'blur(24px)',
+            borderRadius: 12,
+            border: '1px solid rgba(255,255,255,0.12)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
             animation: 'msg-in 0.2s ease-out',
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>

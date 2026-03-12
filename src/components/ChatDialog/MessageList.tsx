@@ -18,7 +18,7 @@ interface Props {
   loading:            boolean
   streamingContent?:  string
   pendingUserContent?: string
-  onSelectionAction?: (type: 'explain' | 'ask', text: string, messageId: string) => void
+  onSelectionAction?: (type: 'explain' | 'ask', text: string, messageId: string, y: number) => void
 }
 
 // ── Helper Component for Message Attachments ──
@@ -102,6 +102,7 @@ export const MessageList: React.FC<Props> = ({
   messages, loading, streamingContent, pendingUserContent, onSelectionAction 
 }) => {
   const endRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const [selection, setSelection] = useState<{ 
     text: string, 
     x: number, 
@@ -174,14 +175,21 @@ export const MessageList: React.FC<Props> = ({
   }
 
   return (
-    <>
+    <div ref={containerRef} style={{ position: 'relative' }}>
       {selection && createPortal(
         <TextSelectionMenu 
           x={selection.x} 
           y={selection.y} 
           isBelow={selection.isBelow}
           onAction={(type) => {
-            onSelectionAction?.(type, selection.text, selection.messageId)
+            const range = window.getSelection()?.getRangeAt(0)
+            const rect = range?.getBoundingClientRect()
+            let relY = 0
+            if (containerRef.current && rect) {
+              const cRect = containerRef.current.getBoundingClientRect()
+              relY = rect.top - cRect.top + containerRef.current.scrollTop
+            }
+            onSelectionAction?.(type, selection.text, selection.messageId, relY)
             setSelection(null)
             window.getSelection()?.removeAllRanges()
           }}
@@ -341,6 +349,6 @@ export const MessageList: React.FC<Props> = ({
       )}
 
       <div ref={endRef} />
-    </>
+    </div>
   )
 }

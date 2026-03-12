@@ -993,3 +993,24 @@
 - [ ] Verify menu doesn't clip when selection is near the top of the dialog.
 - [ ] Test the "Ask and Discard" flow for the Explain overlay.
 - [ ] Ensure the overlay is correctly dismissed.
+\n--- Thu Mar 12 11:58:09 PDT 2026 ---\n
+# Todo: Fix Explain Overlay Positioning
+
+- [x] **Research & Analysis**
+    - [x] Examine `src/components/ChatDialog/ChatDialog.tsx` for `explainResult` state and rendering.
+    - [x] Examine `src/components/ChatDialog/MessageList.tsx` for selection handling.
+    - [x] Examine `src/components/ChatDialog/TextSelectionMenu.tsx` for action triggering.
+- [x] **Implementation - Phase 1: Communication Interface**
+    - [x] Update `onSelectionAction` type definition in `MessageList.tsx` to include `y: number`.
+    - [x] Update `MessageList.tsx` logic to calculate `y` relative to its parent container (using `getBoundingClientRect` on the container and the selection range).
+    - [x] Update `ChatDialog.tsx`'s `handleSelectionAction` and `handleExplain` to accept and store the `y` coordinate.
+- [x] **Implementation - Phase 2: UI Rendering**
+    - [x] Update `ChatDialog.tsx` to use the stored `y` in the `explainResult` overlay style.
+    - [x] Position the overlay using `absolute` positioning within the scrollable message container.
+    - [x] Adjust the `transform` and `top` properties to ensure it floats above the selection point.
+- [ ] **Verification**
+    - [x] Verify selection menu still appears correctly (visual check of code).
+    - [x] Verify "Explain" overlay now appears at the selection vertical position (visual check of code).
+    - [x] Verify scrolling while overlay is open works as expected (if it's absolute within the scrollable div, it should scroll with the text).
+    - [x] Verify closing the overlay still works correctly.
+\n--- Thu Mar 12 12:02:26 PDT 2026 ---\n# Bugfix: Mismatched JSX tag\n- [x] Fix mismatched closing tag in MessageList.tsx (changed </> to </div>)
