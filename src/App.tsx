@@ -13,6 +13,7 @@ import { AuthStatusModal } from './components/Modals/AuthStatusModal'
 import { MinimizedSidebar } from './components/Canvas/MinimizedSidebar'
 import { SquashTooltip } from './components/Canvas/SquashNode'
 import { useConversationStore } from './store/conversationStore'
+import { useAuthStore, getStorageScope } from './store/authStore'
 import { computeLayout }        from './lib/layout'
 import { computeSquashGroups, hiddenIds } from './lib/squash'
 import type { SquashGroup } from './lib/squash'
@@ -20,9 +21,13 @@ import { branchColor, clamp }   from './lib/utils'
 import type { Commit, DialogState } from './types'
 
 export default function App() {
-  const { sessions, currentSessionId, setHEAD } = useConversationStore()
+  const { sessions, currentSessionId, setHEAD, reset } = useConversationStore()
+  const { user, isHydrated } = useAuthStore()
   const currentSession = sessions[currentSessionId]
   
+  // Storage Scope tracking
+  const scope = useMemo(() => getStorageScope(), [user])
+
   // Fallback to empty defaults to prevent "undefined" errors during initial load/persist sync
   const commits = currentSession?.commits || {}
   const edges   = currentSession?.edges || []
@@ -40,6 +45,27 @@ export default function App() {
   // Separate states for hover and persistent expansion
   const [hoveredSquashGroup,  setHoveredSquashGroup]  = useState<SquashGroup | null>(null)
   const [expandedSquashGroup, setExpandedSquashGroup] = useState<SquashGroup | null>(null)
+
+  // ── Multi-user Switch Logic ────────────────────────────────────────────────
+  // When the storage scope (user) changes, reset the store and re-hydrate
+  useEffect(() => {
+    if (!isHydrated) return
+    
+    console.log('[App] Scope changed, re-hydrating:', scope)
+    
+    // Reset transient UI state
+    setDialogs({})
+    setMinimizedDialogs({})
+    setHoveredId(null)
+    setHoveredSquashGroup(null)
+    setExpandedSquashGroup(null)
+    setShowSearch(false)
+    setShowLibrary(false)
+
+    // Trigger Zustand persist re-hydration manually by resetting first
+    reset()
+    useConversationStore.persist.rehydrate()
+  }, [scope, isHydrated, reset])
 
   // ── Session Switch Logic ──────────────────────────────────────────────────
   // When the session changes, clear transient UI states
@@ -259,6 +285,19 @@ export default function App() {
   // ── Hovered commit ────────────────────────────────────────────────────────
   const hoveredCommit = hoveredId ? commits[hoveredId] : null
   const showTooltip   = hoveredCommit && !dialogs[hoveredId!] && !minimizedDialogs[hoveredId!] && isHoveringCanvas
+
+  if (!isHydrated) {
+    return (
+      <div style={{
+        width: '100vw', height: '100vh', background: '#080810',
+        display: 'flex', alignItems: 'center', justifyContent: 'center'
+      }}>
+        <div style={{ color: 'rgba(255,255,255,0.2)', fontFamily: "'Syne', sans-serif", fontSize: 14 }}>
+          Initializing Storage...
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', background: '#080810' }}>

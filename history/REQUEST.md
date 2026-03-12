@@ -339,3 +339,17 @@ Implement a privacy-preserving, dynamic whitelist using Cloudflare KV to store i
 - **Configuration:** Update `wrangler.proxy.json` with the KV binding.
 - **Helper Script:** Add a script to `package.json` to hash emails and generate management commands.
 - **Testing:** Update worker tests to mock the KV lookup.
+
+--- Wed Mar 11 22:31:15 PDT 2026 ---
+
+# Request: Multi-User Data Isolation
+
+Implement strict data isolation between different Google accounts stored in the same browser.
+
+## Requirements:
+- **Namespacing:** Prefix all IndexedDB keys with a unique identifier based on the authenticated user.
+    - Logged in: `user:<google_sub>:...`
+    - Guest: `guest:...`
+- **Dynamic Switching:** When a user logs in or out, the application must immediately switch to the corresponding data store (re-hydrate sessions, commits, and library).
+- **Blob Isolation:** Ensure that uploaded files (blobs) are also isolated by the same namespace to prevent cross-user access to the shared library.
+- **Performance:** Switching users should be smooth and trigger a clean re-render of the UI.

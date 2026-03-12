@@ -966,3 +966,29 @@ Improve whitelist management and protect user privacy (PII) by using a dynamic K
 3.  Modify `worker/index.test.ts` to mock the `WHITELIST_KV` binding and verify both KV and fallback lookup paths.
 4.  Add a helper script `scripts/whitelist.js` and a corresponding `package.json` script.
 5.  Update `worker/README.md` with the new KV setup instructions.
+
+--- Wed Mar 11 22:31:15 PDT 2026 ---
+
+# Refined Prompt: Multi-User Data Isolation Implementation
+
+Implement strict data isolation between Google accounts in GraphChat by namespacing all local storage (IndexedDB) keys.
+
+## Goal:
+Ensure that if multiple users use the same browser, they only see their own chat history and attachments. Unauthenticated users (Guests) should also have their own isolated space.
+
+## Technical Details:
+- **Storage Scope**: Define a `getStorageScope()` helper that returns `user:<subSlot>` or `guest`.
+- **Dynamic Persist Key**:
+    - Modify `conversationStore.ts` to use a dynamic storage key.
+    - Since Zustand `persist` doesn't easily support dynamic key switching, we will implement a "Storage Manager" that manually triggers re-hydration or uses a `key` prop on a provider to force re-initialization.
+- **Blob Keys**: Update `src/lib/storage.ts` to include the current user ID in all blob keys (e.g., `user:123:blob:abc`).
+- **Store Reset**: Ensure that when switching scopes, the in-memory state is completely reset before loading the new scope's data to prevent state leakage.
+
+## Tasks:
+1.  **Auth Store Enhancement**: Ensure `authStore` reliably provides the user's `sub` ID and a `isHydrated` flag.
+2.  **Storage Logic Update**: Refactor `src/lib/storage.ts` to be scope-aware.
+3.  **Conversation Store Refactor**: 
+    - Implement a mechanism to re-initialize or re-hydrate the store based on the current scope.
+    - Export a `useInitializeStore` hook or similar.
+4.  **App Integration**: Update `App.tsx` or `main.tsx` to ensure the correct scope is determined before the conversation store is fully active.
+5.  **Validation**: Test logging in with Account A, creating data, logging out, checking Guest view, and logging in with Account B.

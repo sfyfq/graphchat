@@ -841,3 +841,37 @@
 ## Phase 4: Verification
 - [ ] Run `npm run test:worker` to ensure all paths are verified.
 - [ ] Perform a final manual code review.
+
+--- Wed Mar 11 22:31:15 PDT 2026 ---
+
+# TODO: Implementation Plan for Multi-User Data Isolation
+
+## Phase 1: Storage Layer Refactoring
+- [x] **Modify `src/lib/storage.ts`**:
+    - Update all blob functions (`saveBlob`, `getBlob`, `deleteBlob`) to accept a `scope` parameter (e.g., `guest` or `user:sub`).
+    - Update `getBlobUrl` to correctly resolve scoped blobs.
+- [x] **Modify `src/store/authStore.ts`**:
+    - Add an `onRehydrateStorage` callback to track when auth state is ready.
+    - Export a helper `getStorageScope(state)` that returns the unique namespace string.
+
+## Phase 2: Dynamic Conversation Store
+- [x] **Refactor `src/store/conversationStore.ts`**:
+    - Move the store creation into a factory or use a custom storage proxy that dynamically computes the IndexedDB key based on the current auth state.
+    - Implement a `clearState` action to reset the store when switching users.
+    - Ensure `uploadAttachment` uses the current scope when saving blobs.
+
+## Phase 3: Application Integration
+- [x] **Update `App.tsx`**:
+    - Add a "Loading" or "Initializing" view that waits for the `authStore` to hydrate.
+    - Use a `useEffect` to trigger store re-hydration when the user ID changes.
+- [x] **Update Components**:
+    - Ensure `LibrarySidebar` and `ChatDialog` (attachment logic) pass the correct scope to storage helpers.
+
+## Phase 4: Verification & Migration
+- [ ] **Data Migration (Optional/Canary)**: Decide if existing `graphchat-storage` data should be migrated to the `guest` namespace.
+- [ ] **Manual Testing**:
+    - Create a chat as Guest.
+    - Log in with Account A -> Verify Guest chat is gone, create new chat.
+    - Log out -> Verify Guest chat returns.
+    - Log in with Account B -> Verify Account A's chat is hidden.
+- [x] **Final Review**: Archive methodology files.

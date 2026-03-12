@@ -21,6 +21,7 @@ interface AuthState {
   idToken: string | null
   isWhitelisted: boolean
   showStatusModal: boolean
+  isHydrated: boolean
 }
 
 interface AuthActions {
@@ -28,6 +29,7 @@ interface AuthActions {
   logout: () => void
   setWhitelisted: (status: boolean) => void
   setShowStatusModal: (show: boolean) => void
+  setHydrated: (hydrated: boolean) => void
 }
 
 export const useAuthStore = create<AuthState & AuthActions>()(
@@ -37,15 +39,20 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       idToken: null,
       isWhitelisted: false,
       showStatusModal: false,
+      isHydrated: false,
 
       login: (user, idToken) => set({ user, idToken, isWhitelisted: false }),
       logout: () => set({ user: null, idToken: null, isWhitelisted: false }),
       setWhitelisted: (status) => set({ isWhitelisted: status }),
       setShowStatusModal: (show) => set({ showStatusModal: show }),
+      setHydrated: (hydrated) => set({ isHydrated: hydrated }),
     }),
     {
       name: 'graphchat-auth',
       storage: createJSONStorage(() => storage),
+      onRehydrateStorage: () => (state) => {
+        state?.setHydrated(true)
+      },
       partialize: (state) => ({
         user: state.user,
         idToken: state.idToken,
@@ -54,3 +61,11 @@ export const useAuthStore = create<AuthState & AuthActions>()(
     }
   )
 )
+
+/**
+ * Returns a string identifying the current storage namespace.
+ */
+export const getStorageScope = () => {
+  const { user } = useAuthStore.getState()
+  return user ? `user:${user.sub}` : 'guest'
+}
