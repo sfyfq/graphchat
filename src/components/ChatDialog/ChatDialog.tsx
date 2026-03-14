@@ -1017,8 +1017,8 @@ export const ChatDialog: React.FC<Props> = ({
               border: "none",
               background: canSend
                 ? "linear-gradient(135deg, #2563eb, #4f46e5)"
-                : "rgba(255,255,255,0.07)",
-              color: canSend ? "#fff" : "rgba(255,255,255,0.25)",
+                : "var(--bg-input)",
+              color: canSend ? "#fff" : "var(--text-tertiary)",
               cursor: canSend ? "pointer" : "default",
               display: "flex",
               alignItems: "center",

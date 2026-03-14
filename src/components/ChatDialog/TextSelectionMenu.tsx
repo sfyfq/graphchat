@@ -18,34 +18,34 @@ export const TextSelectionMenu: React.FC<Props> = ({ x, y, isBelow, onAction, on
         transform:      isBelow 
           ? 'translate(-50%, 10px)' 
           : 'translate(-50%, -100%) translateY(-10px)',
-        background:     'rgba(15,15,25,0.95)',
-        border:         '1px solid rgba(255,255,255,0.15)',
+        background:     'var(--bg-surface-solid)',
+        border:         '1px solid var(--border-primary)',
         borderRadius:   10,
         padding:        '4px',
         display:        'flex',
         gap:            4,
         zIndex:         2000,
         backdropFilter: 'blur(12px)',
-        boxShadow:      '0 8px 32px rgba(0,0,0,0.6)',
+        boxShadow:      'var(--shadow-main)',
         animation:      isBelow ? 'tooltip-in-below 0.15s ease-out' : 'tooltip-in 0.15s ease-out',
       }}
     >
       <button
         onClick={() => onAction('explain')}
         style={buttonStyle}
-        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-input)'}
         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
       >
         <span style={{ fontSize: 14 }}>🔍</span>
         <span>Explain</span>
       </button>
 
-      <div style={{ width: 1, background: 'rgba(255,255,255,0.1)', margin: '4px 0' }} />
+      <div style={{ width: 1, background: 'var(--border-secondary)', margin: '4px 0' }} />
 
       <button
         onClick={() => onAction('ask')}
         style={buttonStyle}
-        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-input)'}
         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
       >
         <span style={{ fontSize: 14 }}>💬</span>
@@ -55,9 +55,9 @@ export const TextSelectionMenu: React.FC<Props> = ({ x, y, isBelow, onAction, on
       {/* Close button (optional, but good for accessibility) */}
       <button
         onClick={onClose}
-        style={{ ...buttonStyle, padding: '0 8px', color: 'rgba(255,255,255,0.3)' }}
-        onMouseEnter={e => e.currentTarget.style.color = '#fff'}
-        onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.3)'}
+        style={{ ...buttonStyle, padding: '0 8px', color: 'var(--text-tertiary)' }}
+        onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-tertiary)'}
       >
         ×
       </button>
@@ -68,7 +68,7 @@ export const TextSelectionMenu: React.FC<Props> = ({ x, y, isBelow, onAction, on
 const buttonStyle: React.CSSProperties = {
   background: 'transparent',
   border:     'none',
-  color:      '#ececec',
+  color:      'var(--text-secondary)',
   padding:    '6px 12px',
   borderRadius: 6,
   cursor:     'pointer',

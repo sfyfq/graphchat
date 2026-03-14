@@ -79,10 +79,17 @@ const AttachmentPreview: React.FC<{ id: string }> = ({ id }) => {
 }
 
 export const MarkdownComponents: any = {
-  p: ({ children }: any) => <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{children}</p>,
-  ul: ({ children }: any) => <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>{children}</ul>,
-  ol: ({ children }: any) => <ol style={{ margin: '8px 0', paddingLeft: '20px' }}>{children}</ol>,
-  li: ({ children }: any) => <li style={{ marginBottom: '4px' }}>{children}</li>,
+  p: ({ children }: any) => <p style={{ margin: 0, whiteSpace: 'pre-wrap', color: 'inherit' }}>{children}</p>,
+  ul: ({ children }: any) => <ul style={{ margin: '8px 0', paddingLeft: '20px', color: 'inherit' }}>{children}</ul>,
+  ol: ({ children }: any) => <ol style={{ margin: '8px 0', paddingLeft: '20px', color: 'inherit' }}>{children}</ol>,
+  li: ({ children }: any) => <li style={{ marginBottom: '4px', color: 'inherit' }}>{children}</li>,
+  strong: ({ children }: any) => <strong style={{ fontWeight: 700, color: 'inherit' }}>{children}</strong>,
+  em: ({ children }: any) => <em style={{ fontStyle: 'italic', color: 'inherit' }}>{children}</em>,
+  a: ({ children, href }: any) => (
+    <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: '#6366f1', textDecoration: 'underline' }}>
+      {children}
+    </a>
+  ),
   code: ({ children, inline }: any) => (
     <code style={{
       background: 'var(--bg-input)',
