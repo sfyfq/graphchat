@@ -353,8 +353,19 @@ const Starfield: React.FC = () => {
   return (
     <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }} aria-hidden>
       {stars.map(s => (
-        <circle key={s.id} cx={`${s.x}%`} cy={`${s.y}%`} r={s.r} fill={`rgba(255,255,255,${s.o})`} />
+        <circle 
+          key={s.id} 
+          cx={`${s.x}%`} 
+          cy={`${s.y}%`} 
+          r={s.r} 
+          fill="var(--text-primary)" 
+          style={{ opacity: `calc(${s.o} * var(--star-opacity, 1))` }} 
+        />
       ))}
+      <style>{`
+        :root { --star-opacity: 0.15; }
+        .dark { --star-opacity: 1; }
+      `}</style>
     </svg>
   )
 }
@@ -364,9 +375,10 @@ const ZoomIndicator: React.FC<{ zoom: number }> = ({ zoom }) => (
   <div className="no-pan" style={{
     position: 'fixed', bottom: 20, right: 20,
     fontFamily: "'DM Mono', monospace", fontSize: 11,
-    color: 'rgba(255,255,255,0.25)', background: 'rgba(10,10,16,0.8)',
-    padding: '5px 10px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.07)',
+    color: 'var(--text-tertiary)', background: 'var(--bg-surface)',
+    padding: '5px 10px', borderRadius: 7, border: '1px solid var(--border-secondary)',
     pointerEvents: 'none',
+    backdropFilter: 'blur(12px)',
   }}>
     {Math.round(zoom * 100)}%
   </div>

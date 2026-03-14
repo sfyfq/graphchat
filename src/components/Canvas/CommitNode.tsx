@@ -101,7 +101,7 @@ export const CommitNode: React.FC<Props> = ({
         <circle
           r={NODE_R + 5}
           fill="none"
-          stroke={isHovered ? "rgba(255,255,255,0.5)" : "rgba(99,102,241,0.3)"}
+          stroke={isHovered ? "var(--text-secondary)" : "rgba(99,102,241,0.3)"}
           strokeWidth={isHovered ? 2 : 1}
           strokeDasharray={isHovered ? "none" : "3 3"}
         />
@@ -145,7 +145,7 @@ export const CommitNode: React.FC<Props> = ({
         fontSize={13}
         fontFamily="'DM Mono', monospace"
         fontWeight="500"
-        fill={isHEAD ? "#fff" : "rgba(255,255,255,0.65)"}
+        fill={isHEAD ? "#fff" : "var(--text-secondary)"}
         style={{ pointerEvents: 'none', userSelect: 'none' }}
       >
         {isUser ? 'U' : '✦'}
@@ -177,7 +177,7 @@ export const CommitNode: React.FC<Props> = ({
         <g transform={`translate(0,${NODE_R + 16})`}>
           <rect
             x={-32} y={-9} width={64} height={18} rx={9}
-            fill="rgba(8,8,16,0.9)"
+            fill="var(--bg-app)"
             stroke={bColor}
             strokeWidth={1}
           />

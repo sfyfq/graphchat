@@ -86,10 +86,10 @@ export const SearchPanel: React.FC<Props> = ({
           left:           '50%',
           transform:      'translateX(-50%)',
           width:          540,
-          background:     'rgba(10,10,16,0.98)',
-          border:         '1px solid rgba(255,255,255,0.13)',
+          background:     'var(--bg-surface-solid)',
+          border:         '1px solid var(--border-primary)',
           borderRadius:   16,
-          boxShadow:      '0 32px 80px rgba(0,0,0,0.85)',
+          boxShadow:      'var(--shadow-main)',
           backdropFilter: 'blur(24px)',
           animation:      'search-in 0.18s cubic-bezier(0.34,1.56,0.64,1)',
           overflow:       'hidden',
@@ -102,10 +102,10 @@ export const SearchPanel: React.FC<Props> = ({
           alignItems:   'center',
           gap:          12,
           borderBottom: results.length > 0
-            ? '1px solid rgba(255,255,255,0.07)'
+            ? '1px solid var(--border-secondary)'
             : 'none',
         }}>
-          <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 17, lineHeight: 1 }}>
+          <span style={{ color: 'var(--text-tertiary)', fontSize: 17, lineHeight: 1 }}>
             ⌕
           </span>
           <input
@@ -118,7 +118,7 @@ export const SearchPanel: React.FC<Props> = ({
               flex:       1,
               background: 'none',
               border:     'none',
-              color:      '#fff',
+              color:      'var(--text-primary)',
               fontFamily: "'DM Sans', sans-serif",
               fontSize:   15,
               outline:    'none',
@@ -129,8 +129,8 @@ export const SearchPanel: React.FC<Props> = ({
             style={{
               fontFamily:   'monospace',
               fontSize:     11,
-              color:        'rgba(255,255,255,0.28)',
-              border:       '1px solid rgba(255,255,255,0.15)',
+              color:        'var(--text-tertiary)',
+              border:       '1px solid var(--border-secondary)',
               borderRadius: 5,
               padding:      '2px 7px',
               cursor:       'pointer',
@@ -155,7 +155,7 @@ export const SearchPanel: React.FC<Props> = ({
                     transition: 'background 0.1s',
                   }}
                   onMouseEnter={e => {
-                    (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.05)'
+                    (e.currentTarget as HTMLDivElement).style.background = 'var(--bg-input)'
                   }}
                   onMouseLeave={e => {
                     (e.currentTarget as HTMLDivElement).style.background = 'transparent'
@@ -177,7 +177,7 @@ export const SearchPanel: React.FC<Props> = ({
                     <span style={{
                       fontFamily:    "'Syne', sans-serif",
                       fontSize:      10,
-                      color:         'rgba(255,255,255,0.32)',
+                      color:         'var(--text-tertiary)',
                       textTransform: 'uppercase',
                       letterSpacing: '0.08em',
                     }}>
@@ -197,7 +197,7 @@ export const SearchPanel: React.FC<Props> = ({
                   <div style={{
                     fontFamily: "'DM Sans', sans-serif",
                     fontSize:   13,
-                    color:      '#ccc',
+                    color:      'var(--text-secondary)',
                     lineHeight: 1.5,
                   }}>
                     <Highlighted text={truncate(c.content, 130)} query={query} />
@@ -213,7 +213,7 @@ export const SearchPanel: React.FC<Props> = ({
           <div style={{
             padding:    '28px 18px',
             textAlign:  'center',
-            color:      'rgba(255,255,255,0.2)',
+            color:      'var(--text-tertiary)',
             fontFamily: "'DM Mono', monospace",
             fontSize:   12,
           }}>
@@ -225,13 +225,13 @@ export const SearchPanel: React.FC<Props> = ({
         {!query.trim() && (
           <div style={{
             padding:    '20px 18px',
-            color:      'rgba(255,255,255,0.18)',
+            color:      'var(--text-tertiary)',
             fontFamily: "'DM Mono', monospace",
             fontSize:   11,
             lineHeight: 2,
           }}>
             <div>search message content and summaries</div>
-            <div style={{ color: 'rgba(255,255,255,0.1)' }}>⌘K to open · esc to close</div>
+            <div style={{ color: 'var(--text-tertiary)', opacity: 0.5 }}>⌘K to open · esc to close</div>
           </div>
         )}
       </div>

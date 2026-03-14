@@ -27,6 +27,9 @@ export const EdgePath: React.FC<Props> = ({
       strokeWidth={isActive ? 2 : 1.5}
       opacity={isActive ? 1 : 0.5}
       strokeLinecap="round"
+      style={{
+        transition: 'stroke 0.3s ease, stroke-width 0.3s ease, opacity 0.3s ease'
+      }}
     />
   )
 }

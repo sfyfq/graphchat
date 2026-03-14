@@ -59,11 +59,11 @@ export const AuthStatusModal: React.FC = () => {
       <div
         style={{
           width: 400,
-          background: "rgba(15,15,25,0.95)",
-          border: "1px solid rgba(255,255,255,0.1)",
+          background: "var(--bg-surface-solid)",
+          border: "1px solid var(--border-primary)",
           borderRadius: 20,
           padding: "32px 28px",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+          boxShadow: "var(--shadow-main)",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -96,7 +96,7 @@ export const AuthStatusModal: React.FC = () => {
             style={{
               margin: "12px 0 0",
               fontSize: 14,
-              color: "rgba(255,255,255,0.7)",
+              color: "var(--text-secondary)",
               lineHeight: 1.6,
             }}
           >
@@ -107,7 +107,7 @@ export const AuthStatusModal: React.FC = () => {
               style={{
                 margin: "8px 0 0",
                 fontSize: 12,
-                color: "rgba(255,255,255,0.3)",
+                color: "var(--text-tertiary)",
                 fontStyle: "italic",
               }}
             >
@@ -122,19 +122,19 @@ export const AuthStatusModal: React.FC = () => {
             width: "100%",
             padding: "14px",
             borderRadius: 12,
-            background: "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            color: "#fff",
+            background: "var(--bg-input)",
+            border: "1px solid var(--border-secondary)",
+            color: "var(--text-primary)",
             cursor: "pointer",
             fontSize: 14,
             fontWeight: 600,
             transition: "all 0.2s",
           }}
           onMouseEnter={(e) =>
-            (e.currentTarget.style.background = "rgba(255,255,255,0.1)")
+            (e.currentTarget.style.background = "var(--border-secondary)")
           }
           onMouseLeave={(e) =>
-            (e.currentTarget.style.background = "rgba(255,255,255,0.05)")
+            (e.currentTarget.style.background = "var(--bg-input)")
           }
         >
           Dismiss

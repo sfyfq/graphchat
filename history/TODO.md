@@ -1014,3 +1014,48 @@
     - [x] Verify scrolling while overlay is open works as expected (if it's absolute within the scrollable div, it should scroll with the text).
     - [x] Verify closing the overlay still works correctly.
 \n--- Thu Mar 12 12:02:26 PDT 2026 ---\n# Bugfix: Mismatched JSX tag\n- [x] Fix mismatched closing tag in MessageList.tsx (changed </> to </div>)
+# TODO: Implement Light Mode and System Preference Support
+
+## Phase 1: Infrastructure & State
+- [ ] Update `tailwind.config.js` to include `darkMode: 'class'`.
+- [ ] Extend `src/store/configStore.ts` to include theme preferences.
+    - [ ] Add `Theme` type: `'light' | 'dark' | 'system'`.
+    - [ ] Add `theme` and `setTheme` to `ConfigState`.
+- [ ] Implement theme management logic (e.g., in `App.tsx`) to manage the `dark` class on `html`.
+    - [ ] Use `window.matchMedia('(prefers-color-scheme: dark)')` for 'system' mode.
+
+## Phase 2: Design Tokens (CSS Variables)
+- [ ] Update `src/index.css` with color variables.
+    - [ ] Define `:root` (light) and `.dark` (dark) variables for:
+        - `--bg-app`
+        - `--bg-surface`
+        - `--bg-input`
+        - `--text-primary`
+        - `--text-secondary`
+        - `--border-primary`
+        - `--border-secondary`
+        - `--shadow-main`
+- [ ] Update `src/index.css` global styles (body background, scrollbar) to use variables.
+
+## Phase 3: Component Refactoring
+- [ ] **App.tsx**: Replace hardcoded backgrounds.
+- [ ] **Toolbar.tsx**:
+    - [ ] Add a theme switcher button.
+    - [ ] Update styles.
+- [ ] **ChatDialog.tsx**:
+    - [ ] Use variables for background, border, and text.
+    - [ ] Update `PendingThumbnail` and `Math Overlay`.
+- [ ] **MessageList.tsx**: Update markdown styles for both modes.
+- [ ] **Canvas.tsx**:
+    - [ ] Update `Starfield` (maybe hide or dim in light mode).
+    - [ ] Update `ZoomIndicator`.
+- [ ] **CommitNode.tsx**, **EdgePath.tsx**, **SquashNode.tsx**: Ensure visibility on light background.
+- [ ] **Tooltip.tsx**: Update styles.
+- [ ] **SearchPanel.tsx**, **LibrarySidebar.tsx**: Update styles.
+- [ ] **ApiKeyModal.tsx**, **AuthStatusModal.tsx**: Update styles.
+
+## Phase 4: Verification & Refinement
+- [ ] Verify 'light' mode looks good.
+- [ ] Verify 'dark' mode still looks good.
+- [ ] Verify 'system' mode correctly follows OS setting.
+- [ ] Check for any missed hardcoded colors.

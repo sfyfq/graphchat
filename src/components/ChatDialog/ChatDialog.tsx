@@ -69,8 +69,8 @@ const PendingThumbnail: React.FC<{
         width: 50,
         height: 50,
         borderRadius: 8,
-        background: "rgba(255,255,255,0.05)",
-        border: "1px solid rgba(255,255,255,0.1)",
+        background: "var(--bg-input)",
+        border: "1px solid var(--border-primary)",
         overflow: "hidden",
         flexShrink: 0,
       }}
@@ -548,11 +548,10 @@ export const ChatDialog: React.FC<Props> = ({
         top: pos.y,
         width: 860,
         maxHeight: "min(85vh, 900px)",
-        background: "rgba(11,11,17,0.97)",
-        border: "1px solid rgba(255,255,255,0.1)",
+        background: "var(--bg-surface)",
+        border: "1px solid var(--border-primary)",
         borderRadius: 16,
-        boxShadow:
-          "0 32px 80px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.04)",
+        boxShadow: "var(--shadow-main)",
         display: "flex",
         flexDirection: "column",
         zIndex: 1000,
@@ -565,7 +564,7 @@ export const ChatDialog: React.FC<Props> = ({
         onMouseDown={onHeaderMouseDown}
         style={{
           padding: "13px 16px 11px",
-          borderBottom: "1px solid rgba(255,255,255,0.07)",
+          borderBottom: "1px solid var(--border-secondary)",
           cursor: "grab",
           userSelect: "none",
           display: "flex",
@@ -592,7 +591,7 @@ export const ChatDialog: React.FC<Props> = ({
             fontFamily: "'Syne', sans-serif",
             fontSize: 12,
             fontWeight: 700,
-            color: "#fff",
+            color: "var(--text-primary)",
             letterSpacing: "0.06em",
             textTransform: "uppercase",
           }}
@@ -605,7 +604,7 @@ export const ChatDialog: React.FC<Props> = ({
           style={{
             fontFamily: "'DM Mono', monospace",
             fontSize: 10,
-            color: "rgba(255,255,255,0.28)",
+            color: "var(--text-tertiary)",
           }}
         >
           #{tipId.slice(0, 7)}
@@ -621,7 +620,7 @@ export const ChatDialog: React.FC<Props> = ({
             color:
               tokenCount > 6000
                 ? "rgba(251,146,60,0.8)"
-                : "rgba(255,255,255,0.25)",
+                : "var(--text-tertiary)",
           }}
         >
           ~{tokenCount.toLocaleString()} tok
@@ -632,7 +631,7 @@ export const ChatDialog: React.FC<Props> = ({
           style={{
             fontFamily: "'DM Mono', monospace",
             fontSize: 10,
-            color: "rgba(255,255,255,0.28)",
+            color: "var(--text-tertiary)",
             marginLeft: 6,
           }}
         >
@@ -655,7 +654,7 @@ export const ChatDialog: React.FC<Props> = ({
             style={{
               background: "none",
               border: "none",
-              color: "rgba(255,255,255,0.35)",
+              color: "var(--text-tertiary)",
               cursor: "pointer",
               fontSize: 18,
               lineHeight: 1,
@@ -666,11 +665,11 @@ export const ChatDialog: React.FC<Props> = ({
               justifyContent: "center",
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.color = "#fff";
+              (e.currentTarget as HTMLButtonElement).style.color = "var(--text-primary)";
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLButtonElement).style.color =
-                "rgba(255,255,255,0.35)";
+                "var(--text-tertiary)";
             }}
           >
             −
@@ -683,7 +682,7 @@ export const ChatDialog: React.FC<Props> = ({
             style={{
               background: "none",
               border: "none",
-              color: "rgba(255,255,255,0.35)",
+              color: "var(--text-tertiary)",
               cursor: "pointer",
               fontSize: 20,
               lineHeight: 1,
@@ -698,7 +697,7 @@ export const ChatDialog: React.FC<Props> = ({
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLButtonElement).style.color =
-                "rgba(255,255,255,0.35)";
+                "var(--text-tertiary)";
             }}
           >
             ×
@@ -726,11 +725,11 @@ export const ChatDialog: React.FC<Props> = ({
               // transform: 'translateY(-100%)',
               zIndex: 10,
               padding: "12px 16px",
-              background: "rgba(15,15,25,0.92)",
+              background: "var(--bg-surface-solid)",
               backdropFilter: "blur(24px)",
               borderRadius: 12,
-              border: "1px solid rgba(255,255,255,0.12)",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+              border: "1px solid var(--border-primary)",
+              boxShadow: "var(--shadow-main)",
               animation: "msg-in 0.2s ease-out",
             }}
           >
@@ -759,15 +758,15 @@ export const ChatDialog: React.FC<Props> = ({
                 style={{
                   background: "none",
                   border: "none",
-                  color: "rgba(255,255,255,0.3)",
+                  color: "var(--text-tertiary)",
                   cursor: "pointer",
                   fontSize: 16,
                   padding: 0,
                   lineHeight: 1,
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-primary)")}
                 onMouseLeave={(e) =>
-                  (e.currentTarget.style.color = "rgba(255,255,255,0.3)")
+                  (e.currentTarget.style.color = "var(--text-tertiary)")
                 }
               >
                 ×
@@ -776,7 +775,7 @@ export const ChatDialog: React.FC<Props> = ({
             <div
               style={{
                 fontSize: 13,
-                color: "#fff",
+                color: "var(--text-primary)",
                 lineHeight: 1.6,
                 maxHeight: 200,
                 overflowY: "auto",
@@ -838,7 +837,7 @@ export const ChatDialog: React.FC<Props> = ({
       <div
         style={{
           padding: "10px 14px 14px",
-          borderTop: "1px solid rgba(255,255,255,0.07)",
+          borderTop: "1px solid var(--border-secondary)",
           flexShrink: 0,
           position: "relative",
         }}
@@ -877,10 +876,10 @@ export const ChatDialog: React.FC<Props> = ({
               left: 14,
               right: 14,
               padding: "12px 16px",
-              background: "rgba(15,15,25,0.95)",
+              background: "var(--bg-surface-solid)",
               border: "1px solid rgba(99,102,241,0.3)",
               borderRadius: 12,
-              boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+              boxShadow: "var(--shadow-main)",
               zIndex: 1100,
               backdropFilter: "blur(12px)",
               animation: "dialog-in 0.15s ease-out",
@@ -903,7 +902,7 @@ export const ChatDialog: React.FC<Props> = ({
             </div>
             <div
               style={{
-                color: "#fff",
+                color: "var(--text-primary)",
                 fontSize: 15,
                 lineHeight: 1.5,
                 display: "flex",
@@ -927,7 +926,7 @@ export const ChatDialog: React.FC<Props> = ({
                 left: 30,
                 width: 12,
                 height: 12,
-                background: "rgba(15,15,25,0.95)",
+                background: "var(--bg-surface-solid)",
                 borderRight: "1px solid rgba(99,102,241,0.3)",
                 borderBottom: "1px solid rgba(99,102,241,0.3)",
                 transform: "rotate(45deg)",
@@ -954,8 +953,8 @@ export const ChatDialog: React.FC<Props> = ({
                   height: 36,
                   borderRadius: 10,
                   border: "none",
-                  background: "rgba(255,255,255,0.05)",
-                  color: "rgba(255,255,255,0.4)",
+                  background: "var(--bg-input)",
+                  color: "var(--text-tertiary)",
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
@@ -964,9 +963,9 @@ export const ChatDialog: React.FC<Props> = ({
                   flexShrink: 0,
                   transition: "all 0.15s",
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-primary)")}
                 onMouseLeave={(e) =>
-                  (e.currentTarget.style.color = "rgba(255,255,255,0.4)")
+                  (e.currentTarget.style.color = "var(--text-tertiary)")
                 }
               >
                 📎
@@ -985,10 +984,10 @@ export const ChatDialog: React.FC<Props> = ({
             rows={1}
             style={{
               flex: 1,
-              background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.1)",
+              background: "var(--bg-input)",
+              border: "1px solid var(--border-primary)",
               borderRadius: 10,
-              color: "#fff",
+              color: "var(--text-primary)",
               fontFamily: "'DM Sans', sans-serif",
               fontSize: 13.5,
               padding: "9px 12px",
@@ -1002,7 +1001,7 @@ export const ChatDialog: React.FC<Props> = ({
               e.target.style.borderColor = "rgba(99,102,241,0.55)";
             }}
             onBlur={(e) => {
-              e.target.style.borderColor = "rgba(255,255,255,0.1)";
+              e.target.style.borderColor = "var(--border-primary)";
               // Small delay to allow clicking preview if needed, or just close
               setTimeout(() => setActiveMath(null), 150);
             }}
@@ -1018,8 +1017,8 @@ export const ChatDialog: React.FC<Props> = ({
               border: "none",
               background: canSend
                 ? "linear-gradient(135deg, #2563eb, #4f46e5)"
-                : "rgba(255,255,255,0.07)",
-              color: canSend ? "#fff" : "rgba(255,255,255,0.25)",
+                : "var(--bg-input)",
+              color: canSend ? "#fff" : "var(--text-tertiary)",
               cursor: canSend ? "pointer" : "default",
               display: "flex",
               alignItems: "center",
@@ -1038,7 +1037,8 @@ export const ChatDialog: React.FC<Props> = ({
             marginTop: 6,
             fontFamily: "'DM Mono', monospace",
             fontSize: 10,
-            color: "rgba(255,255,255,0.18)",
+            color: "var(--text-tertiary)",
+            opacity: 0.6,
           }}
         >
           ↵ send · ⇧↵ newline

@@ -432,3 +432,19 @@ Currently, the overlay created by the "Explain" function is affixed to the top o
 - Reposition the "Explain" overlay so it appears immediately above (or near) the selected text.
 - Ensure the overlay moves with the message content if possible, or at least stays vertically aligned with the selection point at the time it was triggered.
 - Maintain the existing dismissible functionality and aesthetic.
+# Request: Add Light Mode and System Preference Support
+
+The user wants to add a light mode theme to the application and make it adaptive to the system's theme preference.
+
+## Requirements
+- Add a "Light Mode" theme.
+- Support "System" preference (auto-switch based on OS setting).
+- Ensure all UI components (Canvas, ChatDialog, Tooltips, Sidebars, Search) are readable and aesthetically pleasing in both modes.
+- Persist the theme preference in the configuration store.
+
+## Proposed Changes
+1.  **Tailwind Configuration**: Enable class-based dark mode.
+2.  **Store Extension**: Add `theme` state ('light' | 'dark' | 'system') to `useConfigStore`.
+3.  **Theme Logic**: Implement theme management logic to apply the correct theme class and handle system preference changes.
+4.  **CSS Variables**: Define a set of CSS variables for colors (background, foreground, border, etc.) in `src/index.css` for both modes.
+5.  **Component Updates**: Refactor components to use Tailwind `dark:` classes or the new CSS variables instead of hardcoded dark colors.

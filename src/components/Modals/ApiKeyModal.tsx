@@ -44,11 +44,11 @@ export const ApiKeyModal: React.FC = () => {
     }}>
       <div style={{
         width: 400,
-        background: 'rgba(15,15,25,0.95)',
-        border: '1px solid rgba(255,255,255,0.1)',
+        background: 'var(--bg-surface-solid)',
+        border: '1px solid var(--border-primary)',
         borderRadius: 20,
         padding: '24px 28px',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+        boxShadow: 'var(--shadow-main)',
         display: 'flex',
         flexDirection: 'column',
         gap: 16
@@ -58,13 +58,13 @@ export const ApiKeyModal: React.FC = () => {
             margin: 0, 
             fontFamily: "'Syne', sans-serif", 
             fontSize: 20, 
-            color: '#fff',
+            color: 'var(--text-primary)',
             letterSpacing: '-0.02em'
           }}>Enter Gemini API Key</h2>
           <p style={{ 
             margin: '8px 0 0', 
             fontSize: 13, 
-            color: 'rgba(255,255,255,0.4)',
+            color: 'var(--text-secondary)',
             lineHeight: 1.5
           }}>
             Your key is stored only in memory for this session and never leaves your browser.
@@ -81,11 +81,11 @@ export const ApiKeyModal: React.FC = () => {
             placeholder="AIza..."
             style={{
               width: '100%',
-              background: 'rgba(255,255,255,0.05)',
-              border: `1px solid ${error ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.1)'}`,
+              background: 'var(--bg-input)',
+              border: `1px solid ${error ? 'rgba(239,68,68,0.5)' : 'var(--border-primary)'}`,
               borderRadius: 12,
               padding: '12px 16px',
-              color: '#fff',
+              color: 'var(--text-primary)',
               fontSize: 14,
               fontFamily: "'DM Mono', monospace",
               outline: 'none',
@@ -104,9 +104,9 @@ export const ApiKeyModal: React.FC = () => {
               flex: 1,
               padding: '12px',
               borderRadius: 12,
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.05)',
-              color: 'rgba(255,255,255,0.6)',
+              background: 'var(--bg-input)',
+              border: '1px solid var(--border-secondary)',
+              color: 'var(--text-secondary)',
               cursor: 'pointer',
               fontSize: 14,
               fontWeight: 600,
@@ -142,7 +142,8 @@ export const ApiKeyModal: React.FC = () => {
           style={{
             textAlign: 'center',
             fontSize: 11,
-            color: 'rgba(99,102,241,0.8)',
+            color: 'var(--text-primary)',
+            opacity: 0.6,
             textDecoration: 'none',
             marginTop: 4
           }}

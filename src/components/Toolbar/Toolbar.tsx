@@ -15,11 +15,11 @@ interface Props {
 
 const WORKER_URL = import.meta.env.VITE_WORKER_URL || ''
 
-const BTN: React.CSSProperties = {
-  background:     'rgba(10,10,16,0.9)',
-  border:         '1px solid rgba(255,255,255,0.1)',
+const BTN_BASE: React.CSSProperties = {
+  background:     'var(--bg-surface)',
+  border:         '1px solid var(--border-primary)',
   borderRadius:   10,
-  color:          'rgba(255,255,255,0.55)',
+  color:          'var(--text-secondary)',
   cursor:         'pointer',
   fontFamily:     "'DM Sans', sans-serif",
   fontSize:       13,
@@ -40,16 +40,16 @@ const IconBtn: React.FC<{
     title={title}
     onClick={onClick}
     className="no-pan"
-    style={{ ...BTN, width: 36, height: 36, fontSize: 16, ...style }}
+    style={{ ...BTN_BASE, width: 36, height: 36, fontSize: 16, ...style }}
     onMouseEnter={e => {
       const el = e.currentTarget
       el.style.borderColor = 'rgba(99,102,241,0.5)'
-      el.style.color = '#fff'
+      el.style.color = 'var(--text-primary)'
     }}
     onMouseLeave={e => {
       const el = e.currentTarget
-      el.style.borderColor = 'rgba(255,255,255,0.1)'
-      el.style.color = 'rgba(255,255,255,0.55)'
+      el.style.borderColor = 'var(--border-primary)'
+      el.style.color = 'var(--text-secondary)'
     }}
   >
     {label}
@@ -63,7 +63,7 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
   } = useConversationStore()
 
   const { user, idToken, isWhitelisted, login, logout, setWhitelisted, setShowStatusModal } = useAuthStore()
-  const { apiKey } = useConfigStore()
+  const { apiKey, theme, setTheme } = useConfigStore()
   
   const [showSessions, setShowSessions] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
@@ -172,6 +172,18 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
     setShowProfile(false)
   }
 
+  const toggleTheme = () => {
+    if (theme === 'system') setTheme('light')
+    else if (theme === 'light') setTheme('dark')
+    else setTheme('system')
+  }
+
+  const getThemeIcon = () => {
+    if (theme === 'system') return '🌓'
+    if (theme === 'light') return '☀️'
+    return '🌙'
+  }
+
   const getStatusText = () => {
     if (apiKey) return 'Local Key Active'
     if (isValidating) return 'Validating Access...'
@@ -203,7 +215,7 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
       >
         {/* Logo */}
         <div style={{
-          ...BTN,
+          ...BTN_BASE,
           padding:    '9px 16px',
           cursor:     'default',
           height:     38,
@@ -212,7 +224,7 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
             fontFamily:    "'Syne', sans-serif",
             fontWeight:    800,
             fontSize:      17,
-            color:         '#fff',
+            color:         'var(--text-primary)',
             letterSpacing: '-0.03em',
           }}>
             graph<span style={{ color: '#6366f1' }}>chat</span>
@@ -224,14 +236,14 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
           <button
             onClick={() => setShowSessions(!showSessions)}
             style={{
-              ...BTN,
+              ...BTN_BASE,
               padding: '0 12px',
               height: 38,
               minWidth: 140,
               justifyContent: 'space-between',
               gap: 10,
-              borderColor: showSessions ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.1)',
-              color: showSessions ? '#fff' : 'rgba(255,255,255,0.55)',
+              borderColor: showSessions ? 'rgba(99,102,241,0.5)' : 'var(--border-primary)',
+              color: showSessions ? 'var(--text-primary)' : 'var(--text-secondary)',
             }}
           >
             <span style={{ 
@@ -248,10 +260,10 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
               top: 'calc(100% + 8px)',
               left: 0,
               width: 260,
-              background: 'rgba(11,11,17,0.98)',
-              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'var(--bg-surface-solid)',
+              border: '1px solid var(--border-primary)',
               borderRadius: 12,
-              boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
+              boxShadow: 'var(--shadow-main)',
               padding: '6px',
               backdropFilter: 'blur(20px)',
               maxHeight: 400,
@@ -269,12 +281,12 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     background: s.id === currentSessionId ? 'rgba(99,102,241,0.15)' : 'transparent',
-                    color: s.id === currentSessionId ? '#fff' : 'rgba(255,255,255,0.6)',
+                    color: s.id === currentSessionId ? 'var(--text-primary)' : 'var(--text-secondary)',
                     transition: 'all 0.1s',
                     marginBottom: 2,
                   }}
                   onMouseEnter={e => {
-                    if (s.id !== currentSessionId) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
+                    if (s.id !== currentSessionId) e.currentTarget.style.background = 'var(--bg-input)'
                   }}
                   onMouseLeave={e => {
                     if (s.id !== currentSessionId) e.currentTarget.style.background = 'transparent'
@@ -295,11 +307,11 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
                       }
                     }}
                     style={{
-                      background: 'none', border: 'none', color: 'rgba(255,255,255,0.2)',
+                      background: 'none', border: 'none', color: 'var(--text-tertiary)',
                       cursor: 'pointer', fontSize: 16, padding: '0 4px'
                     }}
                     onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
-                    onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.2)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--text-tertiary)'}
                   >
                     ×
                   </button>
@@ -338,12 +350,12 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
               <button 
                 onClick={() => setShowProfile(!showProfile)}
                 style={{
-                  ...BTN,
+                  ...BTN_BASE,
                   width: 38,
                   height: 38,
                   padding: 0,
                   overflow: 'hidden',
-                  border: (isWhitelisted || apiKey) ? '2px solid #6366f1' : '1px solid rgba(255,255,255,0.1)'
+                  border: (isWhitelisted || apiKey) ? '2px solid #6366f1' : '1px solid var(--border-primary)'
                 }}
               >
                 <img src={user.picture} style={{ width: '100%', height: '100%' }} alt={user.name} />
@@ -355,15 +367,15 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
                   top: 'calc(100% + 8px)',
                   right: 0,
                   width: 200,
-                  background: 'rgba(11,11,17,0.98)',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: 'var(--bg-surface-solid)',
+                  border: '1px solid var(--border-primary)',
                   borderRadius: 12,
                   padding: '12px',
                   backdropFilter: 'blur(20px)',
-                  boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
+                  boxShadow: 'var(--shadow-main)',
                 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', marginBottom: 2 }}>{user.name}</div>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 12 }}>{user.email}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>{user.name}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 12 }}>{user.email}</div>
                   
                   <div style={{ 
                     fontSize: 10, 
@@ -390,10 +402,10 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
                     style={{
                       width: '100%',
                       padding: '8px',
-                      background: 'rgba(255,255,255,0.05)',
+                      background: 'var(--bg-input)',
                       border: 'none',
                       borderRadius: 6,
-                      color: 'rgba(255,255,255,0.6)',
+                      color: 'var(--text-secondary)',
                       fontSize: 12,
                       cursor: 'pointer'
                     }}
@@ -419,14 +431,21 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
           )}
         </div>
 
-        <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.08)', margin: '0 4px' }} />
+        <div style={{ width: 1, height: 20, background: 'var(--border-secondary)', margin: '0 4px' }} />
+
+        {/* Theme Switcher */}
+        <IconBtn 
+          label={<span style={{ fontSize: 14 }}>{getThemeIcon()}</span>} 
+          onClick={toggleTheme} 
+          title={`Theme: ${theme}`} 
+        />
 
         {/* Search */}
         <button
           onClick={onSearchOpen}
           className="no-pan"
           style={{
-            ...BTN,
+            ...BTN_BASE,
             padding: '9px 14px',
             gap:     8,
             height:  38,
@@ -434,12 +453,12 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
           onMouseEnter={e => {
             const el = e.currentTarget
             el.style.borderColor = 'rgba(99,102,241,0.5)'
-            el.style.color = '#fff'
+            el.style.color = 'var(--text-primary)'
           }}
           onMouseLeave={e => {
             const el = e.currentTarget
-            el.style.borderColor = 'rgba(255,255,255,0.1)'
-            el.style.color = 'rgba(255,255,255,0.55)'
+            el.style.borderColor = 'var(--border-primary)'
+            el.style.color = 'var(--text-secondary)'
           }}
         >
           <span style={{ fontSize: 15 }}>⌕</span>
@@ -447,8 +466,8 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
           <kbd style={{
             fontFamily:   'monospace',
             fontSize:     10,
-            color:        'rgba(255,255,255,0.28)',
-            border:       '1px solid rgba(255,255,255,0.15)',
+            color:        'var(--text-tertiary)',
+            border:       '1px solid var(--border-secondary)',
             borderRadius: 4,
             padding:      '1px 6px',
           }}>
@@ -462,7 +481,7 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
           title="Shared Library" 
         />
         
-        <div style={{ width: 1, background: 'rgba(255,255,255,0.08)', margin: '4px 2px' }} />
+        <div style={{ width: 1, background: 'var(--border-secondary)', margin: '4px 2px' }} />
 
         <IconBtn label="−" onClick={() => zoom('out')}  title="Zoom out" />
         <IconBtn label="+" onClick={() => zoom('in')}   title="Zoom in" />
@@ -476,8 +495,8 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
           position:       'fixed',
           bottom:         20,
           left:           20,
-          background:     'rgba(10,10,16,0.88)',
-          border:         '1px solid rgba(255,255,255,0.08)',
+          background:     'var(--bg-surface)',
+          border:         '1px solid var(--border-secondary)',
           borderRadius:   12,
           padding:        '14px 18px',
           zIndex:         500,
@@ -489,7 +508,7 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
           fontFamily:    "'Syne', sans-serif",
           fontSize:      10,
           fontWeight:    700,
-          color:         'rgba(255,255,255,0.3)',
+          color:         'var(--text-tertiary)',
           textTransform: 'uppercase',
           letterSpacing: '0.12em',
           marginBottom:  12,
@@ -509,12 +528,12 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
             <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
               <span style={{ 
                 fontSize: 12, 
-                color: 'rgba(255,255,255,0.25)', 
+                color: 'var(--text-tertiary)', 
                 fontFamily: "'DM Sans', sans-serif" 
               }}>{s.label}</span>
               <span style={{ 
                 fontSize: 12, 
-                color: 'rgba(255,255,255,0.65)', 
+                color: 'var(--text-secondary)', 
                 fontFamily: "'DM Mono', monospace" 
               }}>{s.value}</span>
             </div>
@@ -523,13 +542,13 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
           <div style={{ 
             marginTop: 4, 
             paddingTop: 8, 
-            borderTop: '1px solid rgba(255,255,255,0.06)',
+            borderTop: '1px solid var(--border-secondary)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center'
           }}>
-            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase' }}>Updated</span>
-            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
+            <span style={{ fontSize: 10, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Updated</span>
+            <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
               {currentSession ? timeAgo(currentSession.lastModified) : '--'}
             </span>
           </div>

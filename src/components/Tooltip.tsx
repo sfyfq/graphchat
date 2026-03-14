@@ -22,15 +22,15 @@ export const Tooltip: React.FC<Props> = ({ commit, screenX, screenY }) => {
         position:       'fixed',
         left:           left,
         top:            top,
-        background:     'rgba(9,9,15,0.97)',
-        border:         '1px solid rgba(255,255,255,0.12)',
+        background:     'var(--bg-surface)',
+        border:         '1px solid var(--border-primary)',
         borderRadius:   11,
         padding:        '11px 14px',
         maxWidth:       250,
         pointerEvents:  'none',
         zIndex:         900,
         backdropFilter: 'blur(16px)',
-        boxShadow:      '0 8px 32px rgba(0,0,0,0.7)',
+        boxShadow:      'var(--shadow-main)',
         animation:      'tooltip-in 0.1s ease',
       }}
     >
@@ -38,7 +38,7 @@ export const Tooltip: React.FC<Props> = ({ commit, screenX, screenY }) => {
       <div style={{
         fontFamily:    "'Syne', sans-serif",
         fontSize:      10,
-        color:         'rgba(255,255,255,0.38)',
+        color:         'var(--text-tertiary)',
         textTransform: 'uppercase',
         letterSpacing: '0.09em',
         marginBottom:  6,
@@ -50,7 +50,7 @@ export const Tooltip: React.FC<Props> = ({ commit, screenX, screenY }) => {
       <div style={{
         fontFamily: "'DM Sans', sans-serif",
         fontSize:   13,
-        color:      '#e2e2e2',
+        color:      'var(--text-primary)',
         lineHeight: 1.55,
       }}>
         {commit.summary || truncate(commit.content, 80)}
