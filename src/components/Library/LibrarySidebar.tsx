@@ -16,21 +16,21 @@ const SIDEBAR_STYLE: React.CSSProperties = {
   right: 0,
   width: 320,
   height: '100vh',
-  background: 'rgba(11,11,17,0.98)',
-  borderLeft: '1px solid rgba(255,255,255,0.08)',
+  background: 'var(--bg-surface-solid)',
+  borderLeft: '1px solid var(--border-primary)',
   backdropFilter: 'blur(24px)',
   zIndex: 1000,
   display: 'flex',
   flexDirection: 'column',
   transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-  boxShadow: '-10px 0 50px rgba(0,0,0,0.5)',
+  boxShadow: 'var(--shadow-main)',
 }
 
 const SECTION_HEADER: React.CSSProperties = {
   fontFamily: "'Syne', sans-serif",
   fontSize: 11,
   fontWeight: 700,
-  color: 'rgba(255,255,255,0.3)',
+  color: 'var(--text-tertiary)',
   textTransform: 'uppercase',
   letterSpacing: '0.12em',
   padding: '24px 20px 12px',
@@ -59,7 +59,7 @@ const Thumbnail: React.FC<{ attachment: Attachment }> = ({ attachment }) => {
   return (
     <div style={{ 
       width: '100%', height: '100%', display: 'flex', alignItems: 'center', 
-      justifyContent: 'center', fontSize: 20, background: 'rgba(255,255,255,0.03)', borderRadius: 6 
+      justifyContent: 'center', fontSize: 20, background: 'var(--bg-input)', borderRadius: 6 
     }}>
       {icon}
     </div>
@@ -110,12 +110,12 @@ export const LibrarySidebar: React.FC<Props> = ({ isOpen, onClose }) => {
       {/* Header */}
       <div style={{ 
         padding: '24px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        borderBottom: '1px solid rgba(255,255,255,0.05)'
+        borderBottom: '1px solid var(--border-secondary)'
       }}>
-        <h2 style={{ margin: 0, fontFamily: "'Syne', sans-serif", fontSize: 18, color: '#fff' }}>Library</h2>
+        <h2 style={{ margin: 0, fontFamily: "'Syne', sans-serif", fontSize: 18, color: 'var(--text-primary)' }}>Library</h2>
         <button 
           onClick={onClose}
-          style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: 24 }}
+          style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', fontSize: 24 }}
         >
           ×
         </button>
@@ -126,12 +126,12 @@ export const LibrarySidebar: React.FC<Props> = ({ isOpen, onClose }) => {
         <div style={{ padding: '20px' }}>
           <label style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            height: 80, border: '1px dashed rgba(255,255,255,0.15)', borderRadius: 12,
-            cursor: isUploading ? 'default' : 'pointer', background: 'rgba(255,255,255,0.02)',
+            height: 80, border: '1px dashed var(--border-primary)', borderRadius: 12,
+            cursor: isUploading ? 'default' : 'pointer', background: 'var(--bg-input)',
             transition: 'all 0.2s'
           }}>
             <span style={{ fontSize: 20, marginBottom: 4 }}>{isUploading ? '⌛' : '📤'}</span>
-            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <span style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               {isUploading ? 'Uploading...' : 'Upload File'}
             </span>
             <input type="file" onChange={handleUpload} style={{ display: 'none' }} disabled={isUploading} />
@@ -147,7 +147,7 @@ export const LibrarySidebar: React.FC<Props> = ({ isOpen, onClose }) => {
             </div>
           ))}
           {sessionAttachments.length === 0 && (
-            <div style={{ gridColumn: '1/-1', padding: '10px 0', fontSize: 12, color: 'rgba(255,255,255,0.15)', fontStyle: 'italic' }}>
+            <div style={{ gridColumn: '1/-1', padding: '10px 0', fontSize: 12, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
               No attachments in this session
             </div>
           )}
@@ -162,7 +162,7 @@ export const LibrarySidebar: React.FC<Props> = ({ isOpen, onClose }) => {
             </div>
           ))}
           {globalAttachments.length === 0 && (
-            <div style={{ gridColumn: '1/-1', padding: '10px 0', fontSize: 12, color: 'rgba(255,255,255,0.15)', fontStyle: 'italic' }}>
+            <div style={{ gridColumn: '1/-1', padding: '10px 0', fontSize: 12, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
               Global library is empty
             </div>
           )}

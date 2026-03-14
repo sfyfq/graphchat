@@ -51,7 +51,7 @@ const AttachmentPreview: React.FC<{ id: string }> = ({ id }) => {
       {isImage && url ? (
         <img 
           src={url} 
-          style={{ maxWidth: '100%', maxHeight: 300, borderRadius: 10, display: 'block', border: '1px solid rgba(255,255,255,0.1)' }} 
+          style={{ maxWidth: '100%', maxHeight: 300, borderRadius: 10, display: 'block', border: '1px solid var(--border-primary)' }} 
           alt={attachment.name} 
         />
       ) : isAudio && url ? (
@@ -61,14 +61,14 @@ const AttachmentPreview: React.FC<{ id: string }> = ({ id }) => {
       ) : (
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
-          background: 'rgba(255,255,255,0.05)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)'
+          background: 'var(--bg-input)', borderRadius: 10, border: '1px solid var(--border-primary)'
         }}>
           <span style={{ fontSize: 20 }}>📄</span>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: 12, color: '#fff', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: 12, color: 'var(--text-primary)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {attachment.name}
             </span>
-            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>
+            <span style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>
               {(attachment.size / 1024).toFixed(1)} KB · {attachment.type.split('/')[1]?.toUpperCase()}
             </span>
           </div>
@@ -85,13 +85,15 @@ export const MarkdownComponents: any = {
   li: ({ children }: any) => <li style={{ marginBottom: '4px' }}>{children}</li>,
   code: ({ children, inline }: any) => (
     <code style={{
-      background: 'rgba(255,255,255,0.1)',
+      background: 'var(--bg-input)',
+      color: 'var(--text-primary)',
       padding: inline ? '2px 4px' : '8px',
       borderRadius: 4,
       fontSize: '0.9em',
       fontFamily: "'DM Mono', monospace",
       display: inline ? 'inline' : 'block',
       overflowX: 'auto',
+      border: inline ? 'none' : '1px solid var(--border-secondary)',
     }}>
       {children}
     </code>
@@ -163,7 +165,7 @@ export const MessageList: React.FC<Props> = ({
     return (
       <div style={{
         textAlign:  'center',
-        color:      'rgba(255,255,255,0.2)',
+        color:      'var(--text-tertiary)',
         fontFamily: "'DM Mono', monospace",
         fontSize:   12,
         paddingTop: 48,
@@ -217,11 +219,11 @@ export const MessageList: React.FC<Props> = ({
                 : '14px 14px 14px 4px',
               background: m.role === 'user'
                 ? 'linear-gradient(135deg, #2563eb, #4f46e5)'
-                : 'rgba(255,255,255,0.06)',
+                : 'var(--bg-input)',
               border:     m.role === 'assistant'
-                ? '1px solid rgba(255,255,255,0.09)'
+                ? '1px solid var(--border-secondary)'
                 : 'none',
-              color:      '#ececec',
+              color:      'var(--text-primary)',
               fontFamily: "'DM Sans', sans-serif",
               fontSize:   13.5,
               lineHeight: 1.65,
@@ -243,7 +245,7 @@ export const MessageList: React.FC<Props> = ({
             </ReactMarkdown>
             <div style={{
               fontSize:   10,
-              color:      'rgba(255,255,255,0.3)',
+              color:      'var(--text-tertiary)',
               marginTop:  5,
               textAlign:  'right',
               fontFamily: "'DM Mono', monospace",
@@ -295,9 +297,9 @@ export const MessageList: React.FC<Props> = ({
             maxWidth:     '82%',
             padding:      '10px 14px',
             borderRadius: '14px 14px 14px 4px',
-            background:   'rgba(255,255,255,0.06)',
-            border:       '1px solid rgba(255,255,255,0.09)',
-            color:        '#ececec',
+            background:   'var(--bg-input)',
+            border:       '1px solid var(--border-secondary)',
+            color:        'var(--text-primary)',
             fontFamily:   "'DM Sans', sans-serif",
             fontSize:     13.5,
             lineHeight:   1.65,
@@ -327,8 +329,8 @@ export const MessageList: React.FC<Props> = ({
           <div style={{
             padding:      '12px 16px',
             borderRadius: '14px 14px 14px 4px',
-            background:   'rgba(255,255,255,0.06)',
-            border:       '1px solid rgba(255,255,255,0.09)',
+            background:   'var(--bg-input)',
+            border:       '1px solid var(--border-secondary)',
           }}>
             <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
               {[0, 1, 2].map(i => (
@@ -338,7 +340,7 @@ export const MessageList: React.FC<Props> = ({
                     width:        6,
                     height:       6,
                     borderRadius: '50%',
-                    background:   'rgba(255,255,255,0.45)',
+                    background:   'var(--text-tertiary)',
                     animation:    `dot-pulse 1.2s ${i * 0.2}s infinite`,
                   }}
                 />

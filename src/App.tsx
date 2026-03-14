@@ -14,6 +14,7 @@ import { MinimizedSidebar } from './components/Canvas/MinimizedSidebar'
 import { SquashTooltip } from './components/Canvas/SquashNode'
 import { useConversationStore } from './store/conversationStore'
 import { useAuthStore, getStorageScope } from './store/authStore'
+import { useConfigStore } from './store/configStore'
 import { computeLayout }        from './lib/layout'
 import { computeSquashGroups, hiddenIds } from './lib/squash'
 import type { SquashGroup } from './lib/squash'
@@ -23,6 +24,7 @@ import type { Commit, DialogState } from './types'
 export default function App() {
   const { sessions, currentSessionId, setHEAD, reset } = useConversationStore()
   const { user, isHydrated } = useAuthStore()
+  const { theme } = useConfigStore()
   const currentSession = sessions[currentSessionId]
   
   // Storage Scope tracking
@@ -45,6 +47,30 @@ export default function App() {
   // Separate states for hover and persistent expansion
   const [hoveredSquashGroup,  setHoveredSquashGroup]  = useState<SquashGroup | null>(null)
   const [expandedSquashGroup, setExpandedSquashGroup] = useState<SquashGroup | null>(null)
+
+  // ── Theme Management ─────────────────────────────────────────────────────
+  useEffect(() => {
+    const root = window.document.documentElement
+    
+    const applyTheme = (isDark: boolean) => {
+      if (isDark) {
+        root.classList.add('dark')
+      } else {
+        root.classList.remove('dark')
+      }
+    }
+
+    if (theme === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+      applyTheme(mediaQuery.matches)
+
+      const handler = (e: MediaQueryListEvent) => applyTheme(e.matches)
+      mediaQuery.addEventListener('change', handler)
+      return () => mediaQuery.removeEventListener('change', handler)
+    } else {
+      applyTheme(theme === 'dark')
+    }
+  }, [theme])
 
   // ── Multi-user Switch Logic ────────────────────────────────────────────────
   // When the storage scope (user) changes, re-hydrate the conversation store
@@ -289,10 +315,10 @@ export default function App() {
   if (!isHydrated) {
     return (
       <div style={{
-        width: '100vw', height: '100vh', background: '#080810',
+        width: '100vw', height: '100vh', background: 'var(--bg-app)',
         display: 'flex', alignItems: 'center', justifyContent: 'center'
       }}>
-        <div style={{ color: 'rgba(255,255,255,0.2)', fontFamily: "'Syne', sans-serif", fontSize: 14 }}>
+        <div style={{ color: 'var(--text-tertiary)', fontFamily: "'Syne', sans-serif", fontSize: 14 }}>
           Initializing Storage...
         </div>
       </div>
@@ -300,7 +326,7 @@ export default function App() {
   }
 
   return (
-    <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', background: '#080810' }}>
+    <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', background: 'var(--bg-app)' }}>
 
       {/* Infinite canvas */}
       <Canvas

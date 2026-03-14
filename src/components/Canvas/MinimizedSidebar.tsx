@@ -29,10 +29,10 @@ export const MinimizedSidebar: React.FC<Props> = ({ items, onRestore }) => {
       gap: 12,
       zIndex: 1000,
       padding: '10px 6px',
-      background: 'rgba(10,10,16,0.4)',
+      background: 'var(--bg-surface)',
       backdropFilter: 'blur(12px)',
       borderRadius: 20,
-      border: '1px solid rgba(255,255,255,0.05)',
+      border: '1px solid var(--border-secondary)',
       animation: 'sidebar-in 0.3s ease-out'
     }}>
       {itemList.map((item) => (
@@ -48,8 +48,8 @@ export const MinimizedSidebar: React.FC<Props> = ({ items, onRestore }) => {
               width: 44,
               height: 44,
               borderRadius: 14,
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'var(--bg-input)',
+              border: '1px solid var(--border-primary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -58,11 +58,11 @@ export const MinimizedSidebar: React.FC<Props> = ({ items, onRestore }) => {
               position: 'relative'
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.12)'
+              e.currentTarget.style.background = 'var(--border-secondary)'
               e.currentTarget.style.transform = 'scale(1.05)'
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
+              e.currentTarget.style.background = 'var(--bg-input)'
               e.currentTarget.style.transform = 'scale(1)'
             }}
           >
@@ -87,22 +87,22 @@ export const MinimizedSidebar: React.FC<Props> = ({ items, onRestore }) => {
               top: '50%',
               transform: 'translateY(-50%)',
               width: 200,
-              background: 'rgba(15,15,25,0.95)',
+              background: 'var(--bg-surface-solid)',
               backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255,255,255,0.1)',
+              border: '1px solid var(--border-primary)',
               borderRadius: 12,
               padding: '10px 12px',
-              color: 'rgba(255,255,255,0.8)',
+              color: 'var(--text-secondary)',
               fontSize: 12,
               lineHeight: 1.4,
               pointerEvents: 'none',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+              boxShadow: 'var(--shadow-main)',
               animation: 'tooltip-in 0.15s ease-out'
             }}>
               <div style={{ 
                 fontFamily: "'Syne', sans-serif", 
                 fontSize: 9, 
-                color: 'rgba(255,255,255,0.3)',
+                color: 'var(--text-tertiary)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
                 marginBottom: 4
@@ -118,9 +118,9 @@ export const MinimizedSidebar: React.FC<Props> = ({ items, onRestore }) => {
                 transform: 'translateY(-50%) rotate(45deg)',
                 width: 10,
                 height: 10,
-                background: 'rgba(15,15,25,0.95)',
-                borderRight: '1px solid rgba(255,255,255,0.1)',
-                borderTop: '1px solid rgba(255,255,255,0.1)',
+                background: 'var(--bg-surface-solid)',
+                borderRight: '1px solid var(--border-primary)',
+                borderTop: '1px solid var(--border-primary)',
               }} />
             </div>
           )}

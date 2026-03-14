@@ -22,9 +22,10 @@ export const SquashNode: React.FC<Props> = ({
   group, x, y, isActive, expanded, zoom, onToggle, onHoverGroup,
 }) => {
   const count   = group.commits.length
-  const bColor  = isActive ? '#6366f1' : 'rgba(255,255,255,0.3)'
-  const fill    = isActive ? 'rgba(99,102,241,0.12)' : 'rgba(255,255,255,0.04)'
-  const stroke  = isActive ? 'rgba(99,102,241,0.7)'  : 'rgba(255,255,255,0.22)'
+  // For SVG elements, we use CSS variables or raw colors.
+  // Tailwind classes don't work directly on style attributes of SVG elements in the same way.
+  const fill    = isActive ? 'rgba(99,102,241,0.12)' : 'var(--bg-input)'
+  const stroke  = isActive ? 'rgba(99,102,241,0.7)'  : 'var(--border-primary)'
 
   const handleClick = (e: React.MouseEvent<SVGGElement>) => {
     e.stopPropagation()
@@ -71,14 +72,14 @@ export const SquashNode: React.FC<Props> = ({
 
       {/* Count badge */}
       <g transform={`translate(${-PILL_W + 18}, 0)`}>
-        <circle r={12} fill={isActive ? 'rgba(99,102,241,0.3)' : 'rgba(255,255,255,0.08)'} />
+        <circle r={12} fill={isActive ? 'rgba(99,102,241,0.3)' : 'var(--border-secondary)'} />
         <text
           textAnchor="middle"
           dominantBaseline="central"
           fontSize={9}
           fontFamily="'DM Mono', monospace"
           fontWeight="500"
-          fill={isActive ? '#a5b4fc' : 'rgba(255,255,255,0.5)'}
+          fill={isActive ? '#a5b4fc' : 'var(--text-secondary)'}
           style={{ pointerEvents: 'none', userSelect: 'none' }}
         >
           ×{count}
@@ -92,7 +93,7 @@ export const SquashNode: React.FC<Props> = ({
         dominantBaseline="central"
         fontSize={10}
         fontFamily="'DM Mono', monospace"
-        fill={isActive ? 'rgba(165,180,252,0.9)' : 'rgba(255,255,255,0.4)'}
+        fill={isActive ? 'rgba(165,180,252,0.9)' : 'var(--text-tertiary)'}
         style={{ pointerEvents: 'none', userSelect: 'none' }}
       >
         {expanded ? 'collapse' : 'squashed'}
@@ -121,8 +122,8 @@ export const SquashTooltip: React.FC<TooltipProps> = ({
       position:       'fixed',
       left:           20,
       top:            74,
-      background:     'rgba(9,9,15,0.97)',
-      border:         '1px solid rgba(255,255,255,0.12)',
+      background:     'var(--bg-surface)',
+      border:         '1px solid var(--border-primary)',
       borderRadius:   12,
       padding:        '12px 14px',
       width:          280,
@@ -131,7 +132,7 @@ export const SquashTooltip: React.FC<TooltipProps> = ({
       pointerEvents:  'auto',
       zIndex:         900,
       backdropFilter: 'blur(16px)',
-      boxShadow:      '0 8px 32px rgba(0,0,0,0.7)',
+      boxShadow:      'var(--shadow-main)',
       animation:      'tooltip-in 0.1s ease',
     }}>
       <div style={{
@@ -141,14 +142,14 @@ export const SquashTooltip: React.FC<TooltipProps> = ({
         marginBottom:  10,
         position:      'sticky',
         top:           0,
-        background:    'rgba(9,9,15,0.01)', // tiny bit of bg for sticky
+        background:    'var(--bg-surface)', // match parent bg for sticky
         paddingBottom: 4,
         zIndex:        10,
       }}>
         <div style={{
           fontFamily:    "'Syne', sans-serif",
           fontSize:      10,
-          color:         'rgba(255,255,255,0.35)',
+          color:         'var(--text-tertiary)',
           textTransform: 'uppercase',
           letterSpacing: '0.09em',
         }}>
@@ -161,27 +162,27 @@ export const SquashTooltip: React.FC<TooltipProps> = ({
           <button
             onClick={() => onCollapse(group.id)}
             style={{
-              background: 'rgba(255,255,255,0.05)',
-              border:     '1px solid rgba(255,255,255,0.1)',
+              background: 'var(--bg-input)',
+              border:     '1px solid var(--border-secondary)',
               borderRadius: '50%',
               width:      18,
               height:     18,
               display:    'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color:      'rgba(255,255,255,0.5)',
+              color:      'var(--text-tertiary)',
               cursor:     'pointer',
               fontSize:   12,
               padding:    0,
               lineHeight: 1,
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.12)'
-              e.currentTarget.style.color = '#fff'
+              e.currentTarget.style.background = 'var(--border-secondary)'
+              e.currentTarget.style.color = 'var(--text-primary)'
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
-              e.currentTarget.style.color = 'rgba(255,255,255,0.5)'
+              e.currentTarget.style.background = 'var(--bg-input)'
+              e.currentTarget.style.color = 'var(--text-tertiary)'
             }}
           >
             ×
@@ -199,7 +200,7 @@ export const SquashTooltip: React.FC<TooltipProps> = ({
               style={{
                 display: 'flex', alignItems: 'flex-start', gap: 7,
                 cursor: 'pointer', padding: '4px', borderRadius: 6,
-                background: isTurnHovered ? 'rgba(255,255,255,0.05)' : 'transparent',
+                background: isTurnHovered ? 'var(--bg-input)' : 'transparent',
                 transition: 'background 0.15s',
               }}
               onMouseEnter={() => onTurnHover(c.id)}
@@ -216,14 +217,14 @@ export const SquashTooltip: React.FC<TooltipProps> = ({
                   flexShrink:   0,
                 }} />
                 {i < group.commits.length - 1 && (
-                  <div style={{ width: 1, height: 10, background: 'rgba(255,255,255,0.1)', marginTop: 2 }} />
+                  <div style={{ width: 1, height: 10, background: 'var(--border-secondary)', marginTop: 2 }} />
                 )}
               </div>
               <div>
                 <div style={{
                   fontFamily: "'DM Sans', sans-serif",
                   fontSize:   11,
-                  color:      isTurnHovered ? '#fff' : '#ccc',
+                  color:      isTurnHovered ? 'var(--text-primary)' : 'var(--text-secondary)',
                   lineHeight: 1.4,
                 }}>
                   {truncate(c.summary || c.content, 55)}
@@ -231,7 +232,8 @@ export const SquashTooltip: React.FC<TooltipProps> = ({
                 <div style={{
                   fontFamily: "'DM Mono', monospace",
                   fontSize:   9,
-                  color:      isTurnHovered ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.25)',
+                  color:      isTurnHovered ? 'var(--text-tertiary)' : 'var(--text-tertiary)',
+                  opacity:    isTurnHovered ? 1 : 0.7,
                   marginTop:  1,
                 }}>
                   {timeAgo(c.timestamp)}
