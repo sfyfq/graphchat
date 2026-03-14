@@ -223,7 +223,7 @@ export const MessageList: React.FC<Props> = ({
               border:     m.role === 'assistant'
                 ? '1px solid var(--border-secondary)'
                 : 'none',
-              color:      'var(--text-primary)',
+              color:      m.role === 'user' ? '#fff' : 'var(--text-primary)',
               fontFamily: "'DM Sans', sans-serif",
               fontSize:   13.5,
               lineHeight: 1.65,
@@ -245,7 +245,7 @@ export const MessageList: React.FC<Props> = ({
             </ReactMarkdown>
             <div style={{
               fontSize:   10,
-              color:      'var(--text-tertiary)',
+              color:      m.role === 'user' ? 'rgba(255,255,255,0.5)' : 'var(--text-tertiary)',
               marginTop:  5,
               textAlign:  'right',
               fontFamily: "'DM Mono', monospace",
@@ -264,7 +264,7 @@ export const MessageList: React.FC<Props> = ({
             padding:      '10px 14px',
             borderRadius: '14px 14px 4px 14px',
             background:   'linear-gradient(135deg, #2563eb, #4f46e5)',
-            color:        '#ececec',
+            color:        '#fff',
             fontFamily:   "'DM Sans', sans-serif",
             fontSize:     13.5,
             lineHeight:   1.65,
@@ -279,7 +279,7 @@ export const MessageList: React.FC<Props> = ({
             </ReactMarkdown>
             <div style={{
               fontSize:   10,
-              color:      'rgba(255,255,255,0.3)',
+              color:      'rgba(255,255,255,0.5)',
               marginTop:  5,
               textAlign:  'right',
               fontFamily: "'DM Mono', monospace",
