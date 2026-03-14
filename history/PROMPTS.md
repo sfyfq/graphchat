@@ -1118,3 +1118,70 @@ Fix the `Explain` overlay positioning in `ChatDialog.tsx` so it appears near the
 - Do not break existing chat functionality.
 - Ensure the overlay is still dismissible via the "X" button.
 - Maintain the visual consistency of the `gitchat` theme.
+# Implementation Plan: Light Mode and System Preference Support
+
+This plan outlines the steps to add light mode support and system-adaptive theme switching to the GitChat application.
+
+## Objective
+Enable users to switch between light and dark themes, or have the application automatically follow their system's theme preference.
+
+## Key Files & Context
+- `tailwind.config.js`: Tailwind's dark mode configuration.
+- `src/store/configStore.ts`: Centralized configuration state.
+- `src/index.css`: Global styles and color definitions.
+- `src/App.tsx`: Main application container and layout.
+- `src/components/Toolbar/Toolbar.tsx`: Theme switching UI.
+- All other UI components (`ChatDialog`, `Canvas`, etc.) that use hardcoded colors.
+
+## Implementation Steps
+
+### Phase 1: Infrastructure & State
+1.  **Configure Tailwind**:
+    -   Update `tailwind.config.js` to use `darkMode: 'class'`.
+2.  **Update Configuration Store**:
+    -   Modify `src/store/configStore.ts` to add `theme` state (`'light' | 'dark' | 'system'`).
+    -   Add a `setTheme` action to the store.
+3.  **Implement Theme Management Logic**:
+    -   Create a `ThemeManager` component (or logic within `App.tsx`) to handle the application of the `dark` class to the `document.documentElement`.
+    -   Listen for system theme preference changes using `window.matchMedia('(prefers-color-scheme: dark)').addEventListener`.
+
+### Phase 2: Design Tokens (CSS Variables)
+1.  **Define Color Variables**:
+    -   In `src/index.css`, define `:root` (for light mode) and `.dark` (for dark mode) CSS variables for:
+        -   `--bg-app`: Main application background.
+        -   `--bg-surface`: Component backgrounds (e.g., dialogs, sidebars).
+        -   `--bg-input`: Textarea and input backgrounds.
+        -   `--text-primary`: Primary text color.
+        -   `--text-secondary`: Secondary/muted text color.
+        -   `--border-primary`: Primary border color.
+        -   `--border-secondary`: Muted border color.
+        -   `--shadow-main`: Main component shadows.
+2.  **Apply Global Styles**:
+    -   Update `html`, `body`, and `#root` to use `--bg-app`.
+    -   Update scrollbar styles to use color variables.
+
+### Phase 3: Component Refactoring
+1.  **Global Refactor**:
+    -   Systematically replace hardcoded dark colors (e.g., `rgba(255,255,255,0.05)`, `rgba(11,11,17,0.97)`) with the new CSS variables or Tailwind's `dark:` utility classes.
+2.  **Toolbar & Theme Switcher**:
+    -   Add a theme toggle button to `src/components/Toolbar/Toolbar.tsx`.
+    -   Implement the toggle logic (cycling through 'light', 'dark', 'system').
+3.  **Canvas & Visualization**:
+    -   In `src/components/Canvas/Canvas.tsx`, adjust the `Starfield` component (e.g., dim or hide stars in light mode).
+    -   Ensure `CommitNode`, `EdgePath`, and `SquashNode` remain visible and clear on a light background.
+4.  **Chat & Dialogs**:
+    -   Update `ChatDialog.tsx`, `MessageList.tsx`, and `MarkdownComponents` to use theme variables.
+    -   Adjust math previews and code blocks for light mode visibility.
+5.  **Modals & Overlays**:
+    -   Update `ApiKeyModal.tsx`, `AuthStatusModal.tsx`, `SearchPanel.tsx`, and `LibrarySidebar.tsx`.
+
+### Phase 4: Verification & Testing
+1.  **Visual Audit**: Manually verify each component in both light and dark modes.
+2.  **System Preference Sync**: Verify that 'system' mode correctly responds to OS theme changes.
+3.  **Persistence**: Confirm that the theme preference is saved and restored across sessions.
+4.  **Accessibility**: Ensure sufficient contrast ratios in both modes.
+
+## Verification
+- Switch theme to 'Light' and verify all components are legible.
+- Switch theme to 'Dark' and verify it looks correct (no regressions).
+- Switch theme to 'System' and toggle OS theme settings, ensuring the app follows.
