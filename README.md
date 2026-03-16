@@ -1,4 +1,5 @@
 # GraphChat
+You can play with a [hosted demo](https://chat.crestavista.net/) here.
 ![alt text](doc/images/graphchat.png)
 
 I have been frustrated with the linear nature of browser-based LLM chatbots. They don't work well when I want to explore multiple sub-topics because the context window eventually gets contaminated. Standard chatbots often lose focus and miss prior instructions as the conversation grows.
