@@ -1059,3 +1059,12 @@
 - [ ] Verify 'dark' mode still looks good.
 - [ ] Verify 'system' mode correctly follows OS setting.
 - [ ] Check for any missed hardcoded colors.
+# TODO: Fix Invisible Connection Lines in Light Mode
+
+- [x] Analyze the issue: where are the colors hardcoded?
+- [x] Define CSS variables for edge colors in `src/index.css`.
+- [x] Update `branchColor` in `src/lib/utils.ts` to use `--edge-color-default`.
+- [x] Update `EdgePath.tsx` to use `--edge-color-active` when active.
+- [x] Update `ChatDialog.tsx` for consistency.
+- [x] Verify changes (pass tests and typecheck).
+- [x] Append to progress.md and commit.

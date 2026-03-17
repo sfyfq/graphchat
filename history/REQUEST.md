@@ -448,3 +448,17 @@ The user wants to add a light mode theme to the application and make it adaptive
 3.  **Theme Logic**: Implement theme management logic to apply the correct theme class and handle system preference changes.
 4.  **CSS Variables**: Define a set of CSS variables for colors (background, foreground, border, etc.) in `src/index.css` for both modes.
 5.  **Component Updates**: Refactor components to use Tailwind `dark:` classes or the new CSS variables instead of hardcoded dark colors.
+# Request: Fix Invisible Connection Lines in Light Mode
+
+The user reported that connection lines between nodes are invisible in light mode.
+
+## Findings
+- `branchColor` returns a hardcoded `rgba(255,255,255,0.2)` for unlabeled commits.
+- This color is almost invisible against the `#f8f9fa` background of light mode.
+- `EdgePath` uses a hardcoded `rgba(99,102,241,0.55)` for the active path, which is also somewhat faint in light mode.
+- `ChatDialog` also has a hardcoded focus border color for the textarea.
+
+## Solution
+- Use CSS variables to manage theme-dependent colors for edges.
+- Define `--edge-color-default` and `--edge-color-active` in `index.css`.
+- Update the code to use these variables instead of hardcoded RGBA strings.
