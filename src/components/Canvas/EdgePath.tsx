@@ -23,7 +23,7 @@ export const EdgePath: React.FC<Props> = ({
     <path
       d={d}
       fill="none"
-      stroke={isActive ? 'rgba(99,102,241,0.55)' : color}
+      stroke={isActive ? 'var(--edge-color-active)' : color}
       strokeWidth={isActive ? 2 : 1.5}
       opacity={isActive ? 1 : 0.5}
       strokeLinecap="round"

@@ -70,7 +70,7 @@ const COLOR_PALETTE = [
 let colorIndex = 1 // 0 reserved for main
 
 export function branchColor(label: string | undefined): string {
-  if (!label) return 'rgba(255,255,255,0.2)'
+  if (!label) return 'var(--edge-color-default)'
   if (label === 'main') return COLOR_PALETTE[0]
   if (!BRANCH_COLORS[label]) {
     BRANCH_COLORS[label] = COLOR_PALETTE[colorIndex % COLOR_PALETTE.length]

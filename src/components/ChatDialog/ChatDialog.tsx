@@ -998,7 +998,7 @@ export const ChatDialog: React.FC<Props> = ({
               minHeight: 38,
             }}
             onFocus={(e) => {
-              e.target.style.borderColor = "rgba(99,102,241,0.55)";
+              e.target.style.borderColor = "var(--edge-color-active)";
             }}
             onBlur={(e) => {
               e.target.style.borderColor = "var(--border-primary)";
