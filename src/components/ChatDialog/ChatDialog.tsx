@@ -131,7 +131,7 @@ export const ChatDialog: React.FC<Props> = ({
 }) => {
   const { sessions, currentSessionId, addTurn, library, uploadAttachment } =
     useConversationStore();
-  const { apiKey, setApiKey, setShowKeyModal } = useConfigStore();
+  const { apiKey, setApiKey, setShowKeyModal, thinkingMode, setThinkingMode } = useConfigStore();
   const commits = sessions[currentSessionId]?.commits || {};
 
   const [pos, setPos] = useState(initialPosition);
@@ -383,6 +383,7 @@ export const ChatDialog: React.FC<Props> = ({
           conv,
           text,
           currentAttachments,
+          thinkingMode,
         )) {
           fullAssistantContent += chunk;
           setStreamingContent(fullAssistantContent);
@@ -451,7 +452,7 @@ export const ChatDialog: React.FC<Props> = ({
         setLoading(false);
       }
     },
-    [input, loading, commits, addTurn, tipId, pendingAttachmentIds],
+    [input, loading, commits, addTurn, tipId, pendingAttachmentIds, thinkingMode],
   );
 
   const handleExplain = useCallback(
@@ -463,7 +464,7 @@ export const ChatDialog: React.FC<Props> = ({
         const conv = await reconstructMessages(commits, overrideTipId);
         let fullAssistantContent = "";
 
-        for await (const chunk of llm.streamMessage(conv, prompt, [])) {
+        for await (const chunk of llm.streamMessage(conv, prompt, [], thinkingMode)) {
           fullAssistantContent += chunk;
           setExplainResult((prev) =>
             prev ? { ...prev, response: fullAssistantContent, y } : null,
@@ -479,7 +480,7 @@ export const ChatDialog: React.FC<Props> = ({
         setExplainResult(null);
       }
     },
-    [commits],
+    [commits, thinkingMode],
   );
 
   const handleSelectionAction = useCallback(
@@ -637,6 +638,42 @@ export const ChatDialog: React.FC<Props> = ({
         >
           {messages.length} turns
         </span>
+
+        {/* Deep Think Toggle */}
+        <button
+          onClick={() => setThinkingMode(thinkingMode === 'deep' ? 'balanced' : 'deep')}
+          title={thinkingMode === 'deep' ? "Deep Think: ON" : "Deep Think: OFF"}
+          style={{
+            background: thinkingMode === 'deep' ? 'rgba(99,102,241,0.15)' : 'none',
+            border: thinkingMode === 'deep' ? '1px solid rgba(99,102,241,0.3)' : '1px solid transparent',
+            borderRadius: 6,
+            padding: '2px 6px',
+            marginLeft: 8,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            transition: 'all 0.2s',
+          }}
+        >
+          <span style={{ 
+            fontSize: 12, 
+            filter: thinkingMode === 'deep' ? 'drop-shadow(0 0 4px #6366f1)' : 'grayscale(1)',
+            opacity: thinkingMode === 'deep' ? 1 : 0.5,
+          }}>
+            🧠
+          </span>
+          <span style={{ 
+            fontSize: 9, 
+            fontFamily: "'Syne', sans-serif",
+            fontWeight: 700,
+            color: thinkingMode === 'deep' ? 'var(--text-primary)' : 'var(--text-tertiary)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.02em',
+          }}>
+            Deep
+          </span>
+        </button>
 
         {/* Action Buttons */}
         <div

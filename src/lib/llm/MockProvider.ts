@@ -1,4 +1,4 @@
-import { LLMProvider } from './types'
+import { LLMProvider, ThinkingMode } from './types'
 import { ReconstructedConversation } from './utils'
 
 export class MockProvider implements LLMProvider {
@@ -6,14 +6,24 @@ export class MockProvider implements LLMProvider {
     multimodal: false,
   };
 
-  async sendMessage(_conv: ReconstructedConversation, newText: string, attachmentIds?: string[]): Promise<string> {
+  async sendMessage(
+    _conv: ReconstructedConversation, 
+    newText: string, 
+    attachmentIds?: string[],
+    thinkingMode: ThinkingMode = 'auto'
+  ): Promise<string> {
     const attachMsg = (attachmentIds && attachmentIds.length > 0) ? ` (with ${attachmentIds.length} attachments)` : '';
-    return `[MOCK MODE] You said: "${newText}"${attachMsg}. \n\nPlease sign in with an authorized Google account to access the real Gemini LLM.`
+    return `[MOCK MODE] You said: "${newText}"${attachMsg}. (Thinking mode: ${thinkingMode}) \n\nPlease sign in with an authorized Google account to access the real Gemini LLM.`
   }
 
-  async* streamMessage(_conv: ReconstructedConversation, newText: string, attachmentIds?: string[]): AsyncGenerator<string, void, unknown> {
+  async* streamMessage(
+    _conv: ReconstructedConversation, 
+    newText: string, 
+    attachmentIds?: string[],
+    thinkingMode: ThinkingMode = 'auto'
+  ): AsyncGenerator<string, void, unknown> {
     const attachMsg = (attachmentIds && attachmentIds.length > 0) ? ` (with ${attachmentIds.length} attachments)` : '';
-    const response = `[MOCK MODE] I am a simulated LLM. \n\nI received your message: "${newText}"${attachMsg}\n\nTo use the actual Gemini model, please use the "Sign In" button in the toolbar. Only whitelisted friends of the author have access to the live model.`
+    const response = `[MOCK MODE] I am a simulated LLM. (Thinking mode: ${thinkingMode}) \n\nI received your message: "${newText}"${attachMsg}\n\nTo use the actual Gemini model, please use the "Sign In" button in the toolbar. Only whitelisted friends of the author have access to the live model.`
     
     // Simulate streaming by splitting into words
     const words = response.split(' ')

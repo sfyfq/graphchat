@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI, Part } from "@google/generative-ai";
-import { LLMProvider } from './types'
-import { ReconstructedConversation, blobToBase64 } from './utils'
+import { LLMProvider, ThinkingMode } from './types'
+import { ReconstructedConversation, blobToBase64, getThinkingConfig } from './utils'
 import { useAuthStore, getStorageScope } from '../../store/authStore'
 import { useConversationStore } from '../../store/conversationStore'
 import { getBlob } from '../storage'
@@ -42,15 +42,17 @@ export class ProxyProvider implements LLMProvider {
   /**
    * Initialize the official Gemini SDK configured to route through the Proxy Worker.
    */
-  private getClient() {
+  private getClient(thinkingMode: ThinkingMode = 'auto') {
     const { idToken } = useAuthStore.getState()
+    const thinkingConfig = getThinkingConfig(thinkingMode, MODEL_NAME);
     
     // The "API Key" here is a placeholder because the Worker injects the real one.
     const genAI = new GoogleGenerativeAI("PROXY_KEY"); 
     
     return genAI.getGenerativeModel({
       model: MODEL_NAME,
-    }, {
+      generationConfig: thinkingConfig
+    } as any, {
       baseUrl: WORKER_URL,
       customHeaders: {
         "Authorization": `Bearer ${idToken}`
@@ -58,9 +60,14 @@ export class ProxyProvider implements LLMProvider {
     });
   }
 
-  async sendMessage(conv: ReconstructedConversation, newText: string, attachmentIds?: string[]): Promise<string> {
+  async sendMessage(
+    conv: ReconstructedConversation, 
+    newText: string, 
+    attachmentIds?: string[],
+    thinkingMode: ThinkingMode = 'auto'
+  ): Promise<string> {
     const { setWhitelisted, logout } = useAuthStore.getState()
-    const model = this.getClient();
+    const model = this.getClient(thinkingMode);
 
     const attachmentParts = await getAttachmentParts(attachmentIds);
     const promptParts: Part[] = attachmentParts.length > 0 
@@ -83,9 +90,14 @@ export class ProxyProvider implements LLMProvider {
     }
   }
 
-  async* streamMessage(conv: ReconstructedConversation, newText: string, attachmentIds?: string[]): AsyncGenerator<string, void, unknown> {
+  async* streamMessage(
+    conv: ReconstructedConversation, 
+    newText: string, 
+    attachmentIds?: string[],
+    thinkingMode: ThinkingMode = 'auto'
+  ): AsyncGenerator<string, void, unknown> {
     const { setWhitelisted, logout } = useAuthStore.getState()
-    const model = this.getClient();
+    const model = this.getClient(thinkingMode);
 
     const attachmentParts = await getAttachmentParts(attachmentIds);
     const promptParts: Part[] = attachmentParts.length > 0 

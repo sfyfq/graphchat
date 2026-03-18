@@ -17,3 +17,14 @@
   - Hardcoded RGBA colors with low alpha can become invisible on light backgrounds.
   - Always prefer CSS variables for colors that need to adapt to different themes.
 ---
+## Tue Mar 17 17:15:00 PDT 2026 - Implement LLM thinking effort abstraction
+- Introduced `ThinkingMode` abstraction ('fast', 'balanced', 'deep', 'auto').
+- Implemented `getThinkingConfig` bridge to map abstract modes to model-specific API parameters (Gemini 3.x and 2.5).
+- Updated `GeminiProvider`, `MockProvider`, and `ProxyProvider` to support thinking effort control.
+- Added persistent `thinkingMode` to `configStore`.
+- Added "Deep Think" toggle to `ChatDialog` header.
+- Files changed: src/lib/llm/types.ts, src/lib/llm/utils.ts, src/lib/llm/gemini.ts, src/lib/llm/MockProvider.ts, src/lib/llm/ProxyProvider.ts, src/store/configStore.ts, src/components/ChatDialog/ChatDialog.tsx
+- **Learnings for future iterations:**
+  - Decoupling user intent (ThinkingMode) from API specifics (ThinkingConfig) allows for easier model swapping and future intelligent routing.
+  - Gemini 3.1 Flash-Lite defaults to minimal thinking; explicit "high" level is needed for deep reasoning.
+---

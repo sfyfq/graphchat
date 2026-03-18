@@ -3,8 +3,8 @@ import { useConfigStore } from '../../store/configStore';
 import { useConversationStore } from '../../store/conversationStore';
 import { useAuthStore, getStorageScope } from '../../store/authStore';
 import { getBlob } from '../storage';
-import type { LLMProvider } from './types';
-import { ReconstructedConversation, blobToBase64 } from './utils';
+import type { LLMProvider, ThinkingMode } from './types';
+import { ReconstructedConversation, blobToBase64, getThinkingConfig } from './utils';
 
 // For testing, we use gemini-3.1-flash-lite-preview
 const MODEL_NAME = "gemini-3.1-flash-lite-preview";
@@ -48,12 +48,20 @@ export class GeminiProvider implements LLMProvider {
         multimodal: true,
     };
 
-    async sendMessage(conv: ReconstructedConversation, newText: string, attachmentIds?: string[]): Promise<string> {
+    async sendMessage(
+        conv: ReconstructedConversation, 
+        newText: string, 
+        attachmentIds?: string[],
+        thinkingMode: ThinkingMode = 'auto'
+    ): Promise<string> {
         const genAI = getGenAI();
+        const thinkingConfig = getThinkingConfig(thinkingMode, MODEL_NAME);
+
         const model = genAI.getGenerativeModel({
             model: MODEL_NAME,
-            systemInstruction: conv.systemInstruction ? { role: 'system', parts: [{ text: conv.systemInstruction }] } : undefined
-        });
+            systemInstruction: conv.systemInstruction ? { role: 'system', parts: [{ text: conv.systemInstruction }] } : undefined,
+            generationConfig: thinkingConfig
+        } as any);
 
         const attachmentParts = await getAttachmentParts(attachmentIds);
         const promptParts: Part[] = attachmentParts.length > 0 
@@ -66,12 +74,20 @@ export class GeminiProvider implements LLMProvider {
         return response.text();
     }
 
-    async* streamMessage(conv: ReconstructedConversation, newText: string, attachmentIds?: string[]): AsyncGenerator<string, void, unknown> {
+    async* streamMessage(
+        conv: ReconstructedConversation, 
+        newText: string, 
+        attachmentIds?: string[],
+        thinkingMode: ThinkingMode = 'auto'
+    ): AsyncGenerator<string, void, unknown> {
         const genAI = getGenAI();
+        const thinkingConfig = getThinkingConfig(thinkingMode, MODEL_NAME);
+
         const model = genAI.getGenerativeModel({
             model: MODEL_NAME,
-            systemInstruction: conv.systemInstruction ? { role: 'system', parts: [{ text: conv.systemInstruction }] } : undefined
-        });
+            systemInstruction: conv.systemInstruction ? { role: 'system', parts: [{ text: conv.systemInstruction }] } : undefined,
+            generationConfig: thinkingConfig
+        } as any);
 
         const attachmentParts = await getAttachmentParts(attachmentIds);
         const promptParts: Part[] = attachmentParts.length > 0 
