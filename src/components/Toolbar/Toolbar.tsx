@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { GoogleLogin, googleLogout } from '@react-oauth/google'
+import { GoogleLogin, googleLogout, useGoogleOneTapLogin } from '@react-oauth/google'
 import { jwtDecode } from 'jwt-decode'
 import { useConversationStore } from '../../store/conversationStore'
 import { useAuthStore } from '../../store/authStore'
@@ -125,33 +125,62 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
     return () => document.removeEventListener('mousedown', clickOutside)
   }, [])
 
+  const handleLogout = () => {
+    googleLogout()
+    logout()
+    setShowProfile(false)
+  }
+
   // Whitelist Handshake
   const validateToken = async (token: string) => {
     setIsValidating(true)
     try {
+      const decoded = jwtDecode<GoogleProfile>(token)
+      login(decoded, token)
+
       const res = await fetch(`${WORKER_URL}/validate`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const ok = res.ok
       setWhitelisted(ok)
-      setShowStatusModal(true)
+      // Only show status modal if it was a fresh login or validation state changed
+      if (!isWhitelisted && ok) setShowStatusModal(true)
     } catch (e) {
       console.error("Auth validation failed", e)
       setWhitelisted(false)
-      setShowStatusModal(true)
+      // If validation fails critically (e.g. token malformed), log out
+      if (e instanceof Error && e.message.includes('Invalid token')) {
+        handleLogout()
+      }
     } finally {
       setIsValidating(false)
     }
   }
+
+  // Automatic "One Tap" login for returning users (Silent Refresh on reload)
+  useGoogleOneTapLogin({
+    onSuccess: credentialResponse => {
+      if (credentialResponse.credential) {
+        validateToken(credentialResponse.credential)
+      }
+    },
+    onError: () => console.log('One Tap Login Failed'),
+    disabled: !!user, // Disable if already logged in
+    auto_select: true, // Crucial for silent refresh feel
+  })
 
   // Re-validate on mount if we have a token
   useEffect(() => {
     if (idToken) {
       try {
         const decoded = jwtDecode<{ exp: number }>(idToken)
-        if (decoded.exp * 1000 < Date.now()) {
-          console.log("Token expired, logging out")
+        const isExpired = decoded.exp * 1000 < Date.now()
+        // If expired OR close to expiring (within 5 mins), treat as expired to trigger One Tap/Login
+        const isCloseToExpiry = decoded.exp * 1000 < Date.now() + 5 * 60 * 1000
+
+        if (isExpired || isCloseToExpiry) {
+          console.log("Token expired or close to expiry, logging out to trigger refresh")
           handleLogout()
         } else if (!isWhitelisted) {
           validateToken(idToken)
@@ -164,12 +193,6 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
 
   const zoom = (action: string) => {
     window.dispatchEvent(new CustomEvent('graphchat:zoom', { detail: action }))
-  }
-
-  const handleLogout = () => {
-    googleLogout()
-    logout()
-    setShowProfile(false)
   }
 
   const toggleTheme = () => {
@@ -419,9 +442,9 @@ export const Toolbar: React.FC<Props> = ({ onSearchOpen, onLibraryToggle }) => {
             <div style={{ transform: 'scale(0.85)', transformOrigin: 'right' }}>
               <GoogleLogin
                 onSuccess={credentialResponse => {
-                  const decoded = jwtDecode<GoogleProfile>(credentialResponse.credential!)
-                  login(decoded, credentialResponse.credential!)
-                  validateToken(credentialResponse.credential!)
+                  if (credentialResponse.credential) {
+                    validateToken(credentialResponse.credential)
+                  }
                 }}
                 onError={() => console.log('Login Failed')}
                 theme="filled_black"

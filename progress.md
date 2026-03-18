@@ -28,3 +28,13 @@
   - Decoupling user intent (ThinkingMode) from API specifics (ThinkingConfig) allows for easier model swapping and future intelligent routing.
   - Gemini 3.1 Flash-Lite defaults to minimal thinking; explicit "high" level is needed for deep reasoning.
 ---
+## Wed Mar 18 16:00:00 PDT 2026 - Improve Auth persistence and error handling
+- Implemented **Silent Refresh** using Google "One Tap" login (`useGoogleOneTapLogin`) with `auto_select: true`.
+- Refactored `Toolbar` to proactively renew tokens when they are within 5 minutes of expiry.
+- Fixed **Random Logout** bug in `ProxyProvider.handleError` by implementing precise status code and regex-based error detection.
+- Prevented false-positive logouts caused by "401" appearing in non-auth error messages.
+- Files changed: src/components/Toolbar/Toolbar.tsx, src/lib/llm/ProxyProvider.ts
+- **Learnings for future iterations:**
+  - `useGoogleOneTapLogin` with `auto_select: true` is the modern GIS way to achieve session persistence across reloads in SPAs.
+  - String-based error detection (like `.includes('401')`) is dangerous and should always be replaced by status code checks or strict regex boundaries.
+---

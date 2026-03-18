@@ -124,16 +124,23 @@ export class ProxyProvider implements LLMProvider {
   }
 
   private handleError(err: any, setWhitelisted: (val: boolean) => void, logout: () => void) {
-    const status = err.message || "";
-    if (status.includes('401')) {
+    const message = err.message || "";
+    const status = err.status;
+
+    // 1. Check for Unauthorized (401)
+    if (status === 401 || /\b401\b/.test(message)) {
       logout();
       throw new Error("AUTH_EXPIRED");
     }
-    if (status.includes('403')) {
+
+    // 2. Check for Forbidden/Whitelisting (403)
+    if (status === 403 || /\b403\b/.test(message)) {
       setWhitelisted(false);
       throw new Error("UNAUTHORIZED_EMAIL");
     }
-    if (status.includes('413')) {
+
+    // 3. Check for Payload Too Large (413)
+    if (status === 413 || /\b413\b/.test(message)) {
       throw new Error("PAYLOAD_TOO_LARGE");
     }
   }
