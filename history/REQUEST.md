@@ -462,3 +462,15 @@ The user reported that connection lines between nodes are invisible in light mod
 - Use CSS variables to manage theme-dependent colors for edges.
 - Define `--edge-color-default` and `--edge-color-active` in `index.css`.
 - Update the code to use these variables instead of hardcoded RGBA strings.
+# Request: Auth Persistence Improvements (Silent Refresh + Bug Fix)
+
+The user wants to improve session persistence and fix accidental logouts.
+
+## Requirements
+1.  **Silent Refresh:** Implement a mechanism to automatically renew the Google session on page reload or token expiry, so the user stays logged in for days (as long as they are logged into Google).
+2.  **Bug Fix (ProxyProvider):** Fix the issue where any error message containing "401" triggers a logout. Error detection must be precise (based on status codes, not string containment).
+
+## Context
+- Current implementation in `Toolbar.tsx` logs out strictly if the `idToken` is > 1 hour old on reload.
+- `ProxyProvider.handleError` uses `status.includes('401')` which is too broad.
+- Tech stack: React, Zustand, `@react-oauth/google`.
