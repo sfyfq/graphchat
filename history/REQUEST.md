@@ -474,3 +474,16 @@ The user wants to improve session persistence and fix accidental logouts.
 - Current implementation in `Toolbar.tsx` logs out strictly if the `idToken` is > 1 hour old on reload.
 - `ProxyProvider.handleError` uses `status.includes('401')` which is too broad.
 - Tech stack: React, Zustand, `@react-oauth/google`.
+# Request: Fix Inline Code Rendering
+
+The user reports that inline code (backtick-quoted phrases) in assistant messages is being rendered as full-line code blocks.
+
+## Requirements
+- Render inline code (single backticks) as inline elements.
+- Render code blocks (triple backticks) as block elements.
+- Ensure the styling is consistent with the application theme.
+
+## Context
+- `react-markdown` v10.1.0 is used.
+- The `inline` prop is no longer passed to the `code` component in this version.
+- `src/components/ChatDialog/MessageList.tsx` contains the `MarkdownComponents` definition.

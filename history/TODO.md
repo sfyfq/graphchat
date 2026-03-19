@@ -1086,3 +1086,11 @@
 - [ ] Run quality checks (`tsc`, `npm run test`).
 - [ ] Append to `progress.md`.
 - [ ] Commit and merge to `dev`.
+# TODO: Fix Inline Code Rendering
+
+- [ ] Checkout `bugfix/inline-code-rendering` branch.
+- [ ] Update `MarkdownComponents.code` in `src/components/ChatDialog/MessageList.tsx` to use `className` presence instead of the obsolete `inline` prop.
+- [ ] Verify that inline code is rendered correctly (inline, subtle padding, no full-line block).
+- [ ] Verify that triple-backtick code blocks are still rendered as blocks.
+- [ ] Run quality checks (`npm run test`, `npx tsc`).
+- [ ] Append to `progress.md` and commit.
