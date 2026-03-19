@@ -18,7 +18,9 @@ export function getThinkingConfig(mode: ThinkingMode, model: string): any {
 
   // Gemini 3.x series models
   if (model.includes('gemini-3.')) {
-    const config: any = {};
+    const config: any = {
+      includeThoughts: true // Enable thoughts for auditing
+    };
     
     switch (mode) {
       case 'fast':
@@ -48,7 +50,12 @@ export function getThinkingConfig(mode: ThinkingMode, model: string): any {
         budget = 32768;
         break;
     }
-    return { thinkingConfig: { thinkingBudget: budget } };
+    return { 
+      thinkingConfig: { 
+        thinkingBudget: budget,
+        includeThoughts: true // Enable thoughts for auditing
+      } 
+    };
   }
 
   return undefined;

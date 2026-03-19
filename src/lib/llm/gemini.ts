@@ -71,6 +71,15 @@ export class GeminiProvider implements LLMProvider {
         const chat = model.startChat({ history: conv.history });
         const result = await chat.sendMessage(promptParts);
         const response = await result.response;
+        
+        // Audit Logging
+        console.log("[Audit] Response Metadata (Direct):", response.usageMetadata);
+        response.candidates?.[0].content.parts.forEach((part: any) => {
+            if (part.thought) {
+                console.log("[Audit] Model Thought (Direct):", part.text);
+            }
+        });
+
         return response.text();
     }
 
@@ -101,6 +110,16 @@ export class GeminiProvider implements LLMProvider {
             const chunkText = chunk.text();
             yield chunkText;
         }
+
+        // After stream finishes, log thoughts and metadata
+        result.response.then(res => {
+            console.log("[Audit] Final Stream Metadata (Direct):", res.usageMetadata);
+            res.candidates?.[0].content.parts.forEach((part: any) => {
+                if (part.thought) {
+                    console.log("[Audit] Model Thought (Stream Direct):", part.text);
+                }
+            });
+        }).catch(() => {});
     }
 }
 

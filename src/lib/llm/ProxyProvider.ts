@@ -82,6 +82,14 @@ export class ProxyProvider implements LLMProvider {
       const result = await chat.sendMessage(promptParts);
       const response = await result.response;
       
+      // Audit Logging
+      console.log("[Audit] Response Metadata:", response.usageMetadata);
+      response.candidates?.[0].content.parts.forEach((part: any) => {
+        if (part.thought) {
+          console.log("[Audit] Model Thought:", part.text);
+        }
+      });
+
       setWhitelisted(true)
       return response.text();
     } catch (err: any) {
@@ -117,6 +125,17 @@ export class ProxyProvider implements LLMProvider {
       for await (const chunk of result.stream) {
         yield chunk.text();
       }
+
+      // After stream finishes, log thoughts and metadata
+      result.response.then(res => {
+        console.log("[Audit] Final Stream Metadata:", res.usageMetadata);
+        res.candidates?.[0].content.parts.forEach((part: any) => {
+          if (part.thought) {
+            console.log("[Audit] Model Thought (Stream):", part.text);
+          }
+        });
+      }).catch(() => {});
+
     } catch (err: any) {
       this.handleError(err, setWhitelisted, logout);
       throw err;
