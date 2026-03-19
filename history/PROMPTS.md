@@ -1185,3 +1185,56 @@ Enable users to switch between light and dark themes, or have the application au
 - Switch theme to 'Light' and verify all components are legible.
 - Switch theme to 'Dark' and verify it looks correct (no regressions).
 - Switch theme to 'System' and toggle OS theme settings, ensuring the app follows.
+# PROMPTS: Fix Invisible Connection Lines in Light Mode
+
+## Analysis
+The core issue is that many colors were hardcoded for dark mode (the initial theme of the application). When light mode was introduced, some of these colors (especially those with low opacity) became invisible or very faint against the new background.
+
+The background for light mode is `#f8f9fa` (almost white).
+The default edge color was `rgba(255,255,255,0.2)`. On a white background, this is invisible.
+
+## Execution
+I decided to use CSS variables to handle these theme-dependent colors.
+
+### CSS Variables
+- `--edge-color-default`
+- `--edge-color-active`
+
+### Color selection
+- For dark mode, I kept the original values:
+  - `--edge-color-default: rgba(255, 255, 255, 0.2)`
+  - `--edge-color-active: rgba(99, 102, 241, 0.55)`
+- For light mode, I chose values that were visible but not too dominant:
+  - `--edge-color-default: rgba(0, 0, 0, 0.15)`
+  - `--edge-color-active: rgba(99, 102, 241, 0.8)` (Higher alpha for better contrast in light mode)
+
+## Code Changes
+- `src/index.css`: Define the new variables.
+- `src/lib/utils.ts`: Update `branchColor`.
+- `src/components/Canvas/EdgePath.tsx`: Update `stroke`.
+- `src/components/ChatDialog/ChatDialog.tsx`: Update textarea focus.
+# PROMPTS: Auth Persistence Improvements
+
+## Research: Silent Refresh
+The current Google Identity Services (GIS) library (wrapped by `@react-oauth/google`) does not support the old "hidden iframe" silent refresh because of Third-Party Cookie restrictions.
+
+The modern way to achieve "stays logged in for days" is a combination of:
+1.  **Token Expiry Check with Buffer:** Instead of waiting for expiry, check if the token is *about* to expire (e.g., in 10 mins).
+2.  **Automatic Login (One Tap / Auto-select):** Using `useGoogleOneTapLogin` with `auto_select: true` allows the browser to automatically receive a fresh ID token on page reload if the user is already logged into Google and has previously authorized the app.
+
+## Research: Bug Fix (ProxyProvider)
+The Gemini SDK rethrows fetch errors as `GoogleGenerativeAIFetchError`. These objects usually have a `status` property. 
+If the error is just a generic string, we must use a regex like `/\b401\b/` to avoid matching "401" inside other numbers or words.
+
+## Implementation Strategy
+
+### 1. Silent Refresh (`Toolbar.tsx`)
+- Implement `useGoogleOneTapLogin` with `auto_select: true`.
+- This will handle automatic sign-in on page reload if the local token is gone or expired.
+- Update the manual `useEffect` check to trigger a refresh if the token is close to expiring.
+
+### 2. Precise Error Handling (`ProxyProvider.ts`)
+- Update `handleError` to:
+    - Check `err.status === 401`.
+    - If no status, check `err.message` using `/\b401\b/`.
+- Apply same logic for 403 and 413.

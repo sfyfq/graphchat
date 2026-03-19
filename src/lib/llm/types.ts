@@ -1,6 +1,8 @@
 import { Part } from "@google/generative-ai";
 import { ReconstructedConversation } from "./utils";
 
+export type ThinkingMode = 'fast' | 'balanced' | 'deep' | 'auto';
+
 export interface LLMMessage {
   role: 'user' | 'model';
   parts: Part[];
@@ -21,7 +23,8 @@ export interface LLMProvider {
   sendMessage: (
     conv: ReconstructedConversation,
     newText: string,
-    attachmentIds?: string[]
+    attachmentIds?: string[],
+    thinkingMode?: ThinkingMode
   ) => Promise<string>;
 
   /**
@@ -30,6 +33,7 @@ export interface LLMProvider {
   streamMessage: (
     conv: ReconstructedConversation,
     newText: string,
-    attachmentIds?: string[]
+    attachmentIds?: string[],
+    thinkingMode?: ThinkingMode
   ) => AsyncGenerator<string, void, unknown>;
 }

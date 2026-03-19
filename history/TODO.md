@@ -1059,3 +1059,30 @@
 - [ ] Verify 'dark' mode still looks good.
 - [ ] Verify 'system' mode correctly follows OS setting.
 - [ ] Check for any missed hardcoded colors.
+# TODO: Fix Invisible Connection Lines in Light Mode
+
+- [x] Analyze the issue: where are the colors hardcoded?
+- [x] Define CSS variables for edge colors in `src/index.css`.
+- [x] Update `branchColor` in `src/lib/utils.ts` to use `--edge-color-default`.
+- [x] Update `EdgePath.tsx` to use `--edge-color-active` when active.
+- [x] Update `ChatDialog.tsx` for consistency.
+- [x] Verify changes (pass tests and typecheck).
+- [x] Append to progress.md and commit.
+# TODO: Auth Persistence Improvements
+
+## Phase 1: Silent Refresh Implementation
+- [ ] Checkout `feature/auth-persistence-improvements` branch.
+- [ ] Import `useGoogleOneTapLogin` in `src/components/Toolbar/Toolbar.tsx`.
+- [ ] Implement `useGoogleOneTapLogin` with `auto_select: true`.
+- [ ] Refactor `validateToken` to be reusable for both One Tap and manual login.
+- [ ] Update mount `useEffect` in `Toolbar.tsx` to handle proactive token renewal (with 5-10 min buffer).
+
+## Phase 2: Precise Error Handling
+- [ ] Update `handleError` in `src/lib/llm/ProxyProvider.ts` to use status codes and regex.
+- [ ] Verify that real 401/403 errors still trigger correct behavior.
+- [ ] Verify that false positives (e.g., "401" in text) are ignored.
+
+## Phase 3: Verification & Cleanup
+- [ ] Run quality checks (`tsc`, `npm run test`).
+- [ ] Append to `progress.md`.
+- [ ] Commit and merge to `dev`.

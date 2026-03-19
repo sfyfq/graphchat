@@ -1,5 +1,5 @@
 import type { Commit } from '../../types'
-import type { LLMMessage } from './types'
+import type { LLMMessage, ThinkingMode } from './types'
 import { getBlob } from '../storage'
 import { getStorageScope } from '../../store/authStore'
 import { useConversationStore } from '../../store/conversationStore'
@@ -7,6 +7,51 @@ import { useConversationStore } from '../../store/conversationStore'
 export interface ReconstructedConversation {
   systemInstruction: string;
   history: LLMMessage[];
+}
+
+/**
+ * Maps our abstract ThinkingMode to model-specific API parameters.
+ * Currently optimized for Gemini 3.1 Flash-Lite.
+ */
+export function getThinkingConfig(mode: ThinkingMode, model: string): any {
+  if (mode === 'auto') return undefined;
+
+  // Gemini 3.x series models
+  if (model.includes('gemini-3.')) {
+    const config: any = {};
+    
+    switch (mode) {
+      case 'fast':
+        config.thinkingLevel = 'minimal';
+        break;
+      case 'balanced':
+        config.thinkingLevel = 'low';
+        break;
+      case 'deep':
+        config.thinkingLevel = 'high';
+        break;
+    }
+    return { thinkingConfig: config };
+  }
+
+  // Gemini 2.5 series models (Legacy budget-based)
+  if (model.includes('gemini-2.5')) {
+    let budget = -1; // Default to dynamic
+    switch (mode) {
+      case 'fast':
+        budget = 0;
+        break;
+      case 'balanced':
+        budget = 4096;
+        break;
+      case 'deep':
+        budget = 32768;
+        break;
+    }
+    return { thinkingConfig: { thinkingBudget: budget } };
+  }
+
+  return undefined;
 }
 
 /**
