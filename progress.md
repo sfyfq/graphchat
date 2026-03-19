@@ -38,3 +38,11 @@
   - `useGoogleOneTapLogin` with `auto_select: true` is the modern GIS way to achieve session persistence across reloads in SPAs.
   - String-based error detection (like `.includes('401')`) is dangerous and should always be replaced by status code checks or strict regex boundaries.
 ---
+## Wed Mar 18 20:15:00 PDT 2026 - Fix inline code rendering in assistant messages
+- Fixed issue where inline code (single backticks) was rendered as block code.
+- Updated `MarkdownComponents.code` in `MessageList.tsx` to use `className` presence heuristic instead of the obsolete `inline` prop (react-markdown v10).
+- Improved styling for inline vs block code elements.
+- Files changed: src/components/ChatDialog/MessageList.tsx
+- **Learnings for future iterations:**
+  - In `react-markdown` v10, the `inline` prop is removed from the `code` component. Use the presence of `className` (e.g., `language-js`) to distinguish between inline and block code.
+---

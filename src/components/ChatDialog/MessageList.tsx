@@ -90,21 +90,28 @@ export const MarkdownComponents: any = {
       {children}
     </a>
   ),
-  code: ({ children, inline }: any) => (
-    <code style={{
-      background: 'var(--bg-input)',
-      color: 'var(--text-primary)',
-      padding: inline ? '2px 4px' : '8px',
-      borderRadius: 4,
-      fontSize: '0.9em',
-      fontFamily: "'DM Mono', monospace",
-      display: inline ? 'inline' : 'block',
-      overflowX: 'auto',
-      border: inline ? 'none' : '1px solid var(--border-secondary)',
-    }}>
-      {children}
-    </code>
-  ),
+  code: ({ children, className, ...props }: any) => {
+    const isInline = !className;
+    return (
+      <code 
+        className={className}
+        style={{
+          background: 'var(--bg-input)',
+          color: 'var(--text-primary)',
+          padding: isInline ? '2px 4px' : '8px',
+          borderRadius: 4,
+          fontSize: '0.9em',
+          fontFamily: "'DM Mono', monospace",
+          display: isInline ? 'inline' : 'block',
+          overflowX: 'auto',
+          border: isInline ? 'none' : '1px solid var(--border-secondary)',
+        }}
+        {...props}
+      >
+        {children}
+      </code>
+    )
+  },
 }
 
 export const MessageList: React.FC<Props> = ({ 

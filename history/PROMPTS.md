@@ -1238,3 +1238,19 @@ If the error is just a generic string, we must use a regex like `/\b401\b/` to a
     - Check `err.status === 401`.
     - If no status, check `err.message` using `/\b401\b/`.
 - Apply same logic for 403 and 413.
+# PROMPTS: Fix Inline Code Rendering
+
+## Research Summary
+- `react-markdown` v10.1.0 does not pass the `inline` prop to the `code` component.
+- Instead, it passes `className` for code blocks (usually starting with `language-`).
+- Inline code typically has no `className`.
+- The current implementation in `MessageList.tsx` relies on the `inline` prop, which results in `undefined` and defaults to block rendering.
+
+## Strategy
+- Update the `code` component in `MarkdownComponents` to use a heuristic based on the presence of `className` to determine if the code is inline or a block.
+- If `className` is present, it's likely a code block (rendered inside a `pre` by `react-markdown`).
+- If `className` is absent, it's likely inline code.
+- Apply appropriate styles (padding, display, border) based on this heuristic.
+
+## Code Changes
+- `src/components/ChatDialog/MessageList.tsx`: Update `MarkdownComponents.code`.
