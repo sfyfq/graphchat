@@ -487,3 +487,16 @@ The user reports that inline code (backtick-quoted phrases) in assistant message
 - `react-markdown` v10.1.0 is used.
 - The `inline` prop is no longer passed to the `code` component in this version.
 - `src/components/ChatDialog/MessageList.tsx` contains the `MarkdownComponents` definition.
+# Request: LLM Thinking Audit Trial
+
+The user wants to audit whether the LLM is actually using deep thinking when the "Deep" mode is enabled.
+
+## Requirements
+- Enable `includeThoughts: true` in the Gemini API configuration.
+- Log model's internal reasoning (thoughts) to the browser console.
+- Log `usageMetadata` (including `thoughtTokenCount`) to the browser console.
+- Use a temporary feature branch for this trial.
+
+## Context
+- Files involved: `src/lib/llm/utils.ts`, `src/lib/llm/ProxyProvider.ts`, `src/lib/llm/gemini.ts`.
+- Model: `gemini-3.1-flash-lite-preview`.

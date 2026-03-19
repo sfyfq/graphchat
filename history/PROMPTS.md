@@ -1254,3 +1254,20 @@ If the error is just a generic string, we must use a regex like `/\b401\b/` to a
 
 ## Code Changes
 - `src/components/ChatDialog/MessageList.tsx`: Update `MarkdownComponents.code`.
+# PROMPTS: LLM Thinking Audit Trial
+
+## Research Summary
+- `includeThoughts: true` in `thinkingConfig` forces the Gemini API to return reasoning parts.
+- Thoughts are returned as parts where `thought: true`.
+- `usageMetadata` contains `thoughtTokenCount`.
+- In streaming, the thoughts usually arrive in the first few chunks or as separate parts before the main text.
+
+## Strategy
+1.  **Configuration**: Update `getThinkingConfig` in `src/lib/llm/utils.ts` to always include `includeThoughts: true` when a thinking level is specified.
+2.  **Logging (Unary)**: In `sendMessage`, await the full response and log both the `usageMetadata` and any `parts` marked as `thought`.
+3.  **Logging (Streaming)**: In `streamMessage`, await the final `response` object from the result (which is available after the stream finishes) and log the thoughts and metadata. This ensures we don't interfere with the real-time UI streaming while still providing audit capability.
+
+## Code Changes
+- `src/lib/llm/utils.ts`: Update `getThinkingConfig`.
+- `src/lib/llm/ProxyProvider.ts`: Add `console.log` statements in `sendMessage` and `streamMessage`.
+- `src/lib/llm/gemini.ts`: Add `console.log` statements in `sendMessage` and `streamMessage`.
