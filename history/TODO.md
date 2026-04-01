@@ -1094,3 +1094,13 @@
 - [ ] Verify that triple-backtick code blocks are still rendered as blocks.
 - [ ] Run quality checks (`npm run test`, `npx tsc`).
 - [ ] Append to `progress.md` and commit.
+# TODO: LLM Thinking Audit Trial
+
+- [ ] Checkout `feature/thinking-audit-trial` branch.
+- [ ] Enable `includeThoughts: true` in `src/lib/llm/utils.ts`.
+- [ ] Implement console logging for thoughts and usage metadata in `src/lib/llm/ProxyProvider.ts`.
+- [ ] Implement console logging for thoughts and usage metadata in `src/lib/llm/gemini.ts`.
+- [ ] Verify fix by sending a "Deep Think" message and checking the browser console.
+- [ ] Run quality checks (`npx tsc`, `npm run test`).
+- [ ] Append to `progress.md` and commit.
+- [ ] Merge to `dev` branch.

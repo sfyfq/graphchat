@@ -46,3 +46,12 @@
 - **Learnings for future iterations:**
   - In `react-markdown` v10, the `inline` prop is removed from the `code` component. Use the presence of `className` (e.g., `language-js`) to distinguish between inline and block code.
 ---
+## Wed Mar 18 21:30:00 PDT 2026 - Implement model thought logging for Deep Think audit
+- Enabled `includeThoughts: true` in `src/lib/llm/utils.ts` when a thinking level is active.
+- Added console logging for internal model reasoning (thoughts) and usage metadata in `ProxyProvider.ts` and `gemini.ts`.
+- This allows users to audit deep thinking by checking the Browser Inspector console.
+- Files changed: src/lib/llm/utils.ts, src/lib/llm/ProxyProvider.ts, src/lib/llm/gemini.ts
+- **Learnings for future iterations:**
+  - Model thoughts are returned as separate response parts where `thought: true`.
+  - In streaming responses, thoughts arrive in the final candidate parts available after the stream completes.
+---
